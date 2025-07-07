@@ -140,9 +140,9 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   }
 
   const totalSlides = notices.length + images.length
-  const currentItem = currentSlide < notices.length 
-    ? notices[currentSlide] 
-    : images[currentSlide - notices.length]
+  const isNoticeSlide = currentSlide < notices.length
+  const currentNotice = isNoticeSlide ? notices[currentSlide] : null
+  const currentImage = !isNoticeSlide ? images[currentSlide - notices.length] : null
 
   const formatHebrewDate = (date: Date) => {
     const options: Intl.DateTimeFormatOptions = {
@@ -180,14 +180,14 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           </div>
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            {currentSlide < notices.length ? (
+            {isNoticeSlide && currentNotice ? (
               // Notice Slide
               <div className="text-center max-w-4xl">
                 <h1 className="text-5xl font-bold mb-8">
                   {user.street_name} {user.building_number}
                 </h1>
                 <div className="text-3xl mb-8">
-                  {currentItem.message_text}
+                  {currentNotice.message_text}
                 </div>
                 <div className="text-2xl">
                   {formatTime(currentTime)}
@@ -196,14 +196,22 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
                   {formatHebrewDate(currentTime)}
                 </div>
               </div>
-            ) : (
+            ) : currentImage ? (
               // Image Slide
               <div className="w-full h-full flex items-center justify-center">
                 <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/images/${currentItem.file_path}`}
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/images/${currentImage.file_path}`}
                   alt="Building notice"
                   className="max-w-full max-h-full object-contain"
                 />
+              </div>
+            ) : (
+              // Fallback
+              <div className="text-center">
+                <h1 className="text-4xl font-bold mb-4">
+                  {user.street_name} {user.building_number}
+                </h1>
+                <p className="text-xl">אין תוכן להצגה כרגע</p>
               </div>
             )}
           </div>

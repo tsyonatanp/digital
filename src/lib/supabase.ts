@@ -29,17 +29,41 @@ const createMockResponse = async (table: string) => {
     }
   } else if (table === 'notices') {
     return {
-      data: [{
-        id: 'notice-1',
-        user_id: 'demo-user',
-        message_text: 'ברוכים הבאים ללוח המודעות הדיגיטלי של הבניין!',
-        start_date: new Date().toISOString(),
-        end_date: null,
-        is_active: true,
-        priority: 1,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }],
+      data: [
+        {
+          id: 'notice-1',
+          user_id: 'demo-user',
+          message_text: 'ברוכים הבאים ללוח המודעות הדיגיטלי! 🎉\nמערכת חדשנית לתקשורת יעילה בבניין',
+          start_date: new Date().toISOString(),
+          end_date: null,
+          is_active: true,
+          priority: 1,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: 'notice-2',
+          user_id: 'demo-user',
+          message_text: '📢 הודעה חשובה:\nעבודות תחזוקה במעלית יתבצעו ביום ראשון\nבין השעות 09:00-17:00',
+          start_date: new Date().toISOString(),
+          end_date: null,
+          is_active: true,
+          priority: 2,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: 'notice-3',
+          user_id: 'demo-user',
+          message_text: '🎊 מזל טוב!\nהוועד החדש נבחר בהצלחה\nתודה לכל המשתתפים בבחירות',
+          start_date: new Date().toISOString(),
+          end_date: null,
+          is_active: true,
+          priority: 3,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ],
       error: null
     }
   } else if (table === 'images') {
@@ -52,13 +76,13 @@ const createMockResponse = async (table: string) => {
       data: {
         id: 'style-1',
         user_id: 'demo-user',
-        background_color: '#FFFFFF',
-        text_color: '#000000',
-        layout_type: 'classic',
-        text_size: 'medium',
+        background_color: '#1e3a8a',
+        text_color: '#ffffff',
+        layout_type: 'modern',
+        text_size: 'large',
         weather_enabled: true,
         news_enabled: false,
-        slide_duration: 5000,
+        slide_duration: 8000,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       },
@@ -155,13 +179,13 @@ const createChainableQuery = (table: string): MockQueryBuilder => {
           data: {
             id: 'style-1',
             user_id: 'demo-user',
-            background_color: '#FFFFFF',
-            text_color: '#000000',
-            layout_type: 'classic',
-            text_size: 'medium',
+            background_color: '#1e3a8a',
+            text_color: '#ffffff',
+            layout_type: 'modern',
+            text_size: 'large',
             weather_enabled: true,
             news_enabled: false,
-            slide_duration: 5000,
+            slide_duration: 8000,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           },
@@ -178,12 +202,38 @@ const createChainableQuery = (table: string): MockQueryBuilder => {
 
 export const supabase = {
   auth: {
-    signInWithPassword: async () => ({
-      data: { user: { id: 'demo-user', email: 'demo@example.com' } },
+    signInWithPassword: async (credentials: { email: string; password: string }) => ({
+      data: { 
+        user: {
+          id: 'demo-user',
+          email: credentials.email,
+          app_metadata: {},
+          user_metadata: {},
+          aud: 'authenticated',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          email_confirmed_at: new Date().toISOString(),
+          last_sign_in_at: new Date().toISOString(),
+          role: 'authenticated'
+        }
+      },
       error: null
     }),
-    signUp: async () => ({
-      data: { user: { id: 'demo-user', email: 'demo@example.com' } },
+    signUp: async (credentials: { email: string; password: string }) => ({
+      data: { 
+        user: {
+          id: 'demo-user',
+          email: credentials.email,
+          app_metadata: {},
+          user_metadata: {},
+          aud: 'authenticated',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          email_confirmed_at: new Date().toISOString(),
+          last_sign_in_at: new Date().toISOString(),
+          role: 'authenticated'
+        }
+      },
       error: null
     }),
     signOut: async () => ({ error: null }),
@@ -192,7 +242,32 @@ export const supabase = {
   },
   from: (table: string) => ({
     select: (columns?: string) => createChainableQuery(table),
-    insert: (data: any) => Promise.resolve({ data: null, error: { message: 'Demo mode' } }),
+    insert: (data: any) => {
+      const insertResult = Promise.resolve({ 
+        data: { 
+          id: 'demo-' + Date.now(), 
+          ...data, 
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }, 
+        error: null 
+      })
+      
+      // Return both direct promise and select method
+      const result: any = insertResult
+      result.select = (columns?: string) => ({
+        single: () => Promise.resolve({ 
+          data: { 
+            id: 'demo-style-' + Date.now(), 
+            ...data, 
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }, 
+          error: null 
+        })
+      })
+      return result
+    },
     update: (data: any) => ({
       eq: (column: string, value: any) => Promise.resolve({ data: null, error: { message: 'Demo mode' } })
     }),
@@ -201,9 +276,10 @@ export const supabase = {
     })
   }),
   storage: {
-    from: () => ({
-      upload: async () => ({ data: null, error: { message: 'Demo mode' } }),
-      getPublicUrl: () => ({ data: { publicUrl: '' } })
+    from: (bucket: string) => ({
+      upload: async (fileName: string, file: File) => ({ data: null, error: { message: 'Demo mode' } }),
+      getPublicUrl: (fileName: string) => ({ data: { publicUrl: '' } }),
+      remove: async (filePaths: string[]) => ({ data: null, error: { message: 'Demo mode' } })
     })
   }
 }

@@ -111,17 +111,13 @@ export default function StyleSelector({ userId, currentStyleId, onStyleChange }:
       const { data, error } = await supabase
         .from('styles')
         .insert({
-          name: styleData.name,
-          description: styleData.description,
-          style_config: {
-            backgroundColor: styleData.preview.backgroundColor,
-            textColor: styleData.preview.textColor,
-            accentColor: styleData.preview.accentColor,
-            fontFamily: 'system-ui',
-            fontSize: '16px',
-            borderRadius: '8px',
-            shadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-          },
+          layout_type: styleData.name,
+          background_color: styleData.preview.backgroundColor,
+          text_color: styleData.preview.textColor,
+          text_size: 'medium',
+          weather_enabled: true,
+          news_enabled: true,
+          slide_duration: 8,
           user_id: userId
         })
         .select()
@@ -170,7 +166,7 @@ export default function StyleSelector({ userId, currentStyleId, onStyleChange }:
   }
 
   const isPredefinedStyleUsed = (styleId: string) => {
-    return styles.some(style => style.name === predefinedStyles.find(p => p.id === styleId)?.name)
+    return styles.some(style => style.layout_type === predefinedStyles.find(p => p.id === styleId)?.name)
   }
 
   if (loading) {
@@ -201,7 +197,7 @@ export default function StyleSelector({ userId, currentStyleId, onStyleChange }:
           <div className="flex items-center gap-3">
             <Monitor className="w-5 h-5 text-blue-600" />
             <span className="text-blue-800">
-              {styles.find(s => s.id === currentStyleId)?.name || 'סגנון לא ידוע'}
+              {styles.find(s => s.id === currentStyleId)?.layout_type || 'סגנון לא ידוע'}
             </span>
           </div>
         </div>
@@ -214,7 +210,7 @@ export default function StyleSelector({ userId, currentStyleId, onStyleChange }:
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {predefinedStyles.map((style) => {
             const isUsed = isPredefinedStyleUsed(style.id)
-            const usedStyle = styles.find(s => s.name === style.name)
+            const usedStyle = styles.find(s => s.layout_type === style.name)
             
             return (
               <div
@@ -308,23 +304,23 @@ export default function StyleSelector({ userId, currentStyleId, onStyleChange }:
                   <div
                     className="w-full h-20 rounded-md"
                     style={{ 
-                      backgroundColor: style.style_config?.backgroundColor || '#ffffff',
+                      backgroundColor: style.background_color || '#ffffff',
                       border: '1px solid #e5e7eb'
                     }}
                   >
                     <div className="flex items-center justify-center h-full">
                       <span
                         className="text-sm font-medium"
-                        style={{ color: style.style_config?.textColor || '#1f2937' }}
+                        style={{ color: style.text_color || '#1f2937' }}
                       >
-                        {style.name}
+                        {style.layout_type}
                       </span>
                     </div>
                   </div>
                   
                   <div>
-                    <h4 className="font-medium text-gray-900">{style.name}</h4>
-                    <p className="text-sm text-gray-500">{style.description}</p>
+                    <h4 className="font-medium text-gray-900">{style.layout_type}</h4>
+                    <p className="text-sm text-gray-500">גודל טקסט: {style.text_size}</p>
                   </div>
                   
                   <div className="flex items-center justify-between">

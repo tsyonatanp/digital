@@ -264,14 +264,14 @@ export default function ImageManager({ userId }: ImageManagerProps) {
               >
                 <div className="aspect-video bg-gray-100 relative">
                   <img
-                    src={image.file_url}
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/building-images/${image.file_path}`}
                     alt={image.file_name}
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition-all flex items-center justify-center">
                     <div className="opacity-0 hover:opacity-100 transition-opacity flex gap-2">
                       <a
-                        href={image.file_url}
+                        href={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/building-images/${image.file_path}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="p-2 bg-white rounded-full shadow-lg hover:bg-gray-50"
@@ -279,7 +279,7 @@ export default function ImageManager({ userId }: ImageManagerProps) {
                         <Eye className="w-4 h-4 text-gray-600" />
                       </a>
                       <a
-                        href={image.file_url}
+                        href={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/building-images/${image.file_path}`}
                         download={image.file_name}
                         className="p-2 bg-white rounded-full shadow-lg hover:bg-gray-50"
                       >
