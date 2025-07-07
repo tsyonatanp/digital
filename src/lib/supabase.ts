@@ -42,6 +42,28 @@ const createMockResponse = async (table: string) => {
       }],
       error: null
     }
+  } else if (table === 'images') {
+    return {
+      data: [],
+      error: null
+    }
+  } else if (table === 'styles') {
+    return {
+      data: {
+        id: 'style-1',
+        user_id: 'demo-user',
+        background_color: '#FFFFFF',
+        text_color: '#000000',
+        layout_type: 'classic',
+        text_size: 'medium',
+        weather_enabled: true,
+        news_enabled: false,
+        slide_duration: 5000,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      error: null
+    }
   } else {
     return { data: [], error: null }
   }
