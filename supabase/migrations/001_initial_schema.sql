@@ -1,0 +1,189 @@
+-- Create users table
+CREATE TABLE users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  street_name VARCHAR(255) NOT NULL,
+  building_number VARCHAR(50) NOT NULL,
+  management_company VARCHAR(255),
+  contact_person VARCHAR(255),
+  contact_phone VARCHAR(50),
+  contact_email VARCHAR(255),
+  is_super_admin BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  last_login TIMESTAMP WITH TIME ZONE,
+  is_active BOOLEAN DEFAULT TRUE
+);
+
+-- Create notices table
+CREATE TABLE notices (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  message_text TEXT NOT NULL,
+  start_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  end_date TIMESTAMP WITH TIME ZONE,
+  is_active BOOLEAN DEFAULT TRUE,
+  priority INTEGER DEFAULT 1,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create images table
+CREATE TABLE images (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  file_name VARCHAR(255) NOT NULL,
+  file_path VARCHAR(500) NOT NULL,
+  file_size INTEGER,
+  mime_type VARCHAR(100),
+  display_order INTEGER DEFAULT 0,
+  start_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  end_date TIMESTAMP WITH TIME ZONE,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create styles table
+CREATE TABLE styles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  background_color VARCHAR(7) DEFAULT '#FFFFFF',
+  text_color VARCHAR(7) DEFAULT '#000000',
+  layout_type VARCHAR(50) DEFAULT 'standard',
+  text_size VARCHAR(20) DEFAULT 'normal',
+  weather_enabled BOOLEAN DEFAULT TRUE,
+  news_enabled BOOLEAN DEFAULT TRUE,
+  slide_duration INTEGER DEFAULT 5000,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create weather_cache table
+CREATE TABLE weather_cache (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  location VARCHAR(255) NOT NULL,
+  weather_data JSONB NOT NULL,
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create news_sources table
+CREATE TABLE news_sources (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255) NOT NULL,
+  rss_url VARCHAR(500) NOT NULL,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create news_cache table
+CREATE TABLE news_cache (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  source_id UUID REFERENCES news_sources(id) ON DELETE CASCADE,
+  title VARCHAR(500) NOT NULL,
+  content TEXT,
+  url VARCHAR(500),
+  published_at TIMESTAMP WITH TIME ZONE,
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create indexes
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_street_building ON users(street_name, building_number);
+CREATE INDEX idx_notices_user_id ON notices(user_id);
+CREATE INDEX idx_notices_active ON notices(is_active, start_date, end_date);
+CREATE INDEX idx_images_user_id ON images(user_id);
+CREATE INDEX idx_images_active ON images(is_active, start_date, end_date);
+CREATE INDEX idx_images_order ON images(user_id, display_order);
+CREATE INDEX idx_styles_user_id ON styles(user_id);
+CREATE INDEX idx_weather_cache_location ON weather_cache(location);
+CREATE INDEX idx_weather_cache_expires ON weather_cache(expires_at);
+CREATE INDEX idx_news_cache_source ON news_cache(source_id);
+CREATE INDEX idx_news_cache_expires ON news_cache(expires_at);
+
+-- Enable Row Level Security
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notices ENABLE ROW LEVEL SECURITY;
+ALTER TABLE images ENABLE ROW LEVEL SECURITY;
+ALTER TABLE styles ENABLE ROW LEVEL SECURITY;
+
+-- Create RLS policies
+CREATE POLICY "Users can view own data" ON users
+  FOR SELECT USING (auth.uid() = id);
+
+CREATE POLICY "Users can update own data" ON users
+  FOR UPDATE USING (auth.uid() = id);
+
+CREATE POLICY "Users can manage own notices" ON notices
+  FOR ALL USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can manage own images" ON images
+  FOR ALL USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can manage own styles" ON styles
+  FOR ALL USING (auth.uid() = user_id);
+
+-- Create function to update updated_at column
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- Create triggers for updated_at
+CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_notices_updated_at BEFORE UPDATE ON notices
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_images_updated_at BEFORE UPDATE ON images
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_styles_updated_at BEFORE UPDATE ON styles
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Create function to create default style
+CREATE OR REPLACE FUNCTION create_default_style()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO styles (user_id, background_color, text_color, layout_type, text_size)
+    VALUES (NEW.id, '#FFFFFF', '#000000', 'standard', 'normal');
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- Create trigger for default style
+CREATE TRIGGER create_user_default_style AFTER INSERT ON users
+    FOR EACH ROW EXECUTE FUNCTION create_default_style();
+
+-- Create view for active content
+CREATE VIEW active_content AS
+SELECT 
+    u.id as user_id,
+    u.street_name,
+    u.building_number,
+    n.message_text,
+    n.start_date as notice_start,
+    n.end_date as notice_end,
+    i.file_path as image_path,
+    i.display_order,
+    i.start_date as image_start,
+    i.end_date as image_end,
+    s.background_color,
+    s.text_color,
+    s.layout_type,
+    s.text_size,
+    s.slide_duration
+FROM users u
+LEFT JOIN notices n ON u.id = n.user_id AND n.is_active = TRUE 
+    AND (n.end_date IS NULL OR n.end_date > NOW())
+LEFT JOIN images i ON u.id = i.user_id AND i.is_active = TRUE 
+    AND (i.end_date IS NULL OR i.end_date > NOW())
+LEFT JOIN styles s ON u.id = s.user_id
+WHERE u.is_active = TRUE; 

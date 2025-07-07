@@ -1,0 +1,93 @@
+'use client'
+
+import Link from 'next/link'
+import { Building2, Monitor, Users } from 'lucide-react'
+
+export default function HomePage() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
+      <div className="max-w-4xl w-full text-center">
+        {/* Main Title */}
+        <div className="mb-12">
+          <div className="flex items-center justify-center mb-6">
+            <Building2 className="w-16 h-16 text-blue-600 ml-4" />
+            <Monitor className="w-16 h-16 text-indigo-600" />
+          </div>
+          <h1 className="text-5xl font-bold text-gray-900 mb-4">
+            לוח מודעות דיגיטלי
+          </h1>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+            מערכת תצוגה חכמה לבניינים - הציגו הודעות, תמונות ומידע חשוב על מסך הטלוויזיה בכניסה לבניין
+          </p>
+        </div>
+
+        {/* Features */}
+        <div className="grid md:grid-cols-3 gap-8 mb-12">
+          <div className="bg-white rounded-lg p-6 shadow-lg">
+            <Monitor className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">תצוגה חכמה</h3>
+            <p className="text-gray-600">
+              הציגו תוכן על מסך הטלוויזיה בכניסה לבניין בקרוסלה אוטומטית
+            </p>
+          </div>
+          
+          <div className="bg-white rounded-lg p-6 shadow-lg">
+            <Users className="w-12 h-12 text-indigo-600 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">ניהול קל</h3>
+            <p className="text-gray-600">
+              ממשק ניהול פשוט לוועד הבית לעדכון הודעות והעלאת תמונות
+            </p>
+          </div>
+          
+          <div className="bg-white rounded-lg p-6 shadow-lg">
+            <Building2 className="w-12 h-12 text-green-600 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">לכל בניין</h3>
+            <p className="text-gray-600">
+              תוכן ייעודי לכל בניין עם פרטי התקשרות ומידע מתוזמן
+            </p>
+          </div>
+        </div>
+
+        {/* Call to Action */}
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/login"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors"
+            >
+              התחבר לחשבון קיים
+            </Link>
+            <Link
+              href="/register"
+              className="bg-white hover:bg-gray-50 text-blue-600 font-semibold py-3 px-8 rounded-lg border-2 border-blue-600 transition-colors"
+            >
+              הרשם חינם
+            </Link>
+          </div>
+          
+          <p className="text-sm text-gray-500 mt-6">
+            כבר יש לכם מסך? 
+            <Link href="/tv" className="text-blue-600 hover:underline mr-1">
+              צפו בתצוגה
+            </Link>
+          </p>
+        </div>
+
+        {/* Demo Link */}
+        <div className="mt-12 p-6 bg-white rounded-lg shadow-lg">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">רוצים לראות דוגמה?</h3>
+          <p className="text-gray-600 mb-4">
+            צפו בדוגמה של לוח המודעות בפעילות
+          </p>
+          <Link
+            href="/tv/demo"
+            className="inline-flex items-center bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
+          >
+            <Monitor className="w-5 h-5 ml-2" />
+            דוגמה חיה
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+} 
