@@ -69,15 +69,62 @@ const createMockResponse = async (table: string) => {
   }
 }
 
-const createChainableQuery = (table: string) => {
+interface MockQueryBuilder {
+  eq: (column: string, value: any) => MockQueryBuilder
+  gte: (column: string, value: any) => MockQueryBuilder
+  lte: (column: string, value: any) => MockQueryBuilder
+  gt: (column: string, value: any) => MockQueryBuilder
+  lt: (column: string, value: any) => MockQueryBuilder
+  or: (filters: string) => MockQueryBuilder
+  and: (filters: string) => MockQueryBuilder
+  order: (column: string, options?: { ascending?: boolean }) => Promise<any>
+  limit: (count: number) => MockQueryBuilder
+  single: () => Promise<any>
+  then: (callback: any) => Promise<any>
+}
+
+const createChainableQuery = (table: string): MockQueryBuilder => {
   const mockPromise = createMockResponse(table)
   
-  return {
-    eq: (column: string, value: any) => createChainableQuery(table),
-    gte: (column: string, value: any) => createChainableQuery(table),
-    or: (filters: string) => createChainableQuery(table),
-    order: (column: string, options?: { ascending?: boolean }) => mockPromise,
+  const queryBuilder: MockQueryBuilder = {
+    eq: (column: string, value: any) => {
+      console.log(`Mock query: ${table}.eq(${column}, ${value})`)
+      return queryBuilder
+    },
+    gte: (column: string, value: any) => {
+      console.log(`Mock query: ${table}.gte(${column}, ${value})`)
+      return queryBuilder
+    },
+    lte: (column: string, value: any) => {
+      console.log(`Mock query: ${table}.lte(${column}, ${value})`)
+      return queryBuilder
+    },
+    gt: (column: string, value: any) => {
+      console.log(`Mock query: ${table}.gt(${column}, ${value})`)
+      return queryBuilder
+    },
+    lt: (column: string, value: any) => {
+      console.log(`Mock query: ${table}.lt(${column}, ${value})`)
+      return queryBuilder
+    },
+    or: (filters: string) => {
+      console.log(`Mock query: ${table}.or(${filters})`)
+      return queryBuilder
+    },
+    and: (filters: string) => {
+      console.log(`Mock query: ${table}.and(${filters})`)
+      return queryBuilder
+    },
+    order: (column: string, options?: { ascending?: boolean }) => {
+      console.log(`Mock query: ${table}.order(${column}, ${JSON.stringify(options)})`)
+      return mockPromise
+    },
+    limit: (count: number) => {
+      console.log(`Mock query: ${table}.limit(${count})`)
+      return queryBuilder
+    },
     single: async () => {
+      console.log(`Mock query: ${table}.single()`)
       if (table === 'users') {
         return {
           data: {
@@ -125,6 +172,8 @@ const createChainableQuery = (table: string) => {
     },
     then: (callback: any) => mockPromise.then(callback)
   }
+  
+  return queryBuilder
 }
 
 export const supabase = {
