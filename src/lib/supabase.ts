@@ -61,58 +61,55 @@ export const supabase = {
     getSession: async () => ({ data: { session: null }, error: null }),
     onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } })
   },
-  from: (table: string) => ({
-    select: (columns?: string) => ({
-              eq: (column: string, value: any) => ({
-          single: async () => {
-          if (table === 'users') {
-            return {
-              data: {
-                id: 'demo-user',
-                email: 'demo@example.com',
-                password_hash: 'hashed',
-                street_name: 'רחוב הדמו',
-                building_number: '123',
-                apartment_number: '4',
-                management_company: 'חברת ניהול דמו',
-                contact_person: 'יוסי כהן',
-                contact_phone: '050-1234567',
-                contact_email: 'management@demo.com',
-                management_contact: 'יוסי כהן',
-                management_phone: '050-1234567',
-                management_email: 'management@demo.com',
-                is_super_admin: false,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-                last_login: null,
-                is_active: true,
-                selected_style_id: null
-              },
-              error: null
-            }
+  from: (table: string) => {
+    const createChainableQuery = () => ({
+      eq: (column: string, value: any) => createChainableQuery(),
+      gte: (column: string, value: any) => createChainableQuery(),
+      or: (filters: string) => createChainableQuery(),
+      order: (column: string, options?: { ascending?: boolean }) => createMockResponse(table),
+      single: async () => {
+        if (table === 'users') {
+          return {
+            data: {
+              id: 'demo-user',
+              email: 'demo@example.com',
+              password_hash: 'hashed',
+              street_name: 'רחוב הדמו',
+              building_number: '123',
+              apartment_number: '4',
+              management_company: 'חברת ניהול דמו',
+              contact_person: 'יוסי כהן',
+              contact_phone: '050-1234567',
+              contact_email: 'management@demo.com',
+              management_contact: 'יוסי כהן',
+              management_phone: '050-1234567',
+              management_email: 'management@demo.com',
+              is_super_admin: false,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              last_login: null,
+              is_active: true,
+              selected_style_id: null
+            },
+            error: null
           }
-          return { data: null, error: null }
-        },
-          eq: (column: string, value: any) => ({
-            eq: (column: string, value: any) => ({
-              gte: (column: string, value: any) => ({
-                or: (filters: string) => ({
-                  order: (column: string, options?: { ascending?: boolean }) => createMockResponse(table)
-                })
-              })
-            })
-          }),
-          then: (callback: any) => createMockResponse(table).then(callback)
-        })
-    }),
-    insert: (data: any) => Promise.resolve({ data: null, error: { message: 'Demo mode' } }),
-    update: (data: any) => ({
-      eq: (column: string, value: any) => Promise.resolve({ data: null, error: { message: 'Demo mode' } })
-    }),
-    delete: () => ({
-      eq: (column: string, value: any) => Promise.resolve({ data: null, error: { message: 'Demo mode' } })
+        }
+        return { data: null, error: null }
+      },
+      then: (callback: any) => createMockResponse(table).then(callback)
     })
-  }),
+
+    return {
+      select: (columns?: string) => createChainableQuery(),
+      insert: (data: any) => Promise.resolve({ data: null, error: { message: 'Demo mode' } }),
+      update: (data: any) => ({
+        eq: (column: string, value: any) => Promise.resolve({ data: null, error: { message: 'Demo mode' } })
+      }),
+      delete: () => ({
+        eq: (column: string, value: any) => Promise.resolve({ data: null, error: { message: 'Demo mode' } })
+      })
+    }
+  },
   storage: {
     from: () => ({
       upload: async () => ({ data: null, error: { message: 'Demo mode' } }),
