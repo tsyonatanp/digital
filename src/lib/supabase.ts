@@ -105,6 +105,7 @@ interface MockQueryBuilder {
   limit: (count: number) => MockQueryBuilder
   single: () => Promise<any>
   then: (callback: any) => Promise<any>
+  select: (columns?: string) => MockQueryBuilder
 }
 
 const createChainableQuery = (table: string): MockQueryBuilder => {
@@ -145,6 +146,10 @@ const createChainableQuery = (table: string): MockQueryBuilder => {
     },
     limit: (count: number) => {
       console.log(`Mock query: ${table}.limit(${count})`)
+      return queryBuilder
+    },
+    select: (columns?: string) => {
+      console.log(`Mock query: ${table}.select(${columns || '*'})`)
       return queryBuilder
     },
     single: async () => {
