@@ -30,6 +30,7 @@ export default function LoginForm() {
   })
 
   const onSubmit = async (data: LoginFormData) => {
+    console.log('🔐 ניסיון התחברות עם:', data.email)
     setLoading(true)
     setError('')
 
@@ -39,17 +40,26 @@ export default function LoginForm() {
         password: data.password,
       })
 
+      console.log('📡 תגובת ההתחברות:', { authData, error })
+
       if (error) {
+        console.error('❌ שגיאה בהתחברות:', error)
         setError(error.message)
         return
       }
 
       if (authData.user) {
+        console.log('✅ התחברות הצליחה! משתמש:', authData.user)
         setUser(authData.user)
+        console.log('🔄 מעבר לדשבורד...')
         // Redirect to dashboard
         window.location.href = '/dashboard'
+      } else {
+        console.error('❌ אין משתמש בתגובה')
+        setError('שגיאה בהתחברות - אין משתמש')
       }
     } catch (err) {
+      console.error('💥 שגיאה כללית בהתחברות:', err)
       setError('שגיאה בהתחברות')
     } finally {
       setLoading(false)

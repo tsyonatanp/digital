@@ -34,11 +34,15 @@ export default function Dashboard() {
   const [editingNotice, setEditingNotice] = useState<Notice | null>(null)
 
   useEffect(() => {
+    console.log('🏠 Dashboard: בדיקת משתמש:', user)
+    
     if (!user) {
+      console.log('❌ אין משתמש - מעבר להתחברות')
       window.location.href = '/login'
       return
     }
 
+    console.log('✅ יש משתמש - טעינת פרופיל')
     fetchProfile()
   }, [user])
 

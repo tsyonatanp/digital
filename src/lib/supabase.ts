@@ -199,7 +199,10 @@ const createChainableQuery = (table: string): MockQueryBuilder => {
       }
       return { data: null, error: null }
     },
-    then: (callback: any) => mockPromise.then(callback)
+    then: (callback: any) => {
+      console.log(`Mock query: ${table}.then()`)
+      return mockPromise.then(callback)
+    }
   }
   
   return queryBuilder
@@ -207,23 +210,27 @@ const createChainableQuery = (table: string): MockQueryBuilder => {
 
 export const supabase = {
   auth: {
-    signInWithPassword: async (credentials: { email: string; password: string }) => ({
-      data: { 
-        user: {
-          id: 'demo-user',
-          email: credentials.email,
-          app_metadata: {},
-          user_metadata: {},
-          aud: 'authenticated',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          email_confirmed_at: new Date().toISOString(),
-          last_sign_in_at: new Date().toISOString(),
-          role: 'authenticated'
-        }
-      },
-      error: null
-    }),
+    signInWithPassword: async (credentials: { email: string; password: string }) => {
+      console.log('🎭 Demo Mode: התחברות עם:', credentials.email)
+      
+      return {
+        data: { 
+          user: {
+            id: 'demo-user',
+            email: credentials.email,
+            app_metadata: {},
+            user_metadata: {},
+            aud: 'authenticated',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            email_confirmed_at: new Date().toISOString(),
+            last_sign_in_at: new Date().toISOString(),
+            role: 'authenticated'
+          }
+        },
+        error: null
+      }
+    },
     signUp: async (credentials: { email: string; password: string }) => ({
       data: { 
         user: {
