@@ -73,24 +73,8 @@ export default function RegisterForm() {
       if (authData.user) {
         console.log('✅ רישום הצלח! משתמש:', authData.user)
         
-        // Create user profile in database
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert({
-            id: authData.user.id,
-            email: data.email,
-            street_name: data.street_name,
-            building_number: data.building_number,
-            management_company: data.management_company || null,
-          })
-
-        if (profileError) {
-          console.error('❌ שגיאה ביצירת פרופיל:', profileError)
-          setError('שגיאה ביצירת פרופיל המשתמש')
-          return
-        }
-
-        console.log('✅ פרופיל נוצר בהצלחה!')
+        // The user profile will be automatically created by Supabase triggers
+        // when the user confirms their email
         setUser(authData.user)
         
         // Show success message

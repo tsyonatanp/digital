@@ -284,3 +284,21 @@ npm run deploy:production
 ## 🙏 תודות
 
 תודה לכל התורמים והמשתמשים שתומכים בפרויקט זה! 
+
+## Database Setup
+
+### User Profile Trigger
+
+To automatically create user profiles when users sign up, run this SQL in your Supabase SQL Editor:
+
+```sql
+-- Run the migration file
+\i migrations/create_user_profile_trigger.sql
+```
+
+Or copy the content from `migrations/create_user_profile_trigger.sql` and paste it into the Supabase SQL Editor.
+
+This creates:
+1. A trigger function that automatically creates user profiles
+2. RLS policies for secure access to user data
+3. Automatic profile creation on user signup 
