@@ -48,8 +48,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           .select('*')
           .eq('user_id', params.id)
           .eq('is_active', true)
-          .gte('start_date', new Date().toISOString())
-          .or(`end_date.is.null,end_date.gte.${new Date().toISOString()}`)
+          .or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`)
           .order('priority', { ascending: false })
 
         setNotices(noticesData || [])
@@ -60,9 +59,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           .select('*')
           .eq('user_id', params.id)
           .eq('is_active', true)
-          .gte('start_date', new Date().toISOString())
-          .or(`end_date.is.null,end_date.gte.${new Date().toISOString()}`)
-          .order('display_order', { ascending: true })
+          .order('created_at', { ascending: true })
 
         setImages(imagesData || [])
 

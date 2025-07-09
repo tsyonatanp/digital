@@ -99,11 +99,10 @@ export default function ImageManager({ userId }: ImageManagerProps) {
       const { error: dbError } = await supabase
         .from('images')
         .insert({
-          file_name: selectedFile.name,
           filename: fileName,
-          file_url: urlData.publicUrl,
-          file_size: selectedFile.size,
-          file_type: selectedFile.type,
+          url: urlData.publicUrl,
+          size_bytes: selectedFile.size,
+          mime_type: selectedFile.type,
           user_id: userId
         })
 

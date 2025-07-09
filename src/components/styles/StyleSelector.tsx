@@ -111,14 +111,14 @@ export default function StyleSelector({ userId, currentStyleId, onStyleChange }:
       const { data, error } = await supabase
         .from('styles')
         .insert({
-          layout_type: styleData.name,
+          name: styleData.name,
+          description: styleData.description,
           background_color: styleData.preview.backgroundColor,
           text_color: styleData.preview.textColor,
-          text_size: 'medium',
-          weather_enabled: true,
-          news_enabled: true,
-          slide_duration: 8,
-          user_id: userId
+          font_family: 'Arial',
+          font_size: 16,
+          is_default: false,
+          slide_duration: 8
         })
         .select()
         .single()
@@ -166,7 +166,7 @@ export default function StyleSelector({ userId, currentStyleId, onStyleChange }:
   }
 
   const isPredefinedStyleUsed = (styleId: string) => {
-    return styles.some(style => style.layout_type === predefinedStyles.find(p => p.id === styleId)?.name)
+    return styles.some(style => style.name === predefinedStyles.find(p => p.id === styleId)?.name)
   }
 
   if (loading) {
@@ -197,7 +197,7 @@ export default function StyleSelector({ userId, currentStyleId, onStyleChange }:
           <div className="flex items-center gap-3">
             <Monitor className="w-5 h-5 text-blue-600" />
             <span className="text-blue-800">
-              {styles.find(s => s.id === currentStyleId)?.layout_type || 'סגנון לא ידוע'}
+              {styles.find(s => s.id === currentStyleId)?.name || 'סגנון לא ידוע'}
             </span>
           </div>
         </div>
@@ -210,7 +210,7 @@ export default function StyleSelector({ userId, currentStyleId, onStyleChange }:
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {predefinedStyles.map((style) => {
             const isUsed = isPredefinedStyleUsed(style.id)
-            const usedStyle = styles.find(s => s.layout_type === style.name)
+            const usedStyle = styles.find(s => s.name === style.name)
             
             return (
               <div
@@ -313,14 +313,14 @@ export default function StyleSelector({ userId, currentStyleId, onStyleChange }:
                         className="text-sm font-medium"
                         style={{ color: style.text_color || '#1f2937' }}
                       >
-                        {style.layout_type}
+                        {style.name}
                       </span>
                     </div>
                   </div>
                   
                   <div>
-                    <h4 className="font-medium text-gray-900">{style.layout_type}</h4>
-                    <p className="text-sm text-gray-500">גודל טקסט: {style.text_size}</p>
+                    <h4 className="font-medium text-gray-900">{style.name}</h4>
+                    <p className="text-sm text-gray-500">גודל טקסט: {style.font_size}</p>
                   </div>
                   
                   <div className="flex items-center justify-between">
