@@ -11,10 +11,10 @@ import { X, Save, Calendar, Clock, AlertCircle } from 'lucide-react'
 type Notice = Database['public']['Tables']['notices']['Row']
 
 const noticeSchema = z.object({
-  message_text: z.string().min(1, 'טקסט ההודעה הוא שדה חובה').max(500, 'הטקסט לא יכול להיות ארוך מ-500 תווים'),
+  title: z.string().min(1, 'כותרת ההודעה היא שדה חובה').max(100, 'הכותרת לא יכולה להיות ארוכה מ-100 תווים'),
+  content: z.string().min(1, 'טקסט ההודעה הוא שדה חובה').max(500, 'הטקסט לא יכול להיות ארוך מ-500 תווים'),
   priority: z.enum(['low', 'medium', 'high']),
-  start_date: z.string().min(1, 'תאריך התחלה הוא שדה חובה'),
-  end_date: z.string().optional(),
+  expires_at: z.string().optional(),
   is_active: z.boolean()
 })
 
@@ -40,25 +40,24 @@ export default function NoticeForm({ notice, userId, onSave, onCancel }: NoticeF
   } = useForm<NoticeFormData>({
     resolver: zodResolver(noticeSchema),
     defaultValues: {
-      message_text: notice?.message_text || '',
+      title: notice?.title || '',
+      content: notice?.content || '',
       priority: (notice?.priority as unknown as string) === 'low' || (notice?.priority as unknown as string) === 'high' ? (notice?.priority as unknown as 'low' | 'medium' | 'high') : 'medium',
-      start_date: notice?.start_date ? new Date(notice.start_date).toISOString().slice(0, 16) : '',
-      end_date: notice?.end_date ? new Date(notice.end_date).toISOString().slice(0, 16) : '',
+      expires_at: notice?.expires_at ? new Date(notice.expires_at).toISOString().slice(0, 16) : '',
       is_active: notice?.is_active ?? true
     }
   })
 
-  const startDate = watch('start_date')
-  const endDate = watch('end_date')
+  const expiresAt = watch('expires_at')
 
   useEffect(() => {
-    // Validate end date is after start date
-    if (startDate && endDate && new Date(endDate) <= new Date(startDate)) {
-      setError('תאריך הסיום חייב להיות אחרי תאריך ההתחלה')
+    // Validate expires_at is in the future
+    if (expiresAt && new Date(expiresAt) <= new Date()) {
+      setError('תאריך התפוגה חייב להיות בעתיד')
     } else {
       setError('')
     }
-  }, [startDate, endDate])
+  }, [expiresAt])
 
   const onSubmit = async (data: NoticeFormData) => {
     if (error) return
@@ -66,10 +65,10 @@ export default function NoticeForm({ notice, userId, onSave, onCancel }: NoticeF
     setLoading(true)
     try {
       const noticeData = {
-        message_text: data.message_text,
+        title: data.title,
+        content: data.content,
         priority: data.priority,
-        start_date: data.start_date,
-        end_date: data.end_date || null,
+        expires_at: data.expires_at || null,
         is_active: data.is_active,
         user_id: userId
       }
@@ -143,16 +142,31 @@ export default function NoticeForm({ notice, userId, onSave, onCancel }: NoticeF
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
+              כותרת ההודעה *
+            </label>
+            <input
+              {...register('title')}
+              type="text"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="הכנס כותרת להודעה..."
+            />
+            {errors.title && (
+              <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               טקסט ההודעה *
             </label>
             <textarea
-              {...register('message_text')}
+              {...register('content')}
               rows={4}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="הכנס את תוכן ההודעה..."
             />
-            {errors.message_text && (
-              <p className="mt-1 text-sm text-red-600">{errors.message_text.message}</p>
+            {errors.content && (
+              <p className="mt-1 text-sm text-red-600">{errors.content.message}</p>
             )}
           </div>
 
@@ -173,40 +187,21 @@ export default function NoticeForm({ notice, userId, onSave, onCancel }: NoticeF
             )}
           </div>
 
-          <div className="grid grid-cols-1 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                תאריך התחלה *
-              </label>
-              <div className="relative">
-                <input
-                  {...register('start_date')}
-                  type="datetime-local"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <Calendar className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
-              </div>
-              {errors.start_date && (
-                <p className="mt-1 text-sm text-red-600">{errors.start_date.message}</p>
-              )}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              תאריך תפוגה (אופציונלי)
+            </label>
+            <div className="relative">
+              <input
+                {...register('expires_at')}
+                type="datetime-local"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <Clock className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                תאריך סיום (אופציונלי)
-              </label>
-              <div className="relative">
-                <input
-                  {...register('end_date')}
-                  type="datetime-local"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <Clock className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
-              </div>
-              {errors.end_date && (
-                <p className="mt-1 text-sm text-red-600">{errors.end_date.message}</p>
-              )}
-            </div>
+            {errors.expires_at && (
+              <p className="mt-1 text-sm text-red-600">{errors.expires_at.message}</p>
+            )}
           </div>
 
           <div className="flex items-center">
