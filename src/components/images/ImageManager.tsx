@@ -100,7 +100,7 @@ export default function ImageManager({ userId }: ImageManagerProps) {
         .from('images')
         .insert({
           file_name: selectedFile.name,
-          file_path: fileName,
+          filename: fileName,
           file_url: urlData.publicUrl,
           file_size: selectedFile.size,
           file_type: selectedFile.type,
@@ -132,7 +132,7 @@ export default function ImageManager({ userId }: ImageManagerProps) {
       // Delete from storage
       const { error: storageError } = await supabase.storage
         .from('building-images')
-        .remove([image.file_path])
+        .remove([image.filename])
 
       if (storageError) {
         setError('שגיאה במחיקת התמונה מהאחסון')
@@ -264,14 +264,14 @@ export default function ImageManager({ userId }: ImageManagerProps) {
               >
                 <div className="aspect-video bg-gray-100 relative">
                   <img
-                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/building-images/${image.file_path}`}
-                    alt={image.file_name}
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/building-images/${image.filename}`}
+                    alt={image.filename}
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition-all flex items-center justify-center">
                     <div className="opacity-0 hover:opacity-100 transition-opacity flex gap-2">
                       <a
-                        href={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/building-images/${image.file_path}`}
+                        href={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/building-images/${image.filename}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="p-2 bg-white rounded-full shadow-lg hover:bg-gray-50"
@@ -279,8 +279,8 @@ export default function ImageManager({ userId }: ImageManagerProps) {
                         <Eye className="w-4 h-4 text-gray-600" />
                       </a>
                       <a
-                        href={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/building-images/${image.file_path}`}
-                        download={image.file_name}
+                        href={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/building-images/${image.filename}`}
+                        download={image.filename}
                         className="p-2 bg-white rounded-full shadow-lg hover:bg-gray-50"
                       >
                         <Download className="w-4 h-4 text-gray-600" />
@@ -297,10 +297,10 @@ export default function ImageManager({ userId }: ImageManagerProps) {
                 
                 <div className="p-3">
                   <p className="text-sm font-medium text-gray-900 truncate">
-                    {image.file_name}
+                    {image.filename}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {formatFileSize(image.file_size)}
+                    {formatFileSize(image.size_bytes)}
                   </p>
                   <p className="text-xs text-gray-500">
                     {new Date(image.created_at).toLocaleDateString('he-IL')}
