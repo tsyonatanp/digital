@@ -1,16 +1,15 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/auth'
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
+import { useRouter } from 'next/navigation';
 
-console.log('LoginForm נטען')
-console.log('🔧 LoginForm עודכן עם תיקונים חדשים!')
-console.log('🚀 גרסה חדשה - 2024 - כפתור מעודכן!')
+console.log('🔐 LoginForm נטען')
 
 const loginSchema = z.object({
   email: z.string().email('אימייל לא תקין'),
@@ -24,6 +23,14 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const setUser = useAuthStore((state) => state.setUser)
+  const user = useAuthStore((state) => state.user)
+  const router = useRouter();
+
+  useEffect(() => {
+    if (user) {
+      router.push('/dashboard');
+    }
+  }, [user, router]);
 
   const {
     register,
@@ -34,7 +41,6 @@ export default function LoginForm() {
   })
 
   const onSubmit = async (data: LoginFormData) => {
-    console.log('onSubmit התחיל', data)
     console.log('🔐 ניסיון התחברות עם:', data.email)
     
     if (!supabase) {
@@ -51,29 +57,18 @@ export default function LoginForm() {
         password: data.password,
       })
 
-      console.log('📡 תגובת ההתחברות:', { authData, error })
-
       if (error) {
         console.error('❌ שגיאה בהתחברות:', error)
-        setError(error.message)
+        setError('אימייל או סיסמה שגויים')
         return
       }
 
       if (authData.user) {
-        console.log('✅ התחברות הצליחה! משתמש:', authData.user)
+        console.log('✅ התחברות הצליחה! משתמש:', authData.user.email)
         setUser(authData.user)
-        console.log('🔄 מעבר לדשבורד...')
-        
-        // Wait longer for store update then redirect - match dashboard timeout
-        setTimeout(() => {
-          console.log('🚀 מבצע redirect לדשבורד...')
-          console.log('🔍 בדיקה אחרונה - יש משתמש ב-store?', useAuthStore.getState().user)
-          console.log('📊 מצב Store מלא:', useAuthStore.getState())
-          window.location.href = '/dashboard'
-        }, 1000) // Increased to match dashboard timeout
+        // אין צורך ב-window.location.href או router.push כאן, כי useEffect יפנה אוטומטית
       } else {
-        console.error('❌ אין משתמש בתגובה')
-        setError('שגיאה בהתחברות - אין משתמש')
+        setError('שגיאה בהתחברות')
       }
     } catch (err) {
       console.error('💥 שגיאה כללית בהתחברות:', err)
@@ -165,11 +160,6 @@ export default function LoginForm() {
             <button
               type="submit"
               disabled={loading}
-              onClick={(e) => {
-                console.log('🔘 לחיצה על כפתור התחבר!')
-                console.log('Event:', e)
-                console.log('Loading state:', loading)
-              }}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'מתחבר...' : 'התחבר'}

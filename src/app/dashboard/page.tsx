@@ -1,6 +1,8 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
+
+export const dynamic = 'force-dynamic'
 import { useAuthStore } from '../../store/auth'
 import { supabase } from '../../lib/supabase'
 import { LogOut, User, Settings, Bell, Image, Palette } from 'lucide-react'
@@ -37,26 +39,16 @@ export default function Dashboard() {
 
   useEffect(() => {
     console.log('🏠 Dashboard: בדיקת משתמש:', user)
-    console.log('🔍 Dashboard: מצב ה-store הנוכחי:', useAuthStore.getState())
     
-    // Give more time for user data to load if page just loaded
-    const timer = setTimeout(() => {
-      console.log('⏰ Dashboard: בדיקת משתמש אחרי timeout')
-      console.log('👤 Dashboard: משתמש נוכחי:', user)
-      
-      if (!user) {
-        console.log('❌ אין משתמש - מעבר להתחברות')
-        console.log('🔄 מפנה ל-/login...')
-        window.location.href = '/login'
-        return
-      }
+    if (!user) {
+      console.log('❌ אין משתמש - מעבר להתחברות')
+      window.location.href = '/login'
+      return
+    }
 
-      console.log('✅ יש משתמש - טעינת פרופיל')
-      console.log('📧 אימייל משתמש:', user.email)
-      fetchProfile()
-    }, 1000) // Increased timeout to 1 second
-
-    return () => clearTimeout(timer)
+    console.log('✅ יש משתמש - טעינת פרופיל')
+    console.log('📧 אימייל משתמש:', user.email)
+    fetchProfile()
   }, [user])
 
   const fetchProfile = async () => {
