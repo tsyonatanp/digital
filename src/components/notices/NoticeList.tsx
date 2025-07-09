@@ -93,18 +93,18 @@ export default function NoticeList({ userId, onAddNotice, onEditNotice }: Notice
 
   const getStatusBadge = (notice: Notice) => {
     const now = new Date()
-    const startDate = new Date(notice.start_date)
-    const endDate = notice.end_date ? new Date(notice.end_date) : null
+    const createdDate = new Date(notice.created_at)
+    const expiresDate = notice.expires_at ? new Date(notice.expires_at) : null
 
     if (!notice.is_active) {
       return <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">לא פעיל</span>
     }
 
-    if (startDate > now) {
+    if (createdDate > now) {
       return <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded">מתוזמן</span>
     }
 
-    if (endDate && endDate < now) {
+    if (expiresDate && expiresDate < now) {
       return <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded">פג תוקף</span>
     }
 
@@ -161,18 +161,18 @@ export default function NoticeList({ userId, onAddNotice, onEditNotice }: Notice
                   </div>
                   
                   <p className="text-gray-900 mb-3 line-clamp-2">
-                    {notice.message_text}
+                    {notice.content}
                   </p>
                   
                   <div className="flex items-center gap-4 text-sm text-gray-500">
                     <div className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />
-                      <span>מ: {formatDate(notice.start_date)}</span>
+                      <span>נוצר: {formatDate(notice.created_at)}</span>
                     </div>
-                    {notice.end_date && (
+                    {notice.expires_at && (
                       <div className="flex items-center gap-1">
                         <Clock className="w-4 h-4" />
-                        <span>עד: {formatDate(notice.end_date)}</span>
+                        <span>פג תוקף: {formatDate(notice.expires_at)}</span>
                       </div>
                     )}
                   </div>
