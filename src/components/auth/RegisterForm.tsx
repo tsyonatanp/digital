@@ -14,11 +14,7 @@ const registerSchema = z.object({
   confirmPassword: z.string(),
   street_name: z.string().min(2, 'שם רחוב חייב להכיל לפחות 2 תווים'),
   building_number: z.string().min(1, 'מספר בניין הוא שדה חובה'),
-  apartment_number: z.string().min(1, 'מספר דירה הוא שדה חובה'),
   management_company: z.string().optional(),
-  contact_person: z.string().optional(),
-  contact_phone: z.string().optional(),
-  contact_email: z.string().email('אימייל לא תקין').optional().or(z.literal('')),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "סיסמאות אינן תואמות",
   path: ["confirmPassword"],
@@ -63,10 +59,7 @@ export default function RegisterForm() {
           data: {
             street_name: data.street_name,
             building_number: data.building_number,
-            apartment_number: data.apartment_number,
-            management_contact: data.contact_person,
-            management_phone: data.contact_phone,
-            management_email: data.contact_email
+            management_company: data.management_company || null,
           }
         }
       })
@@ -88,10 +81,7 @@ export default function RegisterForm() {
             email: data.email,
             street_name: data.street_name,
             building_number: data.building_number,
-            apartment_number: data.apartment_number,
-            management_contact: data.contact_person || null,
-            management_phone: data.contact_phone || null,
-            management_email: data.contact_email || null
+            management_company: data.management_company || null,
           })
 
         if (profileError) {
@@ -258,26 +248,6 @@ export default function RegisterForm() {
             </div>
 
             <div>
-              <label htmlFor="apartment_number" className="block text-sm font-medium text-gray-700">
-                מספר דירה *
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                  <Building className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  {...register('apartment_number')}
-                  type="text"
-                  className="appearance-none block w-full pr-10 px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  placeholder="הכנס מספר דירה"
-                />
-              </div>
-              {errors.apartment_number && (
-                <p className="mt-1 text-sm text-red-600">{errors.apartment_number.message}</p>
-              )}
-            </div>
-
-            <div>
               <label htmlFor="management_company" className="block text-sm font-medium text-gray-700">
                 חברת ניהול
               </label>
@@ -287,60 +257,6 @@ export default function RegisterForm() {
                 className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 placeholder="הכנס שם חברת ניהול"
               />
-            </div>
-
-            <div>
-              <label htmlFor="contact_person" className="block text-sm font-medium text-gray-700">
-                איש קשר
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  {...register('contact_person')}
-                  type="text"
-                  className="appearance-none block w-full pr-10 px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  placeholder="הכנס שם איש קשר"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="contact_phone" className="block text-sm font-medium text-gray-700">
-                טלפון איש קשר
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                  <Phone className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  {...register('contact_phone')}
-                  type="tel"
-                  className="appearance-none block w-full pr-10 px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  placeholder="הכנס מספר טלפון"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="contact_email" className="block text-sm font-medium text-gray-700">
-                אימייל איש קשר
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  {...register('contact_email')}
-                  type="email"
-                  className="appearance-none block w-full pr-10 px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  placeholder="הכנס אימייל איש קשר"
-                />
-              </div>
-              {errors.contact_email && (
-                <p className="mt-1 text-sm text-red-600">{errors.contact_email.message}</p>
-              )}
             </div>
           </div>
 

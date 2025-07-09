@@ -18,11 +18,7 @@ export type Database = {
           email: string
           street_name: string
           building_number: string
-          apartment_number: string
-          management_contact: string | null
-          management_phone: string | null
-          management_email: string | null
-          selected_style_id: string | null
+          management_company: string | null
           created_at: string
           updated_at: string
         }
@@ -31,11 +27,7 @@ export type Database = {
           email: string
           street_name: string
           building_number: string
-          apartment_number: string
-          management_contact?: string | null
-          management_phone?: string | null
-          management_email?: string | null
-          selected_style_id?: string | null
+          management_company?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -44,11 +36,7 @@ export type Database = {
           email?: string
           street_name?: string
           building_number?: string
-          apartment_number?: string
-          management_contact?: string | null
-          management_phone?: string | null
-          management_email?: string | null
-          selected_style_id?: string | null
+          management_company?: string | null
           created_at?: string
           updated_at?: string
         }
