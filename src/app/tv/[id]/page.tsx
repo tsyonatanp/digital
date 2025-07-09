@@ -187,7 +187,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
                   {user.street_name} {user.building_number}
                 </h1>
                 <div className="text-3xl mb-8">
-                  {currentNotice.message_text}
+                  {currentNotice.content}
                 </div>
                 <div className="text-2xl">
                   {formatTime(currentTime)}
@@ -200,7 +200,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
               // Image Slide
               <div className="w-full h-full flex items-center justify-center">
                 <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/images/${currentImage.file_path}`}
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/images/${currentImage.filename}`}
                   alt="Building notice"
                   className="max-w-full max-h-full object-contain"
                 />
