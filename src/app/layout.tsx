@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
@@ -12,9 +12,11 @@ export const metadata: Metadata = {
   description: "מערכת לוח מודעות דיגיטלי לבניינים - תצוגה על גבי טלוויזיה עם ממשק ניהול מובייל",
 };
 
-export const viewport = {
+export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
