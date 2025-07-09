@@ -14,6 +14,7 @@ const registerSchema = z.object({
   confirmPassword: z.string(),
   street_name: z.string().min(2, 'שם רחוב חייב להכיל לפחות 2 תווים'),
   building_number: z.string().min(1, 'מספר בניין הוא שדה חובה'),
+  apartment_number: z.string().min(1, 'מספר דירה הוא שדה חובה'),
   management_company: z.string().optional(),
   contact_person: z.string().optional(),
   contact_phone: z.string().optional(),
@@ -47,32 +48,69 @@ export default function RegisterForm() {
     setSuccess('')
 
     try {
-      // In demo mode, simulate successful registration
-      console.log('🎭 Demo Mode: הרשמה הצליחה!')
+      console.log('🔐 רישום משתמש חדש:', data.email)
       
-      // Create mock user for demo
-      const mockUser = { 
-        id: 'demo-user', 
+      // Sign up with Supabase
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
-        app_metadata: {},
-        user_metadata: {},
-        aud: '',
-        created_at: new Date().toISOString()
+        password: data.password,
+        options: {
+          data: {
+            street_name: data.street_name,
+            building_number: data.building_number,
+            apartment_number: data.apartment_number,
+            management_contact: data.contact_person,
+            management_phone: data.contact_phone,
+            management_email: data.contact_email
+          }
+        }
+      })
+
+      if (authError) {
+        console.error('❌ שגיאה ברישום:', authError)
+        setError(authError.message)
+        return
+      }
+
+      if (authData.user) {
+        console.log('✅ רישום הצלח! משתמש:', authData.user)
+        
+        // Create user profile in database
+        const { error: profileError } = await supabase
+          .from('users')
+          .insert({
+            id: authData.user.id,
+            email: data.email,
+            street_name: data.street_name,
+            building_number: data.building_number,
+            apartment_number: data.apartment_number,
+            management_contact: data.contact_person || null,
+            management_phone: data.contact_phone || null,
+            management_email: data.contact_email || null
+          })
+
+        if (profileError) {
+          console.error('❌ שגיאה ביצירת פרופיל:', profileError)
+          setError('שגיאה ביצירת פרופיל המשתמש')
+          return
+        }
+
+        console.log('✅ פרופיל נוצר בהצלחה!')
+        setUser(authData.user)
+        
+        // Show success message
+        setSuccess('🎉 הרשמה הושלמה בהצלחה! בדוק את האימייל שלך לאישור החשבון.')
+        setError('')
+        
+        // Redirect to login after a short delay
+        setTimeout(() => {
+          window.location.href = '/login'
+        }, 3000)
       }
       
-      setUser(mockUser)
-      
-      // Show success message
-      setSuccess('🎉 הרשמה הושלמה בהצלחה! מעבר לדשבורד...')
-      setError('')
-      
-      // Redirect to dashboard after a short delay
-      setTimeout(() => {
-        window.location.href = '/dashboard'
-      }, 2000)
-      
     } catch (err) {
-      setError('שגיאה בהרשמה במצב הדגמה')
+      console.error('💥 שגיאה כללית ברישום:', err)
+      setError('שגיאה בהרשמה. נסה שוב.')
     } finally {
       setLoading(false)
     }
@@ -211,6 +249,26 @@ export default function RegisterForm() {
               </div>
               {errors.building_number && (
                 <p className="mt-1 text-sm text-red-600">{errors.building_number.message}</p>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="apartment_number" className="block text-sm font-medium text-gray-700">
+                מספר דירה *
+              </label>
+              <div className="mt-1 relative">
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <Building className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  {...register('apartment_number')}
+                  type="text"
+                  className="appearance-none block w-full pr-10 px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  placeholder="הכנס מספר דירה"
+                />
+              </div>
+              {errors.apartment_number && (
+                <p className="mt-1 text-sm text-red-600">{errors.apartment_number.message}</p>
               )}
             </div>
 

@@ -25,6 +25,8 @@ interface UserProfile {
 }
 
 export default function Dashboard() {
+  console.log('🏠 Dashboard Component נטען!')
+  
   const { user, setUser } = useAuthStore()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
@@ -35,33 +37,56 @@ export default function Dashboard() {
 
   useEffect(() => {
     console.log('🏠 Dashboard: בדיקת משתמש:', user)
+    console.log('🔍 Dashboard: מצב ה-store הנוכחי:', useAuthStore.getState())
     
-    if (!user) {
-      console.log('❌ אין משתמש - מעבר להתחברות')
-      window.location.href = '/login'
-      return
-    }
+    // Give more time for user data to load if page just loaded
+    const timer = setTimeout(() => {
+      console.log('⏰ Dashboard: בדיקת משתמש אחרי timeout')
+      console.log('👤 Dashboard: משתמש נוכחי:', user)
+      
+      if (!user) {
+        console.log('❌ אין משתמש - מעבר להתחברות')
+        console.log('🔄 מפנה ל-/login...')
+        window.location.href = '/login'
+        return
+      }
 
-    console.log('✅ יש משתמש - טעינת פרופיל')
-    fetchProfile()
+      console.log('✅ יש משתמש - טעינת פרופיל')
+      console.log('📧 אימייל משתמש:', user.email)
+      fetchProfile()
+    }, 1000) // Increased timeout to 1 second
+
+    return () => clearTimeout(timer)
   }, [user])
 
   const fetchProfile = async () => {
     try {
-      const { data, error } = await supabase
+      console.log('📡 טוען פרופיל למשתמש:', user?.id)
+      
+      // Get user profile from database
+      const { data: profile, error } = await supabase
         .from('users')
         .select('*')
         .eq('id', user?.id)
         .single()
-
+      
       if (error) {
-        setError('שגיאה בטעינת פרטי המשתמש')
+        console.error('❌ שגיאה בטעינת פרופיל:', error)
+        setError('שגיאה בטעינת פרופיל המשתמש')
         return
       }
-
-      setProfile(data)
+      
+      if (profile) {
+        console.log('✅ פרופיל נטען בהצלחה:', profile)
+        setProfile(profile)
+      } else {
+        console.log('❌ לא נמצא פרופיל למשתמש')
+        setError('לא נמצא פרופיל למשתמש זה')
+      }
+      
     } catch (err) {
-      setError('שגיאה בטעינת פרטי המשתמש')
+      console.error('💥 שגיאה כללית בטעינת פרופיל:', err)
+      setError('שגיאה בטעינת הפרופיל')
     } finally {
       setLoading(false)
     }
@@ -122,10 +147,20 @@ export default function Dashboard() {
     )
   }
 
-  if (!user || !profile) {
+  if (!user) {
+    console.log('🔄 אין משתמש - מחכה...')
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-red-500">שגיאה בטעינת הנתונים</div>
+        <div className="text-gray-500">בודק הרשאות...</div>
+      </div>
+    )
+  }
+
+  if (!profile) {
+    console.log('🔄 אין פרופיל - מחכה...')
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-500">טוען נתונים...</div>
       </div>
     )
   }

@@ -72,21 +72,6 @@ export default function HomePage() {
             </Link>
           </p>
         </div>
-
-        {/* Demo Link */}
-        <div className="mt-12 p-6 bg-white rounded-lg shadow-lg">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">רוצים לראות דוגמה?</h3>
-          <p className="text-gray-600 mb-4">
-            צפו בדוגמה של לוח המודעות בפעילות
-          </p>
-          <Link
-            href="/tv/demo"
-            className="inline-flex items-center bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
-          >
-            <Monitor className="w-5 h-5 ml-2" />
-            דוגמה חיה
-          </Link>
-        </div>
       </div>
     </div>
   )

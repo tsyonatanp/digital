@@ -13,6 +13,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   loading: true,
   setUser: (user) => {
     console.log('👤 עדכון משתמש ב-store:', user)
+    console.log('Store State Updated: user =', user?.email || 'null')
     set({ user })
   },
   setLoading: (loading) => set({ loading }),

@@ -8,6 +8,10 @@ import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/auth'
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
 
+console.log('LoginForm נטען')
+console.log('🔧 LoginForm עודכן עם תיקונים חדשים!')
+console.log('🚀 גרסה חדשה - 2024 - כפתור מעודכן!')
+
 const loginSchema = z.object({
   email: z.string().email('אימייל לא תקין'),
   password: z.string().min(6, 'סיסמה חייבת להכיל לפחות 6 תווים'),
@@ -30,6 +34,7 @@ export default function LoginForm() {
   })
 
   const onSubmit = async (data: LoginFormData) => {
+    console.log('onSubmit התחיל', data)
     console.log('🔐 ניסיון התחברות עם:', data.email)
     setLoading(true)
     setError('')
@@ -52,8 +57,14 @@ export default function LoginForm() {
         console.log('✅ התחברות הצליחה! משתמש:', authData.user)
         setUser(authData.user)
         console.log('🔄 מעבר לדשבורד...')
-        // Redirect to dashboard
-        window.location.href = '/dashboard'
+        
+        // Wait longer for store update then redirect - match dashboard timeout
+        setTimeout(() => {
+          console.log('🚀 מבצע redirect לדשבורד...')
+          console.log('🔍 בדיקה אחרונה - יש משתמש ב-store?', useAuthStore.getState().user)
+          console.log('📊 מצב Store מלא:', useAuthStore.getState())
+          window.location.href = '/dashboard'
+        }, 1000) // Increased to match dashboard timeout
       } else {
         console.error('❌ אין משתמש בתגובה')
         setError('שגיאה בהתחברות - אין משתמש')
@@ -77,8 +88,11 @@ export default function LoginForm() {
             התחבר לחשבון שלך
           </p>
         </div>
-        
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
+        <form 
+          className="mt-8 space-y-6" 
+          method="POST"
+          onSubmit={handleSubmit(onSubmit)}
+        >
           <div className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
@@ -90,7 +104,10 @@ export default function LoginForm() {
                 </div>
                 <input
                   {...register('email')}
+                  id="email"
+                  name="email"
                   type="email"
+                  autoComplete="email"
                   className="appearance-none block w-full pr-10 px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   placeholder="הכנס את האימייל שלך"
                 />
@@ -99,7 +116,6 @@ export default function LoginForm() {
                 <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
               )}
             </div>
-
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 סיסמה
@@ -110,7 +126,10 @@ export default function LoginForm() {
                 </div>
                 <input
                   {...register('password')}
+                  id="password"
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
                   className="appearance-none block w-full pr-10 px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   placeholder="הכנס את הסיסמה שלך"
                 />
@@ -131,23 +150,25 @@ export default function LoginForm() {
               )}
             </div>
           </div>
-
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
               {error}
             </div>
           )}
-
           <div>
             <button
               type="submit"
               disabled={loading}
+              onClick={(e) => {
+                console.log('🔘 לחיצה על כפתור התחבר!')
+                console.log('Event:', e)
+                console.log('Loading state:', loading)
+              }}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'מתחבר...' : 'התחבר'}
             </button>
           </div>
-
           <div className="text-center">
             <a
               href="/register"
