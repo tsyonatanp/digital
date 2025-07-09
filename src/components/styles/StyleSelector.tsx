@@ -86,6 +86,8 @@ export default function StyleSelector({ userId, currentStyleId, onStyleChange }:
   }, [userId])
 
   const fetchStyles = async () => {
+    if (!supabase) return
+    
     try {
       const { data, error } = await supabase
         .from('styles')
@@ -107,6 +109,8 @@ export default function StyleSelector({ userId, currentStyleId, onStyleChange }:
   }
 
   const createStyle = async (styleData: typeof predefinedStyles[0]) => {
+    if (!supabase) return
+    
     try {
       const { data, error } = await supabase
         .from('styles')
@@ -139,7 +143,7 @@ export default function StyleSelector({ userId, currentStyleId, onStyleChange }:
   }
 
   const deleteStyle = async (styleId: string) => {
-    if (!confirm('האם אתה בטוח שברצונך למחוק סגנון זה?')) {
+    if (!confirm('האם אתה בטוח שברצונך למחוק סגנון זה?') || !supabase) {
       return
     }
 

@@ -43,6 +43,11 @@ export default function RegisterForm() {
   })
 
   const onSubmit = async (data: RegisterFormData) => {
+    if (!supabase) {
+      setError('שגיאה בחיבור למערכת')
+      return
+    }
+    
     setLoading(true)
     setError('')
     setSuccess('')

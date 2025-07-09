@@ -24,6 +24,8 @@ export default function ImageManager({ userId }: ImageManagerProps) {
   }, [userId])
 
   const fetchImages = async () => {
+    if (!supabase) return
+    
     try {
       const { data, error } = await supabase
         .from('images')
@@ -72,7 +74,7 @@ export default function ImageManager({ userId }: ImageManagerProps) {
   }
 
   const uploadImage = async () => {
-    if (!selectedFile) return
+    if (!selectedFile || !supabase) return
 
     setUploading(true)
     try {
@@ -123,7 +125,7 @@ export default function ImageManager({ userId }: ImageManagerProps) {
   }
 
   const deleteImage = async (image: Image) => {
-    if (!confirm('האם אתה בטוח שברצונך למחוק תמונה זו?')) {
+    if (!confirm('האם אתה בטוח שברצונך למחוק תמונה זו?') || !supabase) {
       return
     }
 

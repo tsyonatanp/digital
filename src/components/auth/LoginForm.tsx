@@ -36,6 +36,12 @@ export default function LoginForm() {
   const onSubmit = async (data: LoginFormData) => {
     console.log('onSubmit התחיל', data)
     console.log('🔐 ניסיון התחברות עם:', data.email)
+    
+    if (!supabase) {
+      setError('שגיאה בחיבור למערכת')
+      return
+    }
+    
     setLoading(true)
     setError('')
 
