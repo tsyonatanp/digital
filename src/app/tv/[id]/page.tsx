@@ -10,12 +10,13 @@ type Image = Database['public']['Tables']['images']['Row']
 type Style = Database['public']['Tables']['styles']['Row']
 
 interface TVDisplayProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default function TVDisplayPage({ params }: TVDisplayProps) {
+  const [resolvedParams, setResolvedParams] = useState<{ id: string } | null>(null)
   const [user, setUser] = useState<User | null>(null)
   const [notices, setNotices] = useState<Notice[]>([])
   const [images, setImages] = useState<Image[]>([])
@@ -25,14 +26,25 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   const [weather, setWeather] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
+  // Resolve params (could be Promise or object)
   useEffect(() => {
+    const resolveParams = async () => {
+      const resolved = await Promise.resolve(params)
+      setResolvedParams(resolved)
+    }
+    resolveParams()
+  }, [params])
+
+  useEffect(() => {
+    if (!resolvedParams) return
+
     const fetchData = async () => {
       try {
         // Fetch user data
         const { data: userData } = await supabase
           .from('users')
           .select('*')
-          .eq('id', params.id)
+          .eq('id', resolvedParams.id)
           .single()
 
         if (!userData) {
@@ -46,7 +58,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         const { data: noticesData } = await supabase
           .from('notices')
           .select('*')
-          .eq('user_id', params.id)
+          .eq('user_id', resolvedParams.id)
           .eq('is_active', true)
           .or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`)
           .order('priority', { ascending: false })
@@ -57,7 +69,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         const { data: imagesData } = await supabase
           .from('images')
           .select('*')
-          .eq('user_id', params.id)
+          .eq('user_id', resolvedParams.id)
           .eq('is_active', true)
           .order('created_at', { ascending: true })
 
@@ -67,7 +79,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         const { data: styleData } = await supabase
           .from('styles')
           .select('*')
-          .eq('user_id', params.id)
+          .eq('user_id', resolvedParams.id)
           .single()
 
         setStyle(styleData)
@@ -80,7 +92,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     }
 
     fetchData()
-  }, [params.id])
+  }, [resolvedParams])
 
   useEffect(() => {
     // Update time every second
