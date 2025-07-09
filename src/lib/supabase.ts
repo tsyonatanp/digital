@@ -141,6 +141,7 @@ export type Database = {
           font_size: number
           is_default: boolean
           created_at: string
+          slide_duration?: number
         }
         Insert: {
           id?: string
@@ -152,6 +153,7 @@ export type Database = {
           font_size?: number
           is_default?: boolean
           created_at?: string
+          slide_duration?: number
         }
         Update: {
           id?: string
@@ -163,6 +165,7 @@ export type Database = {
           font_size?: number
           is_default?: boolean
           created_at?: string
+          slide_duration?: number
         }
       }
     }
