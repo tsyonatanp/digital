@@ -1,9 +1,21 @@
 'use client'
 
 import Link from 'next/link'
-import { Building2, Monitor, Users } from 'lucide-react'
+import { Building2, Monitor, Users, Settings } from 'lucide-react'
+import { useAuthStore } from '../store/auth'
+import { useEffect, useState } from 'react'
 
 export default function HomePage() {
+  const { user } = useAuthStore()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return null
+  }
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
       <div className="max-w-4xl w-full text-center">
@@ -50,27 +62,48 @@ export default function HomePage() {
 
         {/* Call to Action */}
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/login"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors"
-            >
-              התחבר לחשבון קיים
-            </Link>
-            <Link
-              href="/register"
-              className="bg-white hover:bg-gray-50 text-blue-600 font-semibold py-3 px-8 rounded-lg border-2 border-blue-600 transition-colors"
-            >
-              הרשם חינם
-            </Link>
-          </div>
+          {user ? (
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                href="/dashboard"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors flex items-center justify-center"
+              >
+                <Settings className="w-5 h-5 ml-2" />
+                ניהול מערכת
+              </Link>
+              <Link
+                href={`/tv/${user.id}`}
+                className="bg-white hover:bg-gray-50 text-blue-600 font-semibold py-3 px-8 rounded-lg border-2 border-blue-600 transition-colors flex items-center justify-center"
+              >
+                <Monitor className="w-5 h-5 ml-2" />
+                צפה בתצוגה
+              </Link>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                href="/login"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors"
+              >
+                התחבר לחשבון קיים
+              </Link>
+              <Link
+                href="/register"
+                className="bg-white hover:bg-gray-50 text-blue-600 font-semibold py-3 px-8 rounded-lg border-2 border-blue-600 transition-colors"
+              >
+                הרשם חינם
+              </Link>
+            </div>
+          )}
           
-          <p className="text-sm text-gray-500 mt-6">
-            כבר יש לכם מסך? 
-            <Link href="/tv" className="text-blue-600 hover:underline mr-1">
-              צפו בתצוגה
-            </Link>
-          </p>
+          {!user && (
+            <p className="text-sm text-gray-500 mt-6">
+              כבר יש לכם מסך? 
+              <Link href="/tv" className="text-blue-600 hover:underline mr-1">
+                צפו בתצוגה
+              </Link>
+            </p>
+          )}
         </div>
       </div>
     </div>
