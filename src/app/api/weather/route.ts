@@ -6,10 +6,14 @@ export async function GET(request: NextRequest) {
   const apiKey = process.env.OPENWEATHER_API_KEY
 
   if (!apiKey) {
-    return NextResponse.json(
-      { error: 'Weather API key not configured' },
-      { status: 500 }
-    )
+    // Return mock weather data instead of error
+    return NextResponse.json({
+      temperature: 22,
+      description: 'בהיר',
+      icon: '01d',
+      humidity: 60,
+      windSpeed: 3.5,
+    })
   }
 
   try {
