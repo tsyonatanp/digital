@@ -77,14 +77,14 @@ export default function RegisterForm() {
         // when the user confirms their email
         setUser(authData.user)
         
-        // Show success message
-        setSuccess('🎉 הרשמה הושלמה בהצלחה! בדוק את האימייל שלך לאישור החשבון.')
+        // Show success message and redirect to TV page
+        setSuccess('🎉 הרשמה הושלמה בהצלחה! מעביר אותך לתצוגת הבניין שלך...')
         setError('')
         
-        // Redirect to login after a short delay
+        // Redirect to TV page immediately
         setTimeout(() => {
-          window.location.href = '/login'
-        }, 3000)
+          window.location.href = `/tv/${authData.user.id}`
+        }, 2000)
       }
       
     } catch (err) {

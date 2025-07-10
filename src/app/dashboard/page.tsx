@@ -36,20 +36,75 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('profile')
   const [showNoticeForm, setShowNoticeForm] = useState(false)
   const [editingNotice, setEditingNotice] = useState<Notice | null>(null)
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false)
+  const [allUsers, setAllUsers] = useState<UserProfile[]>([])
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
 
   useEffect(() => {
-    console.log('🏠 Dashboard: בדיקת משתמש:', user)
-    
-    if (!user) {
-      console.log('❌ אין משתמש - מעבר להתחברות')
-      window.location.href = '/login'
+    // בדיקת אימות אדמין
+    const adminAuth = localStorage.getItem('admin_authenticated')
+    if (adminAuth !== 'true') {
+      console.log('❌ אין הרשאת אדמין - מעבר לדף אדמין')
+      window.location.href = '/admin'
       return
     }
+    
+    setIsAdminAuthenticated(true)
+    console.log('✅ מנהל מחובר - טעינת דשבורד')
+    
+    // טען את כל המשתמשים
+    fetchAllUsers()
+  }, [])
 
-    console.log('✅ יש משתמש - טעינת פרופיל')
-    console.log('📧 אימייל משתמש:', user.email)
-    fetchProfile()
-  }, [user])
+  const fetchAllUsers = async () => {
+    try {
+      const { data: users, error } = await supabase
+        .from('users')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      if (error) {
+        console.error('❌ שגיאה בטעינת משתמשים:', error)
+        setError('שגיאה בטעינת רשימת משתמשים')
+        return
+      }
+      
+      setAllUsers(users || [])
+      setLoading(false)
+    } catch (err) {
+      console.error('💥 שגיאה כללית בטעינת משתמשים:', err)
+      setError('שגיאה בטעינת רשימת משתמשים')
+      setLoading(false)
+    }
+  }
+
+  // כאשר בוחרים משתמש, טוען את הפרופיל שלו
+  useEffect(() => {
+    if (selectedUserId) {
+      fetchUserProfile(selectedUserId)
+    }
+  }, [selectedUserId])
+
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data: userProfile, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single()
+      
+      if (error) {
+        console.error('❌ שגיאה בטעינת פרופיל משתמש:', error)
+        setError('שגיאה בטעינת פרופיל המשתמש')
+        return
+      }
+      
+      setProfile(userProfile)
+    } catch (err) {
+      console.error('💥 שגיאה כללית בטעינת פרופיל:', err)
+      setError('שגיאה בטעינת פרופיל')
+    }
+  }
 
   const fetchProfile = async () => {
     try {
@@ -85,11 +140,12 @@ export default function Dashboard() {
   }
 
   const handleLogout = async () => {
+    localStorage.removeItem('admin_authenticated')
     if (supabase) {
       await supabase.auth.signOut()
     }
     setUser(null)
-    window.location.href = '/login'
+    window.location.href = '/admin'
   }
 
   const handleAddNotice = () => {
@@ -141,20 +197,10 @@ export default function Dashboard() {
     )
   }
 
-  if (!user) {
-    console.log('🔄 אין משתמש - מחכה...')
+  if (!isAdminAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">בודק הרשאות...</div>
-      </div>
-    )
-  }
-
-  if (!profile) {
-    console.log('🔄 אין פרופיל - מחכה...')
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">טוען נתונים...</div>
+        <div className="text-gray-500">בודק הרשאות מנהל...</div>
       </div>
     )
   }
@@ -169,7 +215,7 @@ export default function Dashboard() {
               <h1 className="text-xl font-semibold text-gray-900">לוח מודעות דיגיטלי</h1>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">{profile.email}</span>
+              <span className="text-sm text-gray-600">מנהל מערכת</span>
               <button
                 onClick={handleLogout}
                 className="flex items-center px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md"
@@ -189,20 +235,52 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Navigation Tabs */}
+        {/* User Selection */}
         <div className="mb-8">
-          <nav className="flex space-x-8">
-            <button
-              onClick={() => setActiveTab('profile')}
-              className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                activeTab === 'profile'
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              <User className="w-4 h-4 mr-2" />
-              פרטי בניין
-            </button>
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-medium text-gray-900 mb-4">בחר בניין לניהול</h2>
+            {allUsers.length === 0 ? (
+              <p className="text-gray-500">אין עדיין בניינים רשומים במערכת</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {allUsers.map((userItem) => (
+                  <button
+                    key={userItem.id}
+                    onClick={() => setSelectedUserId(userItem.id)}
+                    className={`p-4 border rounded-lg text-left transition-colors ${
+                      selectedUserId === userItem.id
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    <div className="font-medium">{userItem.street_name} {userItem.building_number}</div>
+                    <div className="text-sm text-gray-500">{userItem.email}</div>
+                    <div className="text-xs text-gray-400 mt-1">
+                      {userItem.id.substring(0, 8)}...
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {selectedUserId && profile && (
+          <div>
+            {/* Navigation Tabs */}
+            <div className="mb-8">
+              <nav className="flex space-x-8">
+                <button
+                  onClick={() => setActiveTab('profile')}
+                  className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                    activeTab === 'profile'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <User className="w-4 h-4 mr-2" />
+                  פרטי בניין
+                </button>
             <button
               onClick={() => setActiveTab('notices')}
               className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
@@ -320,7 +398,7 @@ export default function Dashboard() {
           {activeTab === 'notices' && (
             <div className="p-6">
               <NoticeList
-                userId={user.id}
+                userId={selectedUserId}
                 onAddNotice={handleAddNotice}
                 onEditNotice={handleEditNotice}
               />
@@ -329,27 +407,29 @@ export default function Dashboard() {
 
           {activeTab === 'images' && (
             <div className="p-6">
-              <ImageManager userId={user.id} />
+              <ImageManager userId={selectedUserId} />
             </div>
           )}
 
           {activeTab === 'styles' && (
             <div className="p-6">
               <StyleSelector
-                userId={user.id}
+                userId={selectedUserId}
                 currentStyleId={profile.selected_style_id}
                 onStyleChange={handleStyleChange}
               />
             </div>
           )}
         </div>
+          </div>
+        )}
       </div>
 
       {/* Notice Form Modal */}
-      {showNoticeForm && (
+      {showNoticeForm && selectedUserId && (
         <NoticeForm
           notice={editingNotice}
-          userId={user.id}
+          userId={selectedUserId}
           onSave={handleNoticeSave}
           onCancel={handleNoticeCancel}
         />

@@ -62,48 +62,25 @@ export default function HomePage() {
 
         {/* Call to Action */}
         <div className="space-y-4">
-          {user ? (
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/dashboard"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors flex items-center justify-center"
-              >
-                <Settings className="w-5 h-5 ml-2" />
-                ניהול מערכת
-              </Link>
-              <Link
-                href={`/tv/${user.id}`}
-                className="bg-white hover:bg-gray-50 text-blue-600 font-semibold py-3 px-8 rounded-lg border-2 border-blue-600 transition-colors flex items-center justify-center"
-              >
-                <Monitor className="w-5 h-5 ml-2" />
-                צפה בתצוגה
-              </Link>
-            </div>
-          ) : (
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/login"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors"
-              >
-                התחבר לחשבון קיים
-              </Link>
-              <Link
-                href="/register"
-                className="bg-white hover:bg-gray-50 text-blue-600 font-semibold py-3 px-8 rounded-lg border-2 border-blue-600 transition-colors"
-              >
-                הרשם חינם
-              </Link>
-            </div>
-          )}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/admin"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors flex items-center justify-center"
+            >
+              <Settings className="w-5 h-5 ml-2" />
+              ניהול מערכת (מנהלים)
+            </Link>
+            <Link
+              href="/register"
+              className="bg-white hover:bg-gray-50 text-blue-600 font-semibold py-3 px-8 rounded-lg border-2 border-blue-600 transition-colors"
+            >
+              הרשמה לבניין חדש
+            </Link>
+          </div>
           
-          {!user && (
-            <p className="text-sm text-gray-500 mt-6">
-              כבר יש לכם מסך? 
-              <Link href="/tv" className="text-blue-600 hover:underline mr-1">
-                צפו בתצוגה
-              </Link>
-            </p>
-          )}
+          <p className="text-sm text-gray-500 mt-6">
+            יש לכם כבר בניין רשום? פנו למנהל המערכת לקבלת קישור התצוגה.
+          </p>
         </div>
       </div>
     </div>
