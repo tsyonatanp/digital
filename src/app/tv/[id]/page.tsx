@@ -35,8 +35,6 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   const [currentNewsIndex, setCurrentNewsIndex] = useState(0)
   const clickCount = useRef(0)
   const lastClickTime = useRef(0)
-  // הוספת state למזג אוויר
-  const [weatherData, setWeatherData] = useState<{ condition: string; temp: string }>({ condition: '', temp: '' })
 
   // Resolve params (could be Promise or object)
   useEffect(() => {
@@ -164,61 +162,64 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     localStorage.removeItem('skipAutoRedirect')
   }, [])
 
-  // החלפת useEffect של מזג האוויר
-  useEffect(() => {
-    const fetchWeather = async () => {
-      try {
-        // בניית מחרוזת מיקום על בסיס נתוני המשתמש
-        let location = 'Tel-Aviv' // ברירת מחדל
-        if (user && user.street_name) {
-          // נשתמש ברחוב בלבד מכיוון שאין שדה עיר
-          location = user.street_name
-        }
-        
-        console.log('Fetching weather for location:', location)
-        const response = await fetch(`https://wttr.in/${encodeURIComponent(location)}?format=%C|%t&lang=he`)
-        const data = await response.text()
-        console.log('Weather data received:', data)
-        const [condition, temp] = data.split('|')
-        setWeatherData({ condition, temp: temp.trim() })
-      } catch (error) {
-        console.error('Error fetching weather:', error)
-      }
-    }
-
-    if (user) { // רק אם יש נתוני משתמש
-      fetchWeather()
-      const weatherInterval = setInterval(fetchWeather, 30 * 60 * 1000) // עדכון כל 30 דקות
-
-      return () => clearInterval(weatherInterval)
-    }
-  }, [user])
-
-  // הוספת useEffect לטעינת סקריפט מזג האוויר
+  // הוספת useEffect לטעינת ווידג'ט מזג האוויר
   useEffect(() => {
     const loadWeatherWidget = () => {
-      const existingScript = document.getElementById('weather-widget-script')
-      if (existingScript) {
-        document.body.removeChild(existingScript)
+      // מסיר ווידג'ט קיים אם יש
+      const existingWidget = document.getElementById('weatherwidget-io-js')
+      if (existingWidget) {
+        document.body.removeChild(existingWidget)
+      }
+      
+      // מסיר div קיים אם יש
+      const existingDiv = document.getElementById('ww_168a241545936')
+      if (existingDiv) {
+        existingDiv.remove()
       }
 
+      // יוצר div חדש לווידג'ט
+      const widgetDiv = document.createElement('div')
+      widgetDiv.id = 'ww_168a241545936'
+      widgetDiv.className = 'weatherwidget-io'
+      widgetDiv.setAttribute('data-label_1', 'מזג האוויר')
+      widgetDiv.setAttribute('data-label_2', user?.street_name || 'גלבוע')
+      widgetDiv.setAttribute('data-theme', 'pure')
+      widgetDiv.setAttribute('data-basecolor', '#FFFFFF')
+      widgetDiv.setAttribute('data-textcolor', '#000000')
+      widgetDiv.setAttribute('data-highcolor', '#FF0000')
+      widgetDiv.setAttribute('data-lowcolor', '#0000FF')
+      widgetDiv.setAttribute('data-suncolor', '#FFD700')
+      widgetDiv.setAttribute('data-mooncolor', '#CCCCCC')
+      widgetDiv.setAttribute('data-cloudcolor', '#CCCCCC')
+      widgetDiv.setAttribute('data-cloudfill', '#FFFFFF')
+      widgetDiv.setAttribute('data-raincolor', '#0066CC')
+      widgetDiv.setAttribute('data-snowcolor', '#FFFFFF')
+      
+      // מוסיף את הDiv למיקום הנכון
+      const weatherContainer = document.getElementById('weather-container')
+      if (weatherContainer) {
+        weatherContainer.appendChild(widgetDiv)
+      }
+
+      // יוצר ומוסיף את הסקריפט
       const script = document.createElement('script')
-      script.id = 'weather-widget-script'
-      script.src = 'https://app3.weatherwidget.org/js/?id=ww_168a241545936'
+      script.id = 'weatherwidget-io-js'
+      script.src = 'https://weatherwidget.io/js/widget.min.js'
       script.async = true
       document.body.appendChild(script)
     }
 
     // טעינה מחדש של הווידג'ט כשהקומפוננטה מתמונטת
-    loadWeatherWidget()
+    const timer = setTimeout(loadWeatherWidget, 100)
 
     return () => {
-      const script = document.getElementById('weather-widget-script')
+      clearTimeout(timer)
+      const script = document.getElementById('weatherwidget-io-js')
       if (script) {
         document.body.removeChild(script)
       }
     }
-  }, [])
+  }, [user])
 
   const handleSecretClick = () => {
     const now = Date.now()
@@ -299,12 +300,8 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
               {user.welcome_text}
             </div>
           )}
-          <div className="mt-8 w-full text-center">
-            <div className="text-2xl font-bold mb-2">
-              מזג האוויר ב{user?.street_name ? user.street_name : 'תל אביב'}
-            </div>
-            <div className="text-xl">{weatherData.condition}</div>
-            <div className="text-3xl font-bold mt-2">{weatherData.temp}</div>
+          <div id="weather-container" className="mt-8 w-full text-center">
+            {/* הווידג'ט יטען כאן אוטומטית */}
           </div>
         </div>
 
