@@ -186,35 +186,66 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     localStorage.removeItem('skipAutoRedirect')
   }, [])
 
-    // הוספת useEffect לטעינת ווידג'ט מזג האוויר
+  // הוספת state למזג האוויר
+  const [weatherData, setWeatherData] = useState({
+    current: 'שמשי 22°C',
+    forecast: [
+      { day: 'ה', icon: '☀️', high: '30', low: '22' },
+      { day: 'ו', icon: '⛅', high: '31', low: '24' },
+      { day: 'ש', icon: '☀️', high: '30', low: '22' },
+      { day: 'א', icon: '🌧️', high: '29', low: '22' },
+      { day: 'ב', icon: '☀️', high: '30', low: '22' },
+      { day: 'ג', icon: '☀️', high: '30', low: '23' },
+      { day: 'ד', icon: '☀️', high: '30', low: '23' }
+    ]
+  })
+
+  // הוספת useEffect לקבלת מזג אוויר אמיתי
   useEffect(() => {
     if (!user) return
     
-    console.log('🌤️ טוען ווידג\'ט מזג האוויר עבור:', user.street_name)
-    
-    // מוחק סקריפטים קיימים
-    const existingScript = document.getElementById('weatherwidget-io-js')
-    if (existingScript) {
-      existingScript.remove()
-    }
-
-    // טוען את הסקריפט
-    const script = document.createElement('script')
-    script.id = 'weatherwidget-io-js'
-    script.src = 'https://weatherwidget.io/js/widget.min.js'
-    script.async = true
-    script.onload = () => {
-      console.log('✅ ווידג\'ט מזג אוויר נטען')
-    }
-    script.onerror = () => console.error('❌ שגיאה בטעינת ווידג\'ט מזג אוויר')
-    document.head.appendChild(script)
-
-    return () => {
-      const script = document.getElementById('weatherwidget-io-js')
-      if (script) {
-        script.remove()
+    const fetchWeather = async () => {
+      try {
+        const location = user.street_name || 'תל אביב'
+        const response = await fetch(`https://wttr.in/${encodeURIComponent(location)}?format=j1`)
+        const data = await response.json()
+        
+        const current = `${data.current_condition[0].weatherDesc[0].value} ${data.current_condition[0].temp_C}°C`
+        
+        const forecast = data.weather.slice(0, 7).map((day: any, index: number) => {
+          const dayNames = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש']
+          const today = new Date().getDay()
+          const dayIndex = (today + index) % 7
+          
+          let icon = '☀️'
+          const code = parseInt(day.hourly[0].weatherCode)
+          if (code >= 200 && code < 300) icon = '⛈️'
+          else if (code >= 300 && code < 600) icon = '🌧️'
+          else if (code >= 600 && code < 700) icon = '❄️'
+          else if (code >= 700 && code < 800) icon = '🌫️'
+          else if (code === 800) icon = '☀️'
+          else if (code > 800) icon = '⛅'
+          
+          return {
+            day: dayNames[dayIndex],
+            icon,
+            high: day.maxtempC,
+            low: day.mintempC
+          }
+        })
+        
+        setWeatherData({ current, forecast })
+      } catch (error) {
+        console.error('Error fetching weather:', error)
+        // השאר ברירת מחדל
       }
     }
+
+    fetchWeather()
+    // עדכון כל 30 דקות
+    const interval = setInterval(fetchWeather, 30 * 60 * 1000)
+
+    return () => clearInterval(interval)
   }, [user])
 
   const handleSecretClick = () => {
@@ -277,7 +308,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       }}
       onClick={handleSecretClick}
     >
-      <div className="flex" style={{ height: 'calc(100vh - 8rem)' }}>
+      <div className="flex" style={{ height: 'calc(100vh - 10rem)' }}>
         {/* Right Column - Welcome Text & Clock (25%) */}
         <div className="w-1/4 p-4 flex flex-col items-center justify-center border-l">
           <h1 className="text-4xl font-bold mb-8 text-center">
@@ -334,29 +365,39 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       </div>
 
       {/* Weather Widget - Full Width at Bottom */}
-      <div className="w-full h-32 bg-gradient-to-r from-blue-50 to-blue-100 flex items-center justify-center border-t">
-        <div 
-          className="weatherwidget-io" 
-          data-label_1="מזג האוויר" 
-          data-label_2={user?.street_name || "תל אביב"}
-          data-theme="pure"
-          data-basecolor="#FFFFFF"
-          data-textcolor="#000000"
-          data-highcolor="#FF0000"
-          data-lowcolor="#0000FF"
-          data-suncolor="#FFD700"
-          data-mooncolor="#CCCCCC"
-          data-cloudcolor="#CCCCCC"
-          data-cloudfill="#FFFFFF"
-          data-raincolor="#0066CC"
-          data-snowcolor="#FFFFFF"
-        >
-          מזג אוויר ב{user?.street_name || "תל אביב"}
+      <div className="w-full h-40 bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 relative overflow-hidden">
+        <div className="flex items-center h-full px-6 text-white">
+          {/* Current Weather */}
+          <div className="flex items-center space-x-4 ml-6">
+            <div className="text-right">
+              <div className="text-lg font-medium">מזג האוויר ב{user?.street_name || 'תל אביב'}</div>
+              <div className="text-2xl font-bold">{weatherData.current}</div>
+            </div>
+          </div>
+          
+          {/* Weekly Forecast */}
+          <div className="flex flex-1 justify-center items-center space-x-8 mx-8">
+            {weatherData.forecast.map((day, index) => (
+              <div key={index} className="text-center">
+                <div className="text-sm font-medium mb-1">{day.day}</div>
+                <div className="text-2xl mb-1">{day.icon}</div>
+                <div className="text-sm">
+                  <div className="font-bold">{day.high}°</div>
+                  <div className="text-blue-200">{day.low}°</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {/* Current Temperature Large Display */}
+          <div className="text-left ml-6">
+            <div className="text-6xl font-bold">
+              {weatherData.current.match(/\d+/)?.[0] || '22'}°C
+            </div>
+            <div className="text-lg">☀️</div>
+          </div>
         </div>
       </div>
-      
-      {/* Weather Widget Script */}
-      <script src="https://weatherwidget.io/js/widget.min.js" async></script>
     </div>
   )
 } 
