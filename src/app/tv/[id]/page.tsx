@@ -16,16 +16,24 @@ interface TVDisplayProps {
   }>
 }
 
+interface NewsItem {
+  title: string;
+  link: string;
+  source: string;
+}
+
 export default function TVDisplayPage({ params }: TVDisplayProps) {
   const [resolvedParams, setResolvedParams] = useState<{ id: string } | null>(null)
   const [user, setUser] = useState<User | null>(null)
   const [notices, setNotices] = useState<Notice[]>([])
   const [images, setImages] = useState<Image[]>([])
   const [style, setStyle] = useState<Style | null>(null)
-  const [currentSlide, setCurrentSlide] = useState(0)
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [currentTime, setCurrentTime] = useState(new Date())
   const [weather, setWeather] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [news, setNews] = useState<NewsItem[]>([])
+  const [currentNewsIndex, setCurrentNewsIndex] = useState(0)
   const clickCount = useRef(0)
   const lastClickTime = useRef(0)
 
@@ -56,17 +64,6 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         }
 
         setUser(userData)
-
-        // Fetch active notices
-        const { data: noticesData } = await supabase
-          .from('notices')
-          .select('*')
-          .eq('user_id', resolvedParams.id)
-          .eq('is_active', true)
-          .or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`)
-          .order('priority', { ascending: false })
-
-        setNotices(noticesData || [])
 
         // Fetch active images
         const { data: imagesData } = await supabase
@@ -107,18 +104,45 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   }, [])
 
   useEffect(() => {
-    if (!style) return
+    if (!style || images.length === 0) return
 
-    // Auto-advance slides
+    // Auto-advance image slides
     const slideTimer = setInterval(() => {
-      const totalSlides = notices.length + images.length
-      if (totalSlides > 0) {
-        setCurrentSlide((prev) => (prev + 1) % totalSlides)
-      }
+      setCurrentImageIndex((prev) => (prev + 1) % images.length)
     }, style.slide_duration || 5000)
 
     return () => clearInterval(slideTimer)
-  }, [notices.length, images.length, style])
+  }, [images.length, style])
+
+  useEffect(() => {
+    // Auto-advance news items
+    const newsTimer = setInterval(() => {
+      if (news.length > 0) {
+        setCurrentNewsIndex((prev) => (prev + 1) % news.length)
+      }
+    }, 5000) // Change news every 5 seconds
+
+    return () => clearInterval(newsTimer)
+  }, [news.length])
+
+  useEffect(() => {
+    // Fetch news data
+    const fetchNews = async () => {
+      try {
+        const response = await fetch('/api/news')
+        const data = await response.json()
+        setNews(data)
+      } catch (error) {
+        console.error('Error fetching news:', error)
+      }
+    }
+
+    fetchNews()
+    // Fetch news every 5 minutes
+    const newsRefreshTimer = setInterval(fetchNews, 5 * 60 * 1000)
+
+    return () => clearInterval(newsRefreshTimer)
+  }, [])
 
   useEffect(() => {
     // Fetch weather data
@@ -158,27 +182,6 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-black">
-        <div className="text-white text-2xl">טוען...</div>
-      </div>
-    )
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-black">
-        <div className="text-white text-2xl">בניין לא נמצא</div>
-      </div>
-    )
-  }
-
-  const totalSlides = notices.length + images.length
-  const isNoticeSlide = currentSlide < notices.length
-  const currentNotice = isNoticeSlide ? notices[currentSlide] : null
-  const currentImage = !isNoticeSlide ? images[currentSlide - notices.length] : null
-
   const formatHebrewDate = (date: Date) => {
     const options: Intl.DateTimeFormatOptions = {
       weekday: 'long',
@@ -196,6 +199,22 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     })
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <div className="text-white text-2xl">טוען...</div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <div className="text-white text-2xl">בניין לא נמצא</div>
+      </div>
+    )
+  }
+
   return (
     <div 
       className="min-h-screen relative overflow-hidden"
@@ -205,73 +224,59 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       }}
       onClick={handleSecretClick}
     >
-      {/* Main Content Area */}
-      <div className="h-[calc(100vh-80px)] flex items-center justify-center p-8">
-        {totalSlides === 0 ? (
-          <div className="text-center">
-            <h1 className="text-4xl font-bold mb-4">
-              {user.street_name} {user.building_number}
-            </h1>
-            <p className="text-xl">אין תוכן להצגה כרגע</p>
+      <div className="h-screen flex">
+        {/* Right Column - Welcome Text & Clock (25%) */}
+        <div className="w-1/4 p-4 flex flex-col items-center justify-center border-l">
+          <h1 className="text-4xl font-bold mb-8 text-center">
+            ברוכים הבאים ל{user.street_name} {user.building_number}
+          </h1>
+          <div className="text-6xl font-bold mb-4 text-center">
+            {formatTime(currentTime)}
           </div>
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            {isNoticeSlide && currentNotice ? (
-              // Notice Slide
-              <div className="text-center max-w-4xl">
-                <h1 className="text-5xl font-bold mb-8">
-                  {user.street_name} {user.building_number}
-                </h1>
-                <div className="text-3xl mb-8">
-                  {currentNotice.content}
-                </div>
-                <div className="text-2xl">
-                  {formatTime(currentTime)}
-                </div>
-                <div className="text-xl mt-4">
-                  {formatHebrewDate(currentTime)}
-                </div>
-              </div>
-            ) : currentImage ? (
-              // Image Slide
-              <div className="w-full h-full flex items-center justify-center">
-                <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/images/${currentImage.filename}`}
-                  alt="Building notice"
-                  className="max-w-full max-h-full object-contain"
-                />
-              </div>
-            ) : (
-              // Fallback
-              <div className="text-center">
-                <h1 className="text-4xl font-bold mb-4">
-                  {user.street_name} {user.building_number}
-                </h1>
-                <p className="text-xl">אין תוכן להצגה כרגע</p>
-              </div>
-            )}
+          <div className="text-2xl text-center">
+            {formatHebrewDate(currentTime)}
           </div>
-        )}
-      </div>
-
-      {/* Bottom Bar */}
-      <div className="absolute bottom-0 left-0 right-0 h-20 bg-black bg-opacity-80 text-white flex items-center justify-between px-8">
-        <div className="flex items-center space-x-4">
-          {weather && (
-            <div className="flex items-center space-x-2">
-              <span className="text-2xl">🌤️</span>
-              <span className="text-xl">{weather.temperature}°C</span>
+          {user.welcome_text && (
+            <div className="mt-8 text-xl text-center">
+              {user.welcome_text}
             </div>
           )}
         </div>
-        
-        <div className="flex items-center space-x-4">
-          <span className="text-xl">{formatTime(currentTime)}</span>
-          <span className="text-xl">{formatHebrewDate(currentTime)}</span>
+
+        {/* Center Column - Image Carousel (50%) */}
+        <div className="w-1/2 p-4 flex items-center justify-center">
+          {images.length > 0 ? (
+            <div className="w-full h-full flex items-center justify-center">
+              <img
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/images/${images[currentImageIndex].filename}`}
+                alt="תמונת בניין"
+                className="max-w-full max-h-full object-contain"
+              />
+            </div>
+          ) : (
+            <div className="text-center text-2xl">
+              אין תמונות להצגה
+            </div>
+          )}
         </div>
-        
-        <div className="flex items-center space-x-2">
-          <span className="text-lg">שקף {currentSlide + 1} מתוך {totalSlides}</span>
+
+        {/* Left Column - News Feed (25%) */}
+        <div className="w-1/4 p-4 flex flex-col items-center justify-center border-r">
+          <h2 className="text-3xl font-bold mb-6 text-center">חדשות</h2>
+          {news.length > 0 ? (
+            <div className="text-xl text-center">
+              <a href={news[currentNewsIndex].link} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                {news[currentNewsIndex].title}
+              </a>
+              <div className="text-sm mt-2 text-gray-600">
+                מקור: {news[currentNewsIndex].source}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center">
+              טוען חדשות...
+            </div>
+          )}
         </div>
       </div>
     </div>

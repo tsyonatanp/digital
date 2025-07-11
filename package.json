@@ -31,6 +31,7 @@
     "react": "^18",
     "react-dom": "^18",
     "react-hook-form": "^7.60.0",
+    "rss-parser": "^3.13.0",
     "zod": "^3.22.4",
     "zustand": "^4.5.0"
   },

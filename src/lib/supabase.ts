@@ -19,6 +19,7 @@ export type Database = {
           street_name: string
           building_number: string
           management_company: string | null
+          welcome_text: string | null
           created_at: string
           updated_at: string
         }
@@ -28,6 +29,7 @@ export type Database = {
           street_name: string
           building_number: string
           management_company?: string | null
+          welcome_text?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -37,6 +39,7 @@ export type Database = {
           street_name?: string
           building_number?: string
           management_company?: string | null
+          welcome_text?: string | null
           created_at?: string
           updated_at?: string
         }
