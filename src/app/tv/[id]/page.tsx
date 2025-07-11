@@ -36,7 +36,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   const clickCount = useRef(0)
   const lastClickTime = useRef(0)
   // הוספת state למזג אוויר
-  const [weatherData, setWeatherData] = useState<string>('')
+  const [weatherData, setWeatherData] = useState<{ condition: string; temp: string }>({ condition: '', temp: '' })
 
   // Resolve params (could be Promise or object)
   useEffect(() => {
@@ -60,7 +60,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           .single()
 
         if (userError) {
-          console.error('Error fetching user:', userError)
+          console.error('Error fetching user:', userError.message)
           return
         }
 
@@ -69,6 +69,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           return
         }
 
+        console.log('User data:', userData) // לבדיקה
         setUser(userData)
 
         // Fetch active images
@@ -167,9 +168,10 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   useEffect(() => {
     const fetchWeather = async () => {
       try {
-        const response = await fetch('https://wttr.in/Tel-Aviv?format=%t|%C&lang=he')
+        const response = await fetch('https://wttr.in/Tel-Aviv?format=%C|%t&lang=he')
         const data = await response.text()
-        setWeatherData(data)
+        const [condition, temp] = data.split('|')
+        setWeatherData({ condition, temp: temp.trim() })
       } catch (error) {
         console.error('Error fetching weather:', error)
       }
@@ -273,7 +275,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           <h1 className="text-4xl font-bold mb-8 text-center">
             ברוכים הבאים
             <br />
-            {user.street_name} {user.building_number}
+            {user?.street_name} {user?.building_number}
           </h1>
           <div className="text-6xl font-bold mb-4 text-center">
             {formatTime(currentTime)}
@@ -281,14 +283,15 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           <div className="text-2xl text-center mb-8">
             {formatHebrewDate(currentTime)}
           </div>
-          {user.welcome_text && (
+          {user?.welcome_text && (
             <div className="mt-4 text-xl text-center">
               {user.welcome_text}
             </div>
           )}
           <div className="mt-8 w-full text-center">
-            <div className="text-2xl font-bold">מזג האוויר בתל אביב</div>
-            <div className="text-xl mt-2">{weatherData}</div>
+            <div className="text-2xl font-bold mb-2">מזג האוויר בתל אביב</div>
+            <div className="text-xl">{weatherData.condition}</div>
+            <div className="text-3xl font-bold mt-2">{weatherData.temp}</div>
           </div>
         </div>
 
