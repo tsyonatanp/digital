@@ -228,7 +228,9 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         {/* Right Column - Welcome Text & Clock (25%) */}
         <div className="w-1/4 p-4 flex flex-col items-center justify-center border-l">
           <h1 className="text-4xl font-bold mb-8 text-center">
-            ברוכים הבאים ל{user.street_name} {user.building_number}
+            ברוכים הבאים
+            <br />
+            {user.street_name} {user.building_number}
           </h1>
           <div className="text-6xl font-bold mb-4 text-center">
             {formatTime(currentTime)}
