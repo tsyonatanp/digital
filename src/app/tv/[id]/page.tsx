@@ -148,6 +148,18 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     localStorage.removeItem('skipAutoRedirect')
   }, [])
 
+  // הוספת useEffect לטעינת סקריפט מזג האוויר
+  useEffect(() => {
+    // מוודא שהסקריפט נטען רק פעם אחת
+    if (!document.getElementById('weather-widget-script')) {
+      const script = document.createElement('script')
+      script.id = 'weather-widget-script'
+      script.src = 'https://app3.weatherwidget.org/js/?id=ww_168a241545936'
+      script.async = true
+      document.body.appendChild(script)
+    }
+  }, [])
+
   const handleSecretClick = () => {
     const now = Date.now()
     if (now - lastClickTime.current < 1000) {
@@ -219,14 +231,43 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           <div className="text-6xl font-bold mb-4 text-center">
             {formatTime(currentTime)}
           </div>
-          <div className="text-2xl text-center">
+          <div className="text-2xl text-center mb-8">
             {formatHebrewDate(currentTime)}
           </div>
           {user.welcome_text && (
-            <div className="mt-8 text-xl text-center">
+            <div className="mt-4 text-xl text-center">
               {user.welcome_text}
             </div>
           )}
+          <div className="mt-8 w-full">
+            <div 
+              id="ww_168a241545936"
+              dangerouslySetInnerHTML={{
+                __html: `
+                  <div v="1.3" loc="id" a='{
+                    "t":"responsive",
+                    "lang":"he",
+                    "sl_lpl":1,
+                    "ids":["wl9138"],
+                    "font":"Arial",
+                    "sl_ics":"one_a",
+                    "sl_sot":"celsius",
+                    "cl_bkg":"image",
+                    "cl_font":"#FFFFFF",
+                    "cl_cloud":"#FFFFFF",
+                    "cl_persp":"#81D4FA",
+                    "cl_sun":"#FFC107",
+                    "cl_moon":"#FFC107",
+                    "cl_thund":"#FF5722",
+                    "cl_odd":"#0000000a",
+                    "el_nme":3
+                  }'>
+                    <a href="https://weatherwidget.org/" id="ww_168a241545936_u" target="_blank" rel="noopener noreferrer">weatherwidget.org</a>
+                  </div>
+                `
+              }}
+            />
+          </div>
         </div>
 
         {/* Center Column - Image Carousel (50%) */}
