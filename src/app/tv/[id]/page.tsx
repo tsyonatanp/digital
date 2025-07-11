@@ -98,23 +98,49 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
 
         // Fetch style with detailed logging
         console.log('🎨 מנסה לטעון סגנון עבור משתמש:', resolvedParams.id)
-        const { data: styleData, error: styleError } = await supabase
+        let { data: styleData, error: styleError } = await supabase
           .from('styles')
           .select('*')
           .eq('user_id', resolvedParams.id)
           .single()
 
+        // If no style exists, create one
+        if (styleError && styleError.code === 'PGRST116') {
+          console.log('🔧 לא נמצא סגנון, יוצר חדש למשתמש:', resolvedParams.id)
+          const { data: newStyleData, error: createError } = await supabase
+            .from('styles')
+            .insert([
+              {
+                user_id: resolvedParams.id,
+                background_color: '#FFFFFF',
+                text_color: '#000000',
+                layout_type: 'standard',
+                text_size: 'normal',
+                weather_enabled: true,
+                news_enabled: true,
+                slide_duration: 5000
+              }
+            ])
+            .select()
+            .single()
+
+          if (createError) {
+            console.error('❌ שגיאה ביצירת סגנון חדש:', createError)
+          } else {
+            console.log('✅ סגנון חדש נוצר:', newStyleData)
+            styleData = newStyleData
+            styleError = null
+          }
+        }
+
         if (styleError) {
-          console.error('❌ שגיאה באחזור הסגנון:', {
-            message: styleError.message,
-            details: styleError.details,
-            hint: styleError.hint,
-            code: styleError.code,
-            user_id: resolvedParams.id
-          })
+          console.error('❌ שגיאה באחזור הסגנון:', styleError)
+          console.error('❌ פרטי השגיאה:', JSON.stringify(styleError, null, 2))
+          console.error('❌ סוג השגיאה:', typeof styleError)
+          console.error('❌ מפתחות השגיאה:', Object.keys(styleError))
           
-          // Create default style if not found
-          console.log('📝 יוצר סגנון ברירת מחדל')
+          // Create default style - always create when there's an error
+          console.log('📝 יוצר סגנון ברירת מחדל בגלל שגיאה')
           const defaultStyle = {
             background_color: '#FFFFFF',
             text_color: '#000000',
