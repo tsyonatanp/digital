@@ -11,8 +11,8 @@ export default function RegisterPage() {
 
   useEffect(() => {
     const skip = localStorage.getItem('skipAutoRedirect')
-    if (user && !skip) {
-      router.push('/tv')
+    if (user && user.id && !skip) {
+      router.push(`/tv/${user.id}`)
     }
   }, [user, router])
   return <RegisterForm />
