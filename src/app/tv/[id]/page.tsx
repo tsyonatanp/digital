@@ -35,6 +35,8 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   const [currentNewsIndex, setCurrentNewsIndex] = useState(0)
   const clickCount = useRef(0)
   const lastClickTime = useRef(0)
+  // הוספת state למזג אוויר
+  const [weatherData, setWeatherData] = useState<string>('')
 
   // Resolve params (could be Promise or object)
   useEffect(() => {
@@ -51,11 +53,16 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     const fetchData = async () => {
       try {
         // Fetch user data
-        const { data: userData } = await supabase
+        const { data: userData, error: userError } = await supabase
           .from('users')
           .select('*')
           .eq('id', resolvedParams.id)
           .single()
+
+        if (userError) {
+          console.error('Error fetching user:', userError)
+          return
+        }
 
         if (!userData) {
           console.error('User not found')
@@ -65,21 +72,29 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         setUser(userData)
 
         // Fetch active images
-        const { data: imagesData } = await supabase
+        const { data: imagesData, error: imagesError } = await supabase
           .from('images')
           .select('*')
           .eq('user_id', resolvedParams.id)
           .eq('is_active', true)
           .order('created_at', { ascending: true })
 
+        if (imagesError) {
+          console.error('Error fetching images:', imagesError)
+        }
+
         setImages(imagesData || [])
 
         // Fetch style
-        const { data: styleData } = await supabase
+        const { data: styleData, error: styleError } = await supabase
           .from('styles')
           .select('*')
           .eq('user_id', resolvedParams.id)
           .single()
+
+        if (styleError) {
+          console.error('Error fetching style:', styleError)
+        }
 
         setStyle(styleData)
 
@@ -148,15 +163,47 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     localStorage.removeItem('skipAutoRedirect')
   }, [])
 
+  // החלפת useEffect של מזג האוויר
+  useEffect(() => {
+    const fetchWeather = async () => {
+      try {
+        const response = await fetch('https://wttr.in/Tel-Aviv?format=%t|%C&lang=he')
+        const data = await response.text()
+        setWeatherData(data)
+      } catch (error) {
+        console.error('Error fetching weather:', error)
+      }
+    }
+
+    fetchWeather()
+    const weatherInterval = setInterval(fetchWeather, 30 * 60 * 1000) // עדכון כל 30 דקות
+
+    return () => clearInterval(weatherInterval)
+  }, [])
+
   // הוספת useEffect לטעינת סקריפט מזג האוויר
   useEffect(() => {
-    // מוודא שהסקריפט נטען רק פעם אחת
-    if (!document.getElementById('weather-widget-script')) {
+    const loadWeatherWidget = () => {
+      const existingScript = document.getElementById('weather-widget-script')
+      if (existingScript) {
+        document.body.removeChild(existingScript)
+      }
+
       const script = document.createElement('script')
       script.id = 'weather-widget-script'
       script.src = 'https://app3.weatherwidget.org/js/?id=ww_168a241545936'
       script.async = true
       document.body.appendChild(script)
+    }
+
+    // טעינה מחדש של הווידג'ט כשהקומפוננטה מתמונטת
+    loadWeatherWidget()
+
+    return () => {
+      const script = document.getElementById('weather-widget-script')
+      if (script) {
+        document.body.removeChild(script)
+      }
     }
   }, [])
 
@@ -239,47 +286,20 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
               {user.welcome_text}
             </div>
           )}
-          <div className="mt-8 w-full">
-            <div 
-              id="ww_168a241545936"
-              dangerouslySetInnerHTML={{
-                __html: `
-                  <div v="1.3" loc="id" a='{
-                    "t":"responsive",
-                    "lang":"he",
-                    "sl_lpl":1,
-                    "ids":["wl9138"],
-                    "font":"Arial",
-                    "sl_ics":"one_a",
-                    "sl_sot":"celsius",
-                    "cl_bkg":"image",
-                    "cl_font":"#FFFFFF",
-                    "cl_cloud":"#FFFFFF",
-                    "cl_persp":"#81D4FA",
-                    "cl_sun":"#FFC107",
-                    "cl_moon":"#FFC107",
-                    "cl_thund":"#FF5722",
-                    "cl_odd":"#0000000a",
-                    "el_nme":3
-                  }'>
-                    <a href="https://weatherwidget.org/" id="ww_168a241545936_u" target="_blank" rel="noopener noreferrer">weatherwidget.org</a>
-                  </div>
-                `
-              }}
-            />
+          <div className="mt-8 w-full text-center">
+            <div className="text-2xl font-bold">מזג האוויר בתל אביב</div>
+            <div className="text-xl mt-2">{weatherData}</div>
           </div>
         </div>
 
         {/* Center Column - Image Carousel (50%) */}
-        <div className="w-1/2 p-4 flex items-center justify-center">
+        <div className="w-2/4 h-full flex items-center justify-center">
           {images.length > 0 ? (
-            <div className="w-full h-full flex items-center justify-center">
-              <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/images/${images[currentImageIndex].filename}`}
-                alt="תמונת בניין"
-                className="max-w-full max-h-full object-contain"
-              />
-            </div>
+            <img
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/images/${images[currentImageIndex].filename}`}
+              alt="תמונת בניין"
+              className="max-w-full max-h-full object-contain"
+            />
           ) : (
             <div className="text-center text-2xl">
               אין תמונות להצגה
