@@ -28,7 +28,7 @@ export default function LoginForm() {
 
   useEffect(() => {
     if (user) {
-      router.push('/dashboard');
+      router.push(`/tv/${user.id}`);
     }
   }, [user, router]);
 
@@ -66,7 +66,7 @@ export default function LoginForm() {
       if (authData.user) {
         console.log('✅ התחברות הצליחה! משתמש:', authData.user.email)
         setUser(authData.user)
-        // אין צורך ב-window.location.href או router.push כאן, כי useEffect יפנה אוטומטית
+        // useEffect יטפל בהפניה ל-TV
       } else {
         setError('שגיאה בהתחברות')
       }
