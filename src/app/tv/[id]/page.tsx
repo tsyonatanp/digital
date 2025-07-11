@@ -35,7 +35,6 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   const [currentNewsIndex, setCurrentNewsIndex] = useState(0)
   const clickCount = useRef(0)
   const lastClickTime = useRef(0)
-  const weatherContainerRef = useRef<HTMLDivElement>(null)
 
   // Resolve params (could be Promise or object)
   useEffect(() => {
@@ -187,69 +186,30 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     localStorage.removeItem('skipAutoRedirect')
   }, [])
 
-  // הוספת useEffect לטעינת ווידג'ט מזג האוויר
+    // הוספת useEffect לטעינת ווידג'ט מזג האוויר
   useEffect(() => {
-    if (!user || !weatherContainerRef.current) return
+    if (!user) return
     
     console.log('🌤️ טוען ווידג\'ט מזג האוויר עבור:', user.street_name)
     
-    const loadWeatherWidget = () => {
-      const weatherContainer = weatherContainerRef.current
-      if (!weatherContainer) return
-
-      // ניקוי קודם
-      weatherContainer.innerHTML = ''
-      
-      // מוחק סקריפטים קיימים
-      const existingScript = document.getElementById('weatherwidget-io-js')
-      if (existingScript) {
-        existingScript.remove()
-      }
-
-      // יוצר div חדש לווידג'ט
-      const widgetDiv = document.createElement('div')
-      widgetDiv.id = 'ww_' + Date.now() // מזהה ייחודי
-      widgetDiv.className = 'weatherwidget-io'
-      widgetDiv.setAttribute('data-label_1', 'מזג האוויר')
-      widgetDiv.setAttribute('data-label_2', user.street_name || 'תל אביב')
-      widgetDiv.setAttribute('data-theme', 'pure')
-      widgetDiv.setAttribute('data-basecolor', '#FFFFFF')
-      widgetDiv.setAttribute('data-textcolor', '#000000')
-      widgetDiv.setAttribute('data-highcolor', '#FF0000')
-      widgetDiv.setAttribute('data-lowcolor', '#0000FF')
-      widgetDiv.setAttribute('data-suncolor', '#FFD700')
-      widgetDiv.setAttribute('data-mooncolor', '#CCCCCC')
-      widgetDiv.setAttribute('data-cloudcolor', '#CCCCCC')
-      widgetDiv.setAttribute('data-cloudfill', '#FFFFFF')
-      widgetDiv.setAttribute('data-raincolor', '#0066CC')
-      widgetDiv.setAttribute('data-snowcolor', '#FFFFFF')
-      widgetDiv.innerHTML = 'טוען מזג אוויר...'
-      
-      // מוסיף לקונטיינר
-      weatherContainer.appendChild(widgetDiv)
-      console.log('✅ ווידג\'ט נוסף לקונטיינר')
-
-      // טוען את הסקריפט
-      const script = document.createElement('script')
-      script.id = 'weatherwidget-io-js'
-      script.src = 'https://weatherwidget.io/js/widget.min.js'
-      script.async = true
-              script.onload = () => {
-          console.log('✅ ווידג\'ט מזג אוויר נטען')
-          // מאלץ את הווידג'ט להתחיל
-          if ((window as any).__weatherwidget_init) {
-            (window as any).__weatherwidget_init()
-          }
-        }
-      script.onerror = () => console.error('❌ שגיאה בטעינת ווידג\'ט מזג אוויר')
-      document.head.appendChild(script)
+    // מוחק סקריפטים קיימים
+    const existingScript = document.getElementById('weatherwidget-io-js')
+    if (existingScript) {
+      existingScript.remove()
     }
 
-    // השהיה קצרה לוודא שה-DOM מוכן
-    const timer = setTimeout(loadWeatherWidget, 1000)
+    // טוען את הסקריפט
+    const script = document.createElement('script')
+    script.id = 'weatherwidget-io-js'
+    script.src = 'https://weatherwidget.io/js/widget.min.js'
+    script.async = true
+    script.onload = () => {
+      console.log('✅ ווידג\'ט מזג אוויר נטען')
+    }
+    script.onerror = () => console.error('❌ שגיאה בטעינת ווידג\'ט מזג אוויר')
+    document.head.appendChild(script)
 
     return () => {
-      clearTimeout(timer)
       const script = document.getElementById('weatherwidget-io-js')
       if (script) {
         script.remove()
@@ -374,9 +334,29 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       </div>
 
       {/* Weather Widget - Full Width at Bottom */}
-      <div ref={weatherContainerRef} className="w-full h-32 bg-gradient-to-r from-blue-50 to-blue-100 flex items-center justify-center border-t">
-        {/* הווידג'ט יטען כאן אוטומטית */}
+      <div className="w-full h-32 bg-gradient-to-r from-blue-50 to-blue-100 flex items-center justify-center border-t">
+        <div 
+          className="weatherwidget-io" 
+          data-label_1="מזג האוויר" 
+          data-label_2={user?.street_name || "תל אביב"}
+          data-theme="pure"
+          data-basecolor="#FFFFFF"
+          data-textcolor="#000000"
+          data-highcolor="#FF0000"
+          data-lowcolor="#0000FF"
+          data-suncolor="#FFD700"
+          data-mooncolor="#CCCCCC"
+          data-cloudcolor="#CCCCCC"
+          data-cloudfill="#FFFFFF"
+          data-raincolor="#0066CC"
+          data-snowcolor="#FFFFFF"
+        >
+          מזג אוויר ב{user?.street_name || "תל אביב"}
+        </div>
       </div>
+      
+      {/* Weather Widget Script */}
+      <script src="https://weatherwidget.io/js/widget.min.js" async></script>
     </div>
   )
 } 
