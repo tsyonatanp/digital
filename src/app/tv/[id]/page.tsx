@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { Database } from '../../../lib/supabase'
+import { useRef } from 'react'
 
 type User = Database['public']['Tables']['users']['Row']
 type Notice = Database['public']['Tables']['notices']['Row']
@@ -25,6 +26,8 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   const [currentTime, setCurrentTime] = useState(new Date())
   const [weather, setWeather] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const clickCount = useRef(0)
+  const lastClickTime = useRef(0)
 
   // Resolve params (could be Promise or object)
   useEffect(() => {
@@ -132,6 +135,29 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     fetchWeather()
   }, [])
 
+  useEffect(() => {
+    // איפוס הדגל בכל טעינה
+    localStorage.removeItem('skipAutoRedirect')
+  }, [])
+
+  const handleSecretClick = () => {
+    const now = Date.now()
+    if (now - lastClickTime.current < 1000) {
+      clickCount.current++
+    } else {
+      clickCount.current = 1
+    }
+    lastClickTime.current = now
+    if (clickCount.current >= 10) {
+      localStorage.setItem('skipAutoRedirect', '1')
+      setTimeout(() => {
+        localStorage.removeItem('skipAutoRedirect')
+      }, 10 * 60 * 1000)
+      alert('מצב עקיפה הופעל ל-10 דקות!')
+      clickCount.current = 0
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black">
@@ -177,6 +203,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         backgroundColor: style?.background_color || '#FFFFFF',
         color: style?.text_color || '#000000'
       }}
+      onClick={handleSecretClick}
     >
       {/* Main Content Area */}
       <div className="h-[calc(100vh-80px)] flex items-center justify-center p-8">
