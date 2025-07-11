@@ -168,8 +168,17 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   useEffect(() => {
     const fetchWeather = async () => {
       try {
-        const response = await fetch('https://wttr.in/Tel-Aviv?format=%C|%t&lang=he')
+        // בניית מחרוזת מיקום על בסיס נתוני המשתמש
+        let location = 'Tel-Aviv' // ברירת מחדל
+        if (user && user.street_name) {
+          // נשתמש ברחוב בלבד מכיוון שאין שדה עיר
+          location = user.street_name
+        }
+        
+        console.log('Fetching weather for location:', location)
+        const response = await fetch(`https://wttr.in/${encodeURIComponent(location)}?format=%C|%t&lang=he`)
         const data = await response.text()
+        console.log('Weather data received:', data)
         const [condition, temp] = data.split('|')
         setWeatherData({ condition, temp: temp.trim() })
       } catch (error) {
@@ -177,11 +186,13 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       }
     }
 
-    fetchWeather()
-    const weatherInterval = setInterval(fetchWeather, 30 * 60 * 1000) // עדכון כל 30 דקות
+    if (user) { // רק אם יש נתוני משתמש
+      fetchWeather()
+      const weatherInterval = setInterval(fetchWeather, 30 * 60 * 1000) // עדכון כל 30 דקות
 
-    return () => clearInterval(weatherInterval)
-  }, [])
+      return () => clearInterval(weatherInterval)
+    }
+  }, [user])
 
   // הוספת useEffect לטעינת סקריפט מזג האוויר
   useEffect(() => {
@@ -289,7 +300,9 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
             </div>
           )}
           <div className="mt-8 w-full text-center">
-            <div className="text-2xl font-bold mb-2">מזג האוויר בתל אביב</div>
+            <div className="text-2xl font-bold mb-2">
+              מזג האוויר ב{user?.street_name ? user.street_name : 'תל אביב'}
+            </div>
             <div className="text-xl">{weatherData.condition}</div>
             <div className="text-3xl font-bold mt-2">{weatherData.temp}</div>
           </div>
