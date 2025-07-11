@@ -60,7 +60,8 @@ export default function RegisterForm() {
             street_name: data.street_name,
             building_number: data.building_number,
             management_company: data.management_company || null,
-          }
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`
         }
       })
 

@@ -30,7 +30,6 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   const [style, setStyle] = useState<Style | null>(null)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [currentTime, setCurrentTime] = useState(new Date())
-  const [weather, setWeather] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [news, setNews] = useState<NewsItem[]>([])
   const [currentNewsIndex, setCurrentNewsIndex] = useState(0)
@@ -142,21 +141,6 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     const newsRefreshTimer = setInterval(fetchNews, 5 * 60 * 1000)
 
     return () => clearInterval(newsRefreshTimer)
-  }, [])
-
-  useEffect(() => {
-    // Fetch weather data
-    const fetchWeather = async () => {
-      try {
-        const response = await fetch('/api/weather?location=Tel Aviv')
-        const data = await response.json()
-        setWeather(data)
-      } catch (error) {
-        console.error('Error fetching weather:', error)
-      }
-    }
-
-    fetchWeather()
   }, [])
 
   useEffect(() => {
