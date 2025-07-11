@@ -47,10 +47,15 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   }, [params])
 
   useEffect(() => {
-    if (!resolvedParams) return
+    if (!resolvedParams) {
+      console.log('⏳ ממתין ל-resolvedParams...')
+      return
+    }
 
     const fetchData = async () => {
       try {
+        console.log('🚀 התחלת טעינת נתונים עבור ID:', resolvedParams.id)
+        
         // Fetch user data
         const { data: userData, error: userError } = await supabase
           .from('users')
@@ -59,16 +64,22 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           .single()
 
         if (userError) {
-          console.error('Error fetching user:', userError.message)
+          console.error('❌ שגיאה באחזור משתמש:', {
+            message: userError.message,
+            details: userError.details,
+            hint: userError.hint,
+            code: userError.code,
+            user_id: resolvedParams.id
+          })
           return
         }
 
         if (!userData) {
-          console.error('User not found')
+          console.error('❌ משתמש לא נמצא עבור ID:', resolvedParams.id)
           return
         }
 
-        console.log('User data:', userData) // לבדיקה
+        console.log('✅ נתוני משתמש נטענו:', userData)
         setUser(userData)
 
         // Fetch active images
@@ -85,7 +96,8 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
 
         setImages(imagesData || [])
 
-        // Fetch style
+        // Fetch style with detailed logging
+        console.log('🎨 מנסה לטעון סגנון עבור משתמש:', resolvedParams.id)
         const { data: styleData, error: styleError } = await supabase
           .from('styles')
           .select('*')
@@ -93,21 +105,28 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           .single()
 
         if (styleError) {
-          console.error('Error fetching style:', styleError)
+          console.error('❌ שגיאה באחזור הסגנון:', {
+            message: styleError.message,
+            details: styleError.details,
+            hint: styleError.hint,
+            code: styleError.code,
+            user_id: resolvedParams.id
+          })
+          
           // Create default style if not found
-          if (styleError.code === 'PGRST116') {
-            const defaultStyle = {
-              background_color: '#FFFFFF',
-              text_color: '#000000',
-              layout_type: 'standard',
-              text_size: 'normal',
-              weather_enabled: true,
-              news_enabled: true,
-              slide_duration: 5000
-            }
-            setStyle(defaultStyle as any)
+          console.log('📝 יוצר סגנון ברירת מחדל')
+          const defaultStyle = {
+            background_color: '#FFFFFF',
+            text_color: '#000000',
+            layout_type: 'standard',
+            text_size: 'normal',
+            weather_enabled: true,
+            news_enabled: true,
+            slide_duration: 5000
           }
+          setStyle(defaultStyle as any)
         } else {
+          console.log('✅ סגנון נטען בהצלחה:', styleData)
           setStyle(styleData)
         }
 
