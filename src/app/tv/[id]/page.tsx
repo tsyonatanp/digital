@@ -88,14 +88,27 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         const { data: styleData, error: styleError } = await supabase
           .from('styles')
           .select('*')
-          .eq('user_id', resolvedParams.id)
+          .eq('id', resolvedParams.id)
           .single()
 
         if (styleError) {
           console.error('Error fetching style:', styleError)
+          // Create default style if not found
+          if (styleError.code === 'PGRST116') {
+            const defaultStyle = {
+              background_color: '#FFFFFF',
+              text_color: '#000000',
+              layout_type: 'standard',
+              text_size: 'normal',
+              weather_enabled: true,
+              news_enabled: true,
+              slide_duration: 5000
+            }
+            setStyle(defaultStyle as any)
+          }
+        } else {
+          setStyle(styleData)
         }
-
-        setStyle(styleData)
 
         setLoading(false)
       } catch (error) {
@@ -164,60 +177,60 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
 
   // הוספת useEffect לטעינת ווידג'ט מזג האוויר
   useEffect(() => {
+    if (!user) return // ממתין עד שיש נתוני משתמש
+    
     const loadWeatherWidget = () => {
-      // מסיר ווידג'ט קיים אם יש
-      const existingWidget = document.getElementById('weatherwidget-io-js')
-      if (existingWidget) {
-        document.body.removeChild(existingWidget)
+      console.log('🌤️ טוען ווידג\'ט מזג האוויר עבור:', user.street_name)
+      
+      // מוחק סקריפטים קיימים
+      const existingScript = document.getElementById('weatherwidget-io-js')
+      if (existingScript) {
+        existingScript.remove()
       }
       
-      // מסיר div קיים אם יש
+      // מוחק div קיים
       const existingDiv = document.getElementById('ww_168a241545936')
       if (existingDiv) {
         existingDiv.remove()
       }
 
-      // יוצר div חדש לווידג'ט
+      // יוצר div חדש
       const widgetDiv = document.createElement('div')
       widgetDiv.id = 'ww_168a241545936'
       widgetDiv.className = 'weatherwidget-io'
       widgetDiv.setAttribute('data-label_1', 'מזג האוויר')
-      widgetDiv.setAttribute('data-label_2', user?.street_name || 'גלבוע')
+      widgetDiv.setAttribute('data-label_2', user.street_name || 'גלבוע')
       widgetDiv.setAttribute('data-theme', 'pure')
       widgetDiv.setAttribute('data-basecolor', '#FFFFFF')
       widgetDiv.setAttribute('data-textcolor', '#000000')
-      widgetDiv.setAttribute('data-highcolor', '#FF0000')
-      widgetDiv.setAttribute('data-lowcolor', '#0000FF')
-      widgetDiv.setAttribute('data-suncolor', '#FFD700')
-      widgetDiv.setAttribute('data-mooncolor', '#CCCCCC')
-      widgetDiv.setAttribute('data-cloudcolor', '#CCCCCC')
-      widgetDiv.setAttribute('data-cloudfill', '#FFFFFF')
-      widgetDiv.setAttribute('data-raincolor', '#0066CC')
-      widgetDiv.setAttribute('data-snowcolor', '#FFFFFF')
+      widgetDiv.innerHTML = 'טוען מזג אוויר...'
       
-      // מוסיף את הDiv למיקום הנכון
+      // מוסיף לקונטיינר
       const weatherContainer = document.getElementById('weather-container')
       if (weatherContainer) {
+        weatherContainer.innerHTML = '' // ניקוי
         weatherContainer.appendChild(widgetDiv)
+        console.log('✅ ווידג\'ט נוסף לקונטיינר')
+      } else {
+        console.error('❌ לא נמצא weather-container')
+        return
       }
 
-      // יוצר ומוסיף את הסקריפט
+      // טוען את הסקריפט
       const script = document.createElement('script')
       script.id = 'weatherwidget-io-js'
       script.src = 'https://weatherwidget.io/js/widget.min.js'
       script.async = true
-      document.body.appendChild(script)
+      script.onload = () => console.log('✅ ווידג\'ט מזג אוויר נטען')
+      script.onerror = () => console.error('❌ שגיאה בטעינת ווידג\'ט מזג אוויר')
+      document.head.appendChild(script)
     }
 
-    // טעינה מחדש של הווידג'ט כשהקומפוננטה מתמונטת
-    const timer = setTimeout(loadWeatherWidget, 100)
+    // השהיה קצרה לוודא שה-DOM מוכן
+    const timer = setTimeout(loadWeatherWidget, 500)
 
     return () => {
       clearTimeout(timer)
-      const script = document.getElementById('weatherwidget-io-js')
-      if (script) {
-        document.body.removeChild(script)
-      }
     }
   }, [user])
 
