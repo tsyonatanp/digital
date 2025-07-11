@@ -295,7 +295,12 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       }}
       onClick={handleSecretClick}
     >
-      <div className="h-screen flex">
+      {/* Weather Widget - Full Width at Top */}
+      <div ref={weatherContainerRef} className="w-full h-32 bg-gradient-to-r from-blue-50 to-blue-100 flex items-center justify-center border-b">
+        {/* הווידג'ט יטען כאן אוטומטית */}
+      </div>
+
+      <div className="flex" style={{ height: 'calc(100vh - 8rem)' }}>
         {/* Right Column - Welcome Text & Clock (25%) */}
         <div className="w-1/4 p-4 flex flex-col items-center justify-center border-l">
           <h1 className="text-4xl font-bold mb-8 text-center">
@@ -314,9 +319,6 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
               {user.welcome_text}
             </div>
           )}
-          <div ref={weatherContainerRef} className="mt-8 w-full text-center">
-            {/* הווידג'ט יטען כאן אוטומטית */}
-          </div>
         </div>
 
         {/* Center Column - Image Carousel (50%) */}
