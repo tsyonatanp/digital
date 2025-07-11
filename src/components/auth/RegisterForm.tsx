@@ -56,11 +56,6 @@ export default function RegisterForm() {
         email: data.email,
         password: data.password,
         options: {
-          data: {
-            street_name: data.street_name,
-            building_number: data.building_number,
-            management_company: data.management_company || null,
-          },
           emailRedirectTo: `${window.location.origin}/auth/callback`
         }
       })
@@ -72,10 +67,29 @@ export default function RegisterForm() {
       }
 
       if (authData.user) {
-        console.log('✅ רישום הצלח! משתמש:', authData.user)
+        console.log('✅ רישום הצלח! משתמש:', authData.user.id)
         
-        // The user profile will be automatically created by Supabase triggers
-        // when the user confirms their email
+        // Create user profile manually in public.users table
+        const { error: profileError } = await supabase
+          .from('users')
+          .insert([
+            {
+              id: authData.user.id,
+              email: authData.user.email,
+              street_name: data.street_name,
+              building_number: data.building_number,
+              management_company: data.management_company || null,
+              welcome_text: ''
+            }
+          ])
+
+        if (profileError) {
+          console.error('❌ שגיאה ביצירת פרופיל:', profileError)
+          // Don't fail the registration for this
+        } else {
+          console.log('✅ פרופיל נוצר בהצלחה!')
+        }
+        
         setUser(authData.user)
         
         // Show success message
