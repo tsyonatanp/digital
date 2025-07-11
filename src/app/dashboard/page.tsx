@@ -11,6 +11,7 @@ import NoticeForm from '../../components/notices/NoticeForm'
 import ImageManager from '../../components/images/ImageManager'
 import StyleSelector from '../../components/styles/StyleSelector'
 import { Database } from '../../lib/supabase'
+import { useRouter } from 'next/navigation'
 
 type Notice = Database['public']['Tables']['notices']['Row']
 
@@ -36,20 +37,58 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('profile')
   const [showNoticeForm, setShowNoticeForm] = useState(false)
   const [editingNotice, setEditingNotice] = useState<Notice | null>(null)
+  const router = useRouter()
+
+  useEffect(() => {
+    const checkAuthAndRedirect = async () => {
+      try {
+        // בדיקת token בlocal storage
+        const skipRedirect = localStorage.getItem('skipAutoRedirect')
+        if (skipRedirect) {
+          console.log('🔓 נמצא דגל עקיפת הפניה')
+          return
+        }
+
+        // בדיקת session
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          console.error('❌ שגיאה בבדיקת session:', error)
+          router.push('/login')
+          return
+        }
+
+        if (!session) {
+          console.log('❌ לא נמצא session - מעבר להתחברות')
+          router.push('/login')
+          return
+        }
+
+        // אם יש session תקף, מפנה ל-TV
+        console.log('✅ נמצא session תקף - מפנה ל-TV')
+        router.push(`/tv/${session.user.id}`)
+      } catch (err) {
+        console.error('💥 שגיאה בבדיקת הרשאות:', err)
+        router.push('/login')
+      }
+    }
+
+    checkAuthAndRedirect()
+  }, [router])
 
   useEffect(() => {
     console.log('🏠 Dashboard: בדיקת משתמש:', user)
     
     if (!user) {
       console.log('❌ אין משתמש - מעבר להתחברות')
-      window.location.href = '/login'
+      router.push('/login')
       return
     }
 
     console.log('✅ יש משתמש - טעינת פרופיל')
     console.log('📧 אימייל משתמש:', user.email)
     fetchProfile()
-  }, [user])
+  }, [user, router])
 
   const fetchProfile = async () => {
     try {
@@ -89,7 +128,7 @@ export default function Dashboard() {
       await supabase.auth.signOut()
     }
     setUser(null)
-    window.location.href = '/login'
+    router.push('/login')
   }
 
   const handleAddNotice = () => {
