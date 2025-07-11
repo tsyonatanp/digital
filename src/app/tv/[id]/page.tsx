@@ -96,65 +96,31 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
 
         setImages(imagesData || [])
 
-        // Fetch style with detailed logging
-        console.log('🎨 מנסה לטעון סגנון עבור משתמש:', resolvedParams.id)
-        let { data: styleData, error: styleError } = await supabase
-          .from('styles')
-          .select('*')
-          .eq('user_id', resolvedParams.id)
-          .single()
-
-        // If no style exists, create one
-        if (styleError && styleError.code === 'PGRST116') {
-          console.log('🔧 לא נמצא סגנון, יוצר חדש למשתמש:', resolvedParams.id)
-          const { data: newStyleData, error: createError } = await supabase
+        // Fetch style
+        let styleData = null;
+        let styleError = null;
+        try {
+          const { data, error } = await supabase
             .from('styles')
-            .insert([
-              {
-                user_id: resolvedParams.id,
-                background_color: '#FFFFFF',
-                text_color: '#000000',
-                layout_type: 'standard',
-                text_size: 'normal',
-                weather_enabled: true,
-                news_enabled: true,
-                slide_duration: 5000
-              }
-            ])
-            .select()
-            .single()
-
-          if (createError) {
-            console.error('❌ שגיאה ביצירת סגנון חדש:', createError)
-          } else {
-            console.log('✅ סגנון חדש נוצר:', newStyleData)
-            styleData = newStyleData
-            styleError = null
-          }
+            .select('*')
+            .eq('user_id', resolvedParams.id)
+            .single();
+          styleData = data;
+          styleError = error;
+        } catch (err) {
+          styleError = err;
         }
 
-        if (styleError) {
-          console.error('❌ שגיאה באחזור הסגנון:', styleError)
-          console.error('❌ פרטי השגיאה:', JSON.stringify(styleError, null, 2))
-          console.error('❌ סוג השגיאה:', typeof styleError)
-          console.error('❌ מפתחות השגיאה:', Object.keys(styleError))
-          
-          // Create default style - always create when there's an error
-          console.log('📝 יוצר סגנון ברירת מחדל בגלל שגיאה')
-          const defaultStyle = {
-            background_color: '#FFFFFF',
-            text_color: '#000000',
-            layout_type: 'standard',
-            text_size: 'normal',
-            weather_enabled: true,
-            news_enabled: true,
-            slide_duration: 5000
-          }
-          setStyle(defaultStyle as any)
-        } else {
-          console.log('✅ סגנון נטען בהצלחה:', styleData)
-          setStyle(styleData)
-        }
+        if (styleData) {
+          setStyle(styleData);
+                 } else {
+           // ברירת מחדל
+           setStyle({
+             background_color: '#FFFFFF',
+             text_color: '#000000',
+             slide_duration: 5000
+           } as any);
+         }
 
         setLoading(false)
       } catch (error) {
@@ -223,60 +189,71 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
 
   // הוספת useEffect לטעינת ווידג'ט מזג האוויר
   useEffect(() => {
-    if (!user) return // ממתין עד שיש נתוני משתמש
+    if (!user || !weatherContainerRef.current) return
+    
+    console.log('🌤️ טוען ווידג\'ט מזג האוויר עבור:', user.street_name)
     
     const loadWeatherWidget = () => {
-      console.log('🌤️ טוען ווידג\'ט מזג האוויר עבור:', user.street_name)
+      const weatherContainer = weatherContainerRef.current
+      if (!weatherContainer) return
+
+      // ניקוי קודם
+      weatherContainer.innerHTML = ''
       
       // מוחק סקריפטים קיימים
       const existingScript = document.getElementById('weatherwidget-io-js')
       if (existingScript) {
         existingScript.remove()
       }
-      
-      // מוחק div קיים
-      const existingDiv = document.getElementById('ww_168a241545936')
-      if (existingDiv) {
-        existingDiv.remove()
-      }
 
-      // יוצר div חדש
+      // יוצר div חדש לווידג'ט
       const widgetDiv = document.createElement('div')
-      widgetDiv.id = 'ww_168a241545936'
+      widgetDiv.id = 'ww_' + Date.now() // מזהה ייחודי
       widgetDiv.className = 'weatherwidget-io'
       widgetDiv.setAttribute('data-label_1', 'מזג האוויר')
-      widgetDiv.setAttribute('data-label_2', user.street_name || 'גלבוע')
+      widgetDiv.setAttribute('data-label_2', user.street_name || 'תל אביב')
       widgetDiv.setAttribute('data-theme', 'pure')
       widgetDiv.setAttribute('data-basecolor', '#FFFFFF')
       widgetDiv.setAttribute('data-textcolor', '#000000')
+      widgetDiv.setAttribute('data-highcolor', '#FF0000')
+      widgetDiv.setAttribute('data-lowcolor', '#0000FF')
+      widgetDiv.setAttribute('data-suncolor', '#FFD700')
+      widgetDiv.setAttribute('data-mooncolor', '#CCCCCC')
+      widgetDiv.setAttribute('data-cloudcolor', '#CCCCCC')
+      widgetDiv.setAttribute('data-cloudfill', '#FFFFFF')
+      widgetDiv.setAttribute('data-raincolor', '#0066CC')
+      widgetDiv.setAttribute('data-snowcolor', '#FFFFFF')
       widgetDiv.innerHTML = 'טוען מזג אוויר...'
       
       // מוסיף לקונטיינר
-      const weatherContainer = weatherContainerRef.current
-      if (weatherContainer) {
-        weatherContainer.innerHTML = '' // ניקוי
-        weatherContainer.appendChild(widgetDiv)
-        console.log('✅ ווידג\'ט נוסף לקונטיינר')
-      } else {
-        console.error('❌ לא נמצא weather-container')
-        return
-      }
+      weatherContainer.appendChild(widgetDiv)
+      console.log('✅ ווידג\'ט נוסף לקונטיינר')
 
       // טוען את הסקריפט
       const script = document.createElement('script')
       script.id = 'weatherwidget-io-js'
       script.src = 'https://weatherwidget.io/js/widget.min.js'
       script.async = true
-      script.onload = () => console.log('✅ ווידג\'ט מזג אוויר נטען')
+              script.onload = () => {
+          console.log('✅ ווידג\'ט מזג אוויר נטען')
+          // מאלץ את הווידג'ט להתחיל
+          if ((window as any).__weatherwidget_init) {
+            (window as any).__weatherwidget_init()
+          }
+        }
       script.onerror = () => console.error('❌ שגיאה בטעינת ווידג\'ט מזג אוויר')
       document.head.appendChild(script)
     }
 
     // השהיה קצרה לוודא שה-DOM מוכן
-    const timer = setTimeout(loadWeatherWidget, 500)
+    const timer = setTimeout(loadWeatherWidget, 1000)
 
     return () => {
       clearTimeout(timer)
+      const script = document.getElementById('weatherwidget-io-js')
+      if (script) {
+        script.remove()
+      }
     }
   }, [user])
 
