@@ -35,6 +35,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   const [currentNewsIndex, setCurrentNewsIndex] = useState(0)
   const clickCount = useRef(0)
   const lastClickTime = useRef(0)
+  const weatherContainerRef = useRef<HTMLDivElement>(null)
 
   // Resolve params (could be Promise or object)
   useEffect(() => {
@@ -88,7 +89,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         const { data: styleData, error: styleError } = await supabase
           .from('styles')
           .select('*')
-          .eq('id', resolvedParams.id)
+          .eq('user_id', resolvedParams.id)
           .single()
 
         if (styleError) {
@@ -206,7 +207,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       widgetDiv.innerHTML = 'טוען מזג אוויר...'
       
       // מוסיף לקונטיינר
-      const weatherContainer = document.getElementById('weather-container')
+      const weatherContainer = weatherContainerRef.current
       if (weatherContainer) {
         weatherContainer.innerHTML = '' // ניקוי
         weatherContainer.appendChild(widgetDiv)
@@ -313,7 +314,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
               {user.welcome_text}
             </div>
           )}
-          <div id="weather-container" className="mt-8 w-full text-center">
+          <div ref={weatherContainerRef} className="mt-8 w-full text-center">
             {/* הווידג'ט יטען כאן אוטומטית */}
           </div>
         </div>
