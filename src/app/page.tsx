@@ -2,20 +2,8 @@
 
 import Link from 'next/link'
 import { Building2, Monitor, Users } from 'lucide-react'
-import { useEffect } from 'react'
-import { useAuthStore } from '../store/auth'
-import { useRouter } from 'next/navigation';
 
 export default function HomePage() {
-  const user = useAuthStore((state) => state.user)
-  const router = useRouter();
-
-  useEffect(() => {
-    const skip = localStorage.getItem('skipAutoRedirect')
-    if (user && user.id && !skip) {
-      router.push(`/tv/${user.id}`)
-    }
-  }, [user, router])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">

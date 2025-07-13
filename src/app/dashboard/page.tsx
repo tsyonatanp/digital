@@ -11,7 +11,7 @@ import NoticeForm from '../../components/notices/NoticeForm'
 import ImageManager from '../../components/images/ImageManager'
 import StyleSelector from '../../components/styles/StyleSelector'
 import { Database } from '../../lib/supabase'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 
 type Notice = Database['public']['Tables']['notices']['Row']
 
@@ -38,17 +38,11 @@ export default function Dashboard() {
   const [showNoticeForm, setShowNoticeForm] = useState(false)
   const [editingNotice, setEditingNotice] = useState<Notice | null>(null)
   const router = useRouter()
+  const pathname = usePathname();
 
   useEffect(() => {
     const checkAuthAndRedirect = async () => {
       try {
-        // בדיקת token בlocal storage
-        const skipRedirect = localStorage.getItem('skipAutoRedirect')
-        if (skipRedirect) {
-          console.log('🔓 נמצא דגל עקיפת הפניה')
-          return
-        }
-
         // בדיקת session
         const { data: { session }, error } = await supabase.auth.getSession()
         
@@ -63,10 +57,6 @@ export default function Dashboard() {
           router.push('/login')
           return
         }
-
-        // אם יש session תקף, מפנה ל-TV
-        console.log('✅ נמצא session תקף - מפנה ל-TV')
-        router.push(`/tv/${session.user.id}`)
       } catch (err) {
         console.error('💥 שגיאה בבדיקת הרשאות:', err)
         router.push('/login')

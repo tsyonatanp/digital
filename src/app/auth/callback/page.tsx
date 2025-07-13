@@ -1,11 +1,12 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 
 export default function AuthCallbackPage() {
   const router = useRouter()
+  const pathname = usePathname();
 
   useEffect(() => {
     const handleAuthCallback = async () => {
@@ -24,7 +25,7 @@ export default function AuthCallbackPage() {
       }
 
       console.log('אימות הצליח:', session.user.email)
-      router.push(`/tv/${session.user.id}`)
+      router.push('/dashboard')
     }
 
     handleAuthCallback()

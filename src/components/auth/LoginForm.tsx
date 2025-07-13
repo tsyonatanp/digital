@@ -28,7 +28,7 @@ export default function LoginForm() {
 
   useEffect(() => {
     if (user) {
-      router.push(`/tv/${user.id}`);
+      router.push('/dashboard');
     }
   }, [user, router]);
 
