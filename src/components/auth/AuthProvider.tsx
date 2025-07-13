@@ -22,7 +22,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       console.log('🔐 בדיקת session ראשונית...')
       try {
         const { data: { session } } = await supabase.auth.getSession()
-        
+        console.log('🔍 תוצאת getSession:', session)
         if (session) {
           console.log('✅ נמצא session קיים:', session.user.email)
           setUser(session.user)
@@ -34,14 +34,17 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         console.error('❌ שגיאה בבדיקת session:', error)
         setUser(null)
       }
-      
       setLoading(false)
+      // לוג נוסף: מצב store אחרי טעינה
+      setTimeout(() => {
+        const storeUser = useAuthStore.getState().user;
+        console.log('🟢 מצב user ב-store אחרי טעינה:', storeUser);
+      }, 1000);
     }
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('🔄 שינוי במצב האימות:', event)
-      
+      console.log('🔄 שינוי במצב האימות:', event, session)
       if (session) {
         console.log('✅ משתמש התחבר:', session.user.email)
         setUser(session.user)
@@ -49,6 +52,11 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         console.log('❌ משתמש התנתק')
         setUser(null)
       }
+      // לוג נוסף: מצב store אחרי שינוי auth
+      setTimeout(() => {
+        const storeUser = useAuthStore.getState().user;
+        console.log('🟢 מצב user ב-store אחרי שינוי auth:', storeUser);
+      }, 1000);
     })
 
     getInitialSession()

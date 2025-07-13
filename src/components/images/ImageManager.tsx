@@ -102,6 +102,7 @@ export default function ImageManager({ userId }: ImageManagerProps) {
         .from('images')
         .insert({
           filename: fileName,
+          original_name: selectedFile.name, // הוספתי שדה חובה!
           url: urlData.publicUrl,
           size_bytes: selectedFile.size,
           mime_type: selectedFile.type,
@@ -265,8 +266,8 @@ export default function ImageManager({ userId }: ImageManagerProps) {
               >
                 <div className="aspect-video bg-gray-100 relative">
                   <img
-                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/building-images/${image.filename}`}
-                    alt={image.filename}
+                    src={image.url ? image.url : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/building-images/${image.filename}`}
+                    alt={image.original_name || image.filename}
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition-all flex items-center justify-center">
