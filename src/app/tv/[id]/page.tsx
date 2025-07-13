@@ -1,9 +1,8 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { Database } from '../../../lib/supabase'
-import { useRef } from 'react'
 
 type User = Database['public']['Tables']['users']['Row']
 type Notice = Database['public']['Tables']['notices']['Row']
@@ -190,13 +189,13 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   const [weatherData, setWeatherData] = useState({
     current: 'שמשי 22°C',
     forecast: [
-      { day: 'ה', icon: '☀️', high: '30', low: '22' },
-      { day: 'ו', icon: '⛅', high: '31', low: '24' },
-      { day: 'ש', icon: '☀️', high: '30', low: '22' },
-      { day: 'א', icon: '🌧️', high: '29', low: '22' },
-      { day: 'ב', icon: '☀️', high: '30', low: '22' },
-      { day: 'ג', icon: '☀️', high: '30', low: '23' },
-      { day: 'ד', icon: '☀️', high: '30', low: '23' }
+      { day: 'ה', icon: '⛅', high: '27', low: '19' },
+      { day: 'ו', icon: '🌧️', high: '24', low: '20' },
+      { day: 'ש', icon: '🌧️', high: '26', low: '21' },
+      { day: 'א', icon: '☀️', high: '28', low: '22' },
+      { day: 'ב', icon: '☀️', high: '30', low: '23' },
+      { day: 'ג', icon: '⛅', high: '29', low: '22' },
+      { day: 'ד', icon: '☀️', high: '31', low: '24' }
     ]
   })
 
@@ -206,7 +205,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     
     const fetchWeather = async () => {
       try {
-        const location = user.street_name || 'תל אביב'
+        const location = 'תל אביב' // תמיד תל אביב
         const response = await fetch(`https://wttr.in/${encodeURIComponent(location)}?format=j1`)
         const data = await response.json()
         
@@ -308,9 +307,9 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       }}
       onClick={handleSecretClick}
     >
-      <div className="flex" style={{ height: 'calc(100vh - 10rem)' }}>
-        {/* Right Column - Welcome Text & Clock (25%) */}
-        <div className="w-1/4 p-4 flex flex-col items-center justify-center border-l">
+      <div className="flex" style={{ height: 'calc(100vh - 12rem)' }}>
+        {/* Right Column - Welcome Text & Clock (28%) */}
+        <div className="p-4 flex flex-col items-center border-l" style={{ width: '28%' }}>
           <h1 className="text-4xl font-bold mb-8 text-center">
             ברוכים הבאים
             <br />
@@ -329,8 +328,8 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           )}
         </div>
 
-        {/* Center Column - Image Carousel (50%) */}
-        <div className="w-2/4 h-full flex items-center justify-center">
+        {/* Center Column - Image Carousel (44%) */}
+        <div className="h-full flex items-center justify-center" style={{ width: '44%' }}>
           {images.length > 0 ? (
             <img
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/images/${images[currentImageIndex].filename}`}
@@ -344,60 +343,113 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           )}
         </div>
 
-        {/* Left Column - News Feed (25%) */}
-        <div className="w-1/4 p-4 flex flex-col items-center justify-center border-r">
-          <h2 className="text-3xl font-bold mb-6 text-center">חדשות</h2>
-          {news.length > 0 ? (
-            <div className="text-xl text-center">
-              <a href={news[currentNewsIndex].link} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                {news[currentNewsIndex].title}
-              </a>
-              <div className="text-sm mt-2 text-gray-600">
-                מקור: {news[currentNewsIndex].source}
-              </div>
-            </div>
-          ) : (
-            <div className="text-center">
-              טוען חדשות...
-            </div>
-          )}
+        {/* Left Column - News Feed (28%) */}
+        <div className="p-4 flex flex-col items-center border-r overflow-y-auto" style={{ width: '28%' }}>
+          <NewsColumn news={news} />
         </div>
       </div>
 
       {/* Weather Widget - Full Width at Bottom */}
-      <div className="w-full h-40 bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 relative overflow-hidden">
-        <div className="flex items-center h-full px-6 text-white">
-          {/* Current Weather */}
-          <div className="flex items-center space-x-4 ml-6">
-            <div className="text-right">
-              <div className="text-lg font-medium">מזג האוויר ב{user?.street_name || 'תל אביב'}</div>
-              <div className="text-2xl font-bold">{weatherData.current}</div>
-            </div>
-          </div>
-          
-          {/* Weekly Forecast */}
-          <div className="flex flex-1 justify-center items-center space-x-8 mx-8">
-            {weatherData.forecast.map((day, index) => (
-              <div key={index} className="text-center">
-                <div className="text-sm font-medium mb-1">{day.day}</div>
-                <div className="text-2xl mb-1">{day.icon}</div>
-                <div className="text-sm">
-                  <div className="font-bold">{day.high}°</div>
-                  <div className="text-blue-200">{day.low}°</div>
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          {/* Current Temperature Large Display */}
-          <div className="text-left ml-6">
-            <div className="text-6xl font-bold">
-              {weatherData.current.match(/\d+/)?.[0] || '22'}°C
-            </div>
-            <div className="text-lg">☀️</div>
-          </div>
-        </div>
+      <div className="w-full h-40 relative overflow-hidden flex items-center justify-center px-1 text-white mt-4">
+        <WeatherWidget />
       </div>
     </div>
   )
+} 
+
+// קומפוננטת עמודת חדשות מעוצבת עם קרוסלה לכל קבוצה
+function NewsColumn({ news }) {
+  // קיבוץ לפי מקור
+  const grouped = news.reduce((acc, item) => {
+    const key = item.source || 'אחר';
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(item);
+    return acc;
+  }, {});
+
+  // סדר הצגה מועדף
+  const order = ['ynet', 'ONE', 'גלובס']; // ynet למעלה, ONE באמצע, גלובס למטה
+  const sourceTitles = {
+    ynet: 'ynet - חדשות חמות',
+    ONE: 'ONE - עדכוני ספורט',
+    'גלובס': 'גלובס - כלכלה ומסחר',
+  };
+
+  // אינדקס נוכחי לכל קבוצה
+  const [indexes, setIndexes] = useState({ ynet: 0, ONE: 0, 'גלובס': 0 });
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    intervalRef.current = setInterval(() => {
+      setIndexes(prev => {
+        const next = { ...prev };
+        order.forEach(src => {
+          const arr = grouped[src] || [];
+          next[src] = arr.length > 0 ? (prev[src] + 1) % arr.length : 0;
+        });
+        return next;
+      });
+    }, 5000);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [news.length]);
+
+  return (
+    <div className="w-full space-y-8">
+      {order.map((src) => (
+        <div key={src} className="min-h-24 flex flex-col justify-center">
+          <div className="text-xl font-bold text-red-700 mb-2 flex items-center justify-between">
+            <span>{sourceTitles[src]}</span>
+            <span className="flex-1 border-b-2 border-red-200 ml-2"></span>
+          </div>
+          <div className="flex items-center min-h-[2.5em]">
+            {grouped[src]?.length ? (
+              <>
+                <span className="mt-2 mr-2 text-xs text-blue-400">•</span>
+                <span className="text-base font-bold text-gray-900" style={{fontWeight: 500}}>
+                  {grouped[src][indexes[src]]?.title}
+                </span>
+              </>
+            ) : (
+              <span className="text-gray-400">אין עדכונים</span>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// קומפוננטת ווידג'ט מזג אוויר חיצוני
+function WeatherWidget() {
+  const widgetRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // מנקה קודם כל ווידג'ט קודם
+    if (widgetRef.current) {
+      widgetRef.current.innerHTML = '';
+    }
+    // יוצר div עם id
+    const div = document.createElement('div');
+    div.id = 'ww_4d5960b26d6ed';
+    div.setAttribute('v', '1.3');
+    div.setAttribute('loc', 'auto');
+    div.setAttribute('a', '{"t":"responsive","lang":"he","sl_lpl":1,"ids":[],"font":"Arial","sl_ics":"one_a","sl_sot":"celsius","cl_bkg":"#512DA8","cl_font":"#FFFFFF","cl_cloud":"#FFFFFF","cl_persp":"#81D4FA","cl_sun":"#FFC107","cl_moon":"#FFC107","cl_thund":"#FF5722","cl_odd":"#0000000a","el_nme":3}');
+    div.innerHTML = '<a href="https://weatherwidget.org/" id="ww_4d5960b26d6ed_u" target="_blank">Weather widget html</a>';
+    widgetRef.current?.appendChild(div);
+
+    // מוסיף סקריפט
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = 'https://app3.weatherwidget.org/js/?id=ww_4d5960b26d6ed';
+    widgetRef.current?.appendChild(script);
+
+    // ניקוי
+    return () => {
+      if (widgetRef.current) widgetRef.current.innerHTML = '';
+    };
+  }, []);
+
+  return (
+    <div ref={widgetRef} className="w-full h-full flex items-center justify-center" />
+  );
 } 

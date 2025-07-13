@@ -16,7 +16,7 @@ export async function GET() {
     // Fetch from Ynet
     try {
       const feed = await parser.parseURL(RSS_FEEDS.ynet)
-      const items = feed.items.slice(0, 5).map(item => ({
+      const items = feed.items.slice(0, 7).map(item => ({
         title: item.title || '',
         link: item.link || '',
         source: 'ynet'
@@ -27,22 +27,39 @@ export async function GET() {
     }
 
     // Fetch from ONE
+    let oneNewsAdded = false;
     try {
       const feed = await parser.parseURL(RSS_FEEDS.one)
-      const items = feed.items.slice(0, 5).map(item => ({
+      const items = feed.items.slice(0, 7).map(item => ({
         title: item.title || '',
         link: item.link || '',
         source: 'ONE'
       }))
       newsItems.push(...items)
+      oneNewsAdded = items.length > 0;
     } catch (error) {
       console.error('Error fetching from ONE:', error)
+    }
+    // אם לא נוספו חדשות ONE, ננסה rss2json
+    if (!oneNewsAdded) {
+      try {
+        const oneResponse = await fetch("https://api.rss2json.com/v1/api.json?rss_url=https://www.one.co.il/rss/");
+        const oneData = await oneResponse.json();
+        const oneNewsItems = (oneData.items || []).slice(0, 7).map(item => ({
+          title: item.title || '',
+          link: item.link || '',
+          source: 'ONE'
+        }));
+        newsItems.push(...oneNewsItems);
+      } catch (err) {
+        console.error('Error fetching ONE from rss2json:', err);
+      }
     }
 
     // Fetch from Globes
     try {
       const feed = await parser.parseURL(RSS_FEEDS.globes)
-      const items = feed.items.slice(0, 5).map(item => ({
+      const items = feed.items.slice(0, 7).map(item => ({
         title: item.title || '',
         link: item.link || '',
         source: 'גלובס'
