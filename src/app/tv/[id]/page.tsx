@@ -34,6 +34,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   const [currentNewsIndex, setCurrentNewsIndex] = useState(0)
   const clickCount = useRef(0)
   const lastClickTime = useRef(0)
+  const [hebrewDate, setHebrewDate] = useState('');
 
   // Resolve params (could be Promise or object)
   useEffect(() => {
@@ -247,6 +248,27 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     return () => clearInterval(interval)
   }, [user])
 
+  // קריאה ל-hebcal API
+  useEffect(() => {
+    const fetchHebrewDate = async () => {
+      try {
+        const date = new Date();
+        const yyyy = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
+        const url = `https://www.hebcal.com/converter?gy=${yyyy}&gm=${mm}&gd=${dd}&g2h=1&cfg=json&strict=1`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data && data.hebrew) {
+          setHebrewDate(data.hebrew);
+        }
+      } catch (e) {
+        setHebrewDate('');
+      }
+    };
+    fetchHebrewDate();
+  }, []);
+
   const handleSecretClick = () => {
     const now = Date.now()
     if (now - lastClickTime.current < 1000) {
@@ -310,16 +332,16 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       <div className="flex" style={{ height: 'calc(100vh - 12rem)' }}>
         {/* Right Column - Welcome Text & Clock (28%) */}
         <div className="p-4 flex flex-col items-center border-l" style={{ width: '28%' }}>
-          <h1 className="text-4xl font-bold mb-8 text-center">
-            ברוכים הבאים
-            <br />
-            {user?.street_name} {user?.building_number}
-          </h1>
-          <div className="text-6xl font-bold mb-4 text-center">
-            {formatTime(currentTime)}
-          </div>
-          <div className="text-2xl text-center mb-8">
-            {formatHebrewDate(currentTime)}
+          <div className="rounded-xl shadow-lg bg-white/80 px-6 py-4 mb-8 w-full text-center" style={{maxWidth: 420}}>
+            <h1 className="text-4xl md:text-5xl font-bold text-blue-800 mb-2">ברוכים הבאים {user?.street_name} {user?.building_number}</h1>
+            <div className="text-xl md:text-2xl text-gray-800 mb-1 flex flex-col md:flex-row items-center justify-center gap-2">
+              {hebrewDate && <span className="font-bold">{hebrewDate}</span>}
+              <span className="mx-2">|</span>
+              <span>{formatHebrewDate(currentTime)}</span>
+            </div>
+            <div className="text-4xl md:text-5xl font-extrabold text-blue-900 mt-2">
+              {formatTime(currentTime)}
+            </div>
           </div>
           {user?.welcome_text && (
             <div className="mt-4 text-xl text-center">
@@ -332,7 +354,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         <div className="h-full flex items-center justify-center" style={{ width: '44%' }}>
           {images.length > 0 ? (
             <img
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/images/${images[currentImageIndex].filename}`}
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/building-images/${images[currentImageIndex].filename}`}
               alt="תמונת בניין"
               className="max-w-full max-h-full object-contain"
             />

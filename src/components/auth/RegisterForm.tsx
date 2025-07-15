@@ -85,7 +85,9 @@ export default function RegisterForm() {
 
         if (profileError) {
           console.error('❌ שגיאה ביצירת פרופיל:', profileError)
-          // Don't fail the registration for this
+          setError('שגיאה ביצירת פרופיל: ' + profileError.message)
+          setLoading(false)
+          return; // עצור כאן, אל תמשיך
         } else {
           console.log('✅ פרופיל נוצר בהצלחה!')
         }
