@@ -51,12 +51,18 @@ export default function RegisterForm() {
     try {
       console.log('🔐 רישום משתמש חדש:', data.email)
       
-      // Sign up with Supabase
+      // Sign up with Supabase - this will create the user in auth.users
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          data: {
+            street_name: data.street_name,
+            building_number: data.building_number,
+            management_company: data.management_company || null,
+            welcome_text: ''
+          }
         }
       })
 
@@ -69,27 +75,19 @@ export default function RegisterForm() {
       if (authData.user) {
         console.log('✅ רישום הצלח! משתמש:', authData.user.id)
         
-        // Create user profile manually in public.users table
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert([
-            {
-              id: authData.user.id,
-              email: authData.user.email,
-              street_name: data.street_name,
-              building_number: data.building_number,
-              management_company: data.management_company || null,
-              welcome_text: ''
-            }
-          ])
+        // Update user metadata with additional info
+        const { error: updateError } = await supabase.auth.updateUser({
+          data: {
+            street_name: data.street_name,
+            building_number: data.building_number,
+            management_company: data.management_company || null,
+            welcome_text: ''
+          }
+        })
 
-        if (profileError) {
-          console.error('❌ שגיאה ביצירת פרופיל:', profileError)
-          setError('שגיאה ביצירת פרופיל: ' + profileError.message)
-          setLoading(false)
-          return; // עצור כאן, אל תמשיך
-        } else {
-          console.log('✅ פרופיל נוצר בהצלחה!')
+        if (updateError) {
+          console.error('❌ שגיאה בעדכון מטא-דאטה:', updateError)
+          // לא נעצור כאן כי ההרשמה הצליחה
         }
         
         setUser(authData.user)
