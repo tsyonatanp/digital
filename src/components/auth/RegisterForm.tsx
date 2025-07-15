@@ -75,19 +75,25 @@ export default function RegisterForm() {
       if (authData.user) {
         console.log('✅ רישום הצלח! משתמש:', authData.user.id)
         
-        // Update user metadata with additional info
-        const { error: updateError } = await supabase.auth.updateUser({
-          data: {
-            street_name: data.street_name,
-            building_number: data.building_number,
-            management_company: data.management_company || null,
-            welcome_text: ''
-          }
-        })
+        // Create user profile in public.users table
+        const { error: profileError } = await supabase
+          .from('users')
+          .insert([
+            {
+              id: authData.user.id,
+              email: authData.user.email,
+              street_name: data.street_name,
+              building_number: data.building_number,
+              management_company: data.management_company || null,
+              welcome_text: ''
+            }
+          ])
 
-        if (updateError) {
-          console.error('❌ שגיאה בעדכון מטא-דאטה:', updateError)
+        if (profileError) {
+          console.error('❌ שגיאה ביצירת פרופיל:', profileError)
           // לא נעצור כאן כי ההרשמה הצליחה
+        } else {
+          console.log('✅ פרופיל נוצר בהצלחה!')
         }
         
         setUser(authData.user)
