@@ -367,6 +367,11 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         <div className="p-4 flex flex-col items-center border-l" style={{ width: '28%' }}>
           <div className="rounded-xl shadow-lg bg-white/80 px-6 py-4 mb-8 w-full text-center" style={{maxWidth: 420}}>
             <h1 className="text-4xl md:text-5xl font-bold text-blue-800 mb-2">ברוכים הבאים {user?.street_name} {user?.building_number}</h1>
+            {user?.management_company && (
+              <div className="text-lg md:text-xl text-gray-700 mb-2">
+                חברת ניהול: {user.management_company}
+              </div>
+            )}
             <div className="text-xl md:text-2xl text-gray-800 mb-1 flex flex-col md:flex-row items-center justify-center gap-2">
               {hebrewDate && <span className="font-bold">{hebrewDate}</span>}
               <span className="mx-2">|</span>
@@ -401,18 +406,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
                   {notices[currentNoticeIndex]?.priority === 'high' && (
                     <div className="text-red-600 text-sm font-bold">⚠️ עדיפות גבוהה</div>
                   )}
-                  {notices.length > 1 && (
-                    <div className="flex justify-center mt-4 space-x-2">
-                      {notices.map((_, index) => (
-                        <div
-                          key={index}
-                          className={`w-2 h-2 rounded-full transition-colors duration-300 ${
-                            index === currentNoticeIndex ? 'bg-red-600' : 'bg-gray-300'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  )}
+
                 </div>
               ) : (
                 <div className="text-center text-gray-500">
