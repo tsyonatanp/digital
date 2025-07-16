@@ -20,7 +20,7 @@ interface UserProfile {
   email: string
   street_name: string
   building_number: string
-  apartment_number: string
+  management_company: string | null
   management_contact: string
   management_phone: string
   management_email: string
@@ -37,6 +37,7 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('profile')
   const [showNoticeForm, setShowNoticeForm] = useState(false)
   const [editingNotice, setEditingNotice] = useState<Notice | null>(null)
+  const [editingProfile, setEditingProfile] = useState<UserProfile | null>(null)
   const router = useRouter()
   const pathname = usePathname();
 
@@ -100,6 +101,7 @@ export default function Dashboard() {
       if (profile) {
         console.log('✅ פרופיל נטען בהצלחה:', profile)
         setProfile(profile)
+        setEditingProfile(profile)
       } else {
         console.log('❌ לא נמצא פרופיל למשתמש')
         setError('לא נמצא פרופיל למשתמש זה')
@@ -159,6 +161,33 @@ export default function Dashboard() {
       setProfile(prev => prev ? { ...prev, selected_style_id: styleId } : null)
     } catch (err) {
       setError('שגיאה בעדכון הסגנון הנבחר')
+    }
+  }
+
+  const handleSaveProfile = async () => {
+    if (!editingProfile) return
+
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({
+          management_contact: editingProfile.management_contact,
+          management_phone: editingProfile.management_phone,
+          management_email: editingProfile.management_email
+        })
+        .eq('id', editingProfile.id)
+
+      if (error) {
+        setError('שגיאה בשמירת השינויים')
+        return
+      }
+
+      // Update local state
+      setProfile(editingProfile)
+      setError('')
+      // אפשר להוסיף הודעת הצלחה כאן
+    } catch (err) {
+      setError('שגיאה בשמירת השינויים')
     }
   }
 
@@ -307,22 +336,12 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    מספר דירה
-                  </label>
-                  <input
-                    type="text"
-                    value={profile.apartment_number}
-                    disabled
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     איש קשר לניהול
                   </label>
                   <input
                     type="text"
-                    value={profile.management_contact}
+                    value={editingProfile?.management_contact || ''}
+                    onChange={(e) => setEditingProfile(prev => prev ? { ...prev, management_contact: e.target.value } : null)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
@@ -332,7 +351,8 @@ export default function Dashboard() {
                   </label>
                   <input
                     type="tel"
-                    value={profile.management_phone}
+                    value={editingProfile?.management_phone || ''}
+                    onChange={(e) => setEditingProfile(prev => prev ? { ...prev, management_phone: e.target.value } : null)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
@@ -342,13 +362,17 @@ export default function Dashboard() {
                   </label>
                   <input
                     type="email"
-                    value={profile.management_email}
+                    value={editingProfile?.management_email || ''}
+                    onChange={(e) => setEditingProfile(prev => prev ? { ...prev, management_email: e.target.value } : null)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               </div>
               <div className="mt-6">
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                <button 
+                  onClick={handleSaveProfile}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                >
                   שמור שינויים
                 </button>
               </div>
