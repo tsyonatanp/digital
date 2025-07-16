@@ -417,19 +417,8 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
             {formatTime(currentTime)}
           </div>
           <div className="text-lg text-gray-600">
-            {/* Digital Snow Effect */}
-            <div className="flex space-x-1">
-              {[...Array(12)].map((_, i) => (
-                <div
-                  key={i}
-                  className="w-1 h-1 bg-blue-400 rounded-full animate-pulse"
-                  style={{
-                    animationDelay: `${i * 0.15}s`,
-                    animationDuration: '2s'
-                  }}
-                />
-              ))}
-            </div>
+            {/* Weather Icon */}
+            <div className="text-2xl">☀️</div>
           </div>
         </div>
       </div>
