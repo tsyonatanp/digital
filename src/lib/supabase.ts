@@ -73,7 +73,7 @@ export type Database = {
           title: string
           content: string
           is_active: boolean
-          priority: number
+          priority: 'low' | 'medium' | 'high'
           expires_at: string | null
           created_at: string
           updated_at: string
@@ -84,7 +84,7 @@ export type Database = {
           title: string
           content: string
           is_active?: boolean
-          priority?: number
+          priority?: 'low' | 'medium' | 'high'
           expires_at?: string | null
           created_at?: string
           updated_at?: string
@@ -95,7 +95,7 @@ export type Database = {
           title?: string
           content?: string
           is_active?: boolean
-          priority?: number
+          priority?: 'low' | 'medium' | 'high'
           expires_at?: string | null
           created_at?: string
           updated_at?: string
