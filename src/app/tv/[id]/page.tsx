@@ -314,6 +314,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         const url = `https://www.hebcal.com/shabbat?cfg=json&lg=h&gy=${yyyy}&gm=${mm}&gd=${dd}&m=50&s=on&b=18&M=on&year=h`;
         const res = await fetch(url);
         const data = await res.json();
+        console.log('Shabbat data:', data); // Debug
         if (data && data.items && data.items.length > 0) {
           const shabbat = data.items.find((item: any) => item.category === 'candles');
           if (shabbat) {
@@ -328,9 +329,11 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
               minute: '2-digit'
             });
             setShabbatTimes({ entry: entryTime, exit: exitTimeStr });
+            console.log('Shabbat times set:', { entry: entryTime, exit: exitTimeStr }); // Debug
           }
         }
       } catch (e) {
+        console.error('Error fetching shabbat times:', e);
         setShabbatTimes({ entry: '', exit: '' });
       }
     };
@@ -398,31 +401,31 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       onClick={handleSecretClick}
     >
       {/* Top Bar - Welcome, Date & Time in one row */}
-      <div className="w-full bg-gradient-to-r from-blue-50 to-white shadow-lg px-8 py-4 flex items-center justify-between border-b-2 border-blue-200">
-        <div className="flex items-center space-x-6">
-          <div className="text-2xl font-bold text-blue-800">
+      <div className="w-full bg-gradient-to-r from-blue-50 to-white shadow-lg px-6 py-3 flex items-center justify-between border-b-2 border-blue-200">
+        <div className="flex items-center space-x-4">
+          <div className="text-3xl font-bold text-blue-800">
             ברוכים הבאים {user?.street_name} {user?.building_number}
           </div>
-          <div className="text-lg text-gray-700 flex items-center gap-3">
+          <div className="text-xl text-gray-700 flex items-center gap-2">
             {hebrewDate && <span className="font-bold text-blue-600">{hebrewDate}</span>}
             <span className="text-blue-400">|</span>
             <span className="text-gray-600">{formatHebrewDate(currentTime)}</span>
           </div>
         </div>
-        <div className="flex items-center space-x-6">
-          <div className="text-3xl font-extrabold text-blue-900">
+        <div className="flex items-center space-x-4">
+          <div className="text-4xl font-extrabold text-blue-900">
             {formatTime(currentTime)}
           </div>
           <div className="text-lg text-gray-600">
             {/* Digital Snow Effect */}
             <div className="flex space-x-1">
-              {[...Array(8)].map((_, i) => (
+              {[...Array(12)].map((_, i) => (
                 <div
                   key={i}
-                  className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
+                  className="w-1 h-1 bg-blue-400 rounded-full animate-pulse"
                   style={{
-                    animationDelay: `${i * 0.1}s`,
-                    animationDuration: '1.5s'
+                    animationDelay: `${i * 0.15}s`,
+                    animationDuration: '2s'
                   }}
                 />
               ))}
@@ -532,27 +535,29 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           <NewsColumn news={news} />
           
           {/* Shabbat Times Card in Left Column */}
-          {(shabbatTimes.entry || shabbatTimes.exit) && (
-            <div className="rounded-xl shadow-lg bg-gradient-to-br from-blue-50 to-blue-100 p-4 mt-4 w-full">
-              <div className="text-lg font-bold text-blue-800 mb-3 text-center border-b-2 border-blue-200 pb-2">
-                זמני שבת
-              </div>
-              <div className="space-y-2">
-                {shabbatTimes.entry && (
-                  <div className="flex justify-between items-center text-blue-700">
-                    <span className="font-medium">כניסת שבת:</span>
-                    <span className="font-bold">{shabbatTimes.entry}</span>
-                  </div>
-                )}
-                {shabbatTimes.exit && (
-                  <div className="flex justify-between items-center text-blue-700">
-                    <span className="font-medium">יציאת שבת:</span>
-                    <span className="font-bold">{shabbatTimes.exit}</span>
-                  </div>
-                )}
-              </div>
+          <div className="rounded-xl shadow-lg bg-gradient-to-br from-blue-50 to-blue-100 p-4 mt-4 w-full">
+            <div className="text-lg font-bold text-blue-800 mb-3 text-center border-b-2 border-blue-200 pb-2">
+              זמני שבת
             </div>
-          )}
+            <div className="space-y-2">
+              {shabbatTimes.entry ? (
+                <div className="flex justify-between items-center text-blue-700">
+                  <span className="font-medium">כניסת שבת:</span>
+                  <span className="font-bold">{shabbatTimes.entry}</span>
+                </div>
+              ) : (
+                <div className="text-center text-blue-600">טוען זמני שבת...</div>
+              )}
+              {shabbatTimes.exit ? (
+                <div className="flex justify-between items-center text-blue-700">
+                  <span className="font-medium">יציאת שבת:</span>
+                  <span className="font-bold">{shabbatTimes.exit}</span>
+                </div>
+              ) : (
+                <div className="text-center text-blue-600">טוען זמני שבת...</div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
