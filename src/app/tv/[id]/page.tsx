@@ -362,24 +362,39 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       }}
       onClick={handleSecretClick}
     >
-      <div className="flex" style={{ height: 'calc(100vh - 12rem)' }}>
-        {/* Right Column - Welcome Text & Clock (28%) */}
+      {/* Top Bar - Welcome, Date & Time */}
+      <div className="w-full bg-white/90 shadow-lg px-6 py-4 text-center">
+        <h1 className="text-3xl md:text-4xl font-bold text-blue-800 mb-2">ברוכים הבאים {user?.street_name} {user?.building_number}</h1>
+        <div className="text-lg md:text-xl text-gray-800 mb-1 flex flex-col md:flex-row items-center justify-center gap-2">
+          {hebrewDate && <span className="font-bold">{hebrewDate}</span>}
+          <span className="mx-2">|</span>
+          <span>{formatHebrewDate(currentTime)}</span>
+        </div>
+        <div className="text-3xl md:text-4xl font-extrabold text-blue-900">
+          {formatTime(currentTime)}
+        </div>
+      </div>
+
+      <div className="flex" style={{ height: 'calc(100vh - 12rem - 8rem)' }}>
+        {/* Right Column - Management Info & Notices (28%) */}
         <div className="p-4 flex flex-col items-center border-l" style={{ width: '28%' }}>
+          {/* Management Info Card */}
           <div className="rounded-xl shadow-lg bg-white/80 px-6 py-4 mb-8 w-full text-center" style={{maxWidth: 420}}>
-            <h1 className="text-4xl md:text-5xl font-bold text-blue-800 mb-2">ברוכים הבאים {user?.street_name} {user?.building_number}</h1>
             {user?.management_company && (
               <div className="text-lg md:text-xl text-gray-700 mb-2">
                 חברת ניהול: {user.management_company}
               </div>
             )}
-            <div className="text-xl md:text-2xl text-gray-800 mb-1 flex flex-col md:flex-row items-center justify-center gap-2">
-              {hebrewDate && <span className="font-bold">{hebrewDate}</span>}
-              <span className="mx-2">|</span>
-              <span>{formatHebrewDate(currentTime)}</span>
-            </div>
-            <div className="text-4xl md:text-5xl font-extrabold text-blue-900 mt-2">
-              {formatTime(currentTime)}
-            </div>
+            {user?.management_contact && (
+              <div className="text-base md:text-lg text-gray-600 mb-1">
+                איש קשר: {user.management_contact}
+              </div>
+            )}
+            {user?.management_phone && (
+              <div className="text-base md:text-lg text-gray-600">
+                טלפון: {user.management_phone}
+              </div>
+            )}
           </div>
           
           {/* הודעות ועד */}
