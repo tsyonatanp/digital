@@ -400,25 +400,28 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       }}
       onClick={handleSecretClick}
     >
-      {/* Top Bar - Welcome, Date & Time in one row */}
-      <div className="w-full bg-gradient-to-r from-blue-50 to-white shadow-lg px-6 py-3 flex items-center justify-between border-b-2 border-blue-200">
-        <div className="flex items-center space-x-4">
-          <div className="text-3xl font-bold text-blue-800">
+      {/* Top Bar - Modern Design */}
+      <div className="w-full bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center space-x-6">
+          <div className="text-2xl font-bold text-white">
             ברוכים הבאים {user?.street_name} {user?.building_number}
           </div>
-          <div className="text-xl text-gray-700 flex items-center gap-2">
-            {hebrewDate && <span className="font-bold text-blue-600">{hebrewDate}</span>}
-            <span className="text-blue-400">|</span>
-            <span className="text-gray-600">{formatHebrewDate(currentTime)}</span>
+          <div className="w-px h-8 bg-white/30"></div>
+          <div className="text-lg text-white/90 flex items-center gap-2">
+            {hebrewDate && <span className="font-bold">{hebrewDate}</span>}
+            <span className="text-white/60">|</span>
+            <span>{formatHebrewDate(currentTime)}</span>
           </div>
         </div>
-        <div className="flex items-center space-x-4">
-          <div className="text-4xl font-extrabold text-blue-900">
+        <div className="flex items-center space-x-6">
+          <div className="text-3xl font-bold text-white flex items-center gap-2">
+            <span className="text-xl">🕐</span>
             {formatTime(currentTime)}
           </div>
-          <div className="text-lg text-gray-600">
-            {/* Weather Icon */}
-            <div className="text-2xl">☀️</div>
+          <div className="w-px h-8 bg-white/30"></div>
+          <div className="text-white/90">
+            <div className="text-sm font-medium mb-1">שלג דיגיטלי</div>
+            <div className="text-xs text-white/70">Digital Snow</div>
           </div>
         </div>
       </div>
