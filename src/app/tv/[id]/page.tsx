@@ -32,6 +32,8 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   const [loading, setLoading] = useState(true)
   const [news, setNews] = useState<NewsItem[]>([])
   const [currentNewsIndex, setCurrentNewsIndex] = useState(0)
+  const [currentNoticeIndex, setCurrentNoticeIndex] = useState(0)
+  const [noticePaused, setNoticePaused] = useState(false)
   const clickCount = useRef(0)
   const lastClickTime = useRef(0)
   const [hebrewDate, setHebrewDate] = useState('');
@@ -176,6 +178,17 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
 
     return () => clearInterval(newsTimer)
   }, [news.length])
+
+  useEffect(() => {
+    // Auto-advance notices
+    const noticeTimer = setInterval(() => {
+      if (notices.length > 0 && !noticePaused) {
+        setCurrentNoticeIndex((prev) => (prev + 1) % notices.length)
+      }
+    }, 4000) // Change notice every 4 seconds
+
+    return () => clearInterval(noticeTimer)
+  }, [notices.length, noticePaused])
 
   useEffect(() => {
     // Fetch news data
@@ -362,23 +375,46 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           {/* הודעות ועד */}
           {notices.length > 0 && (
             <div className="w-full mb-4">
-              <div className="bg-red-600 text-white px-4 py-2 rounded-t-lg text-center font-bold">
-                הודעות ועד
+              <div className="bg-red-600 text-white px-4 py-2 rounded-t-lg text-center font-bold flex items-center justify-center">
+                <span>הודעות ועד</span>
+                {noticePaused && (
+                  <span className="mr-2 text-yellow-300">⏸️</span>
+                )}
               </div>
-              <div className="bg-white/90 p-4 rounded-b-lg">
-                {notices.map((notice, index) => (
-                  <div key={notice.id} className="mb-3 last:mb-0">
-                    <div className="font-bold text-lg text-gray-800 mb-1">
-                      {notice.title}
-                    </div>
-                    <div className="text-gray-700">
-                      {notice.content}
-                    </div>
-                    {notice.priority === 'high' && (
-                      <div className="text-red-600 text-sm font-bold mt-1">⚠️ עדיפות גבוהה</div>
-                    )}
+              <div 
+                className="bg-white/90 p-4 rounded-b-lg min-h-[200px] flex flex-col justify-center overflow-hidden cursor-pointer"
+                onClick={() => setNoticePaused(!noticePaused)}
+                title={noticePaused ? "לחץ להפעלת קרוסלה" : "לחץ לעצירת קרוסלה"}
+              >
+                <div 
+                  className="text-center transition-all duration-500 ease-in-out"
+                  style={{
+                    transform: `translateY(-${currentNoticeIndex * 100}%)`,
+                    opacity: 1
+                  }}
+                >
+                  <div className="font-bold text-lg text-gray-800 mb-2">
+                    {notices[currentNoticeIndex].title}
                   </div>
-                ))}
+                  <div className="text-gray-700 mb-3">
+                    {notices[currentNoticeIndex].content}
+                  </div>
+                  {notices[currentNoticeIndex].priority === 'high' && (
+                    <div className="text-red-600 text-sm font-bold">⚠️ עדיפות גבוהה</div>
+                  )}
+                  {notices.length > 1 && (
+                    <div className="flex justify-center mt-4 space-x-2">
+                      {notices.map((_, index) => (
+                        <div
+                          key={index}
+                          className={`w-2 h-2 rounded-full transition-colors duration-300 ${
+                            index === currentNoticeIndex ? 'bg-red-600' : 'bg-gray-300'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
