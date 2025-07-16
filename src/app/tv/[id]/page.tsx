@@ -81,6 +81,21 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         console.log('✅ נתוני משתמש נטענו:', userData)
         setUser(userData)
 
+        // Fetch active notices
+        const { data: noticesData, error: noticesError } = await supabase
+          .from('notices')
+          .select('*')
+          .eq('user_id', resolvedParams.id)
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+
+        if (noticesError) {
+          console.error('Error fetching notices:', noticesError)
+        }
+
+        console.log('✅ הודעות נטענו:', noticesData)
+        setNotices(noticesData || [])
+
         // Fetch active images
         const { data: imagesData, error: imagesError } = await supabase
           .from('images')
@@ -343,6 +358,31 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
               {formatTime(currentTime)}
             </div>
           </div>
+          
+          {/* הודעות ועד */}
+          {notices.length > 0 && (
+            <div className="w-full mb-4">
+              <div className="bg-red-600 text-white px-4 py-2 rounded-t-lg text-center font-bold">
+                הודעות ועד
+              </div>
+              <div className="bg-white/90 p-4 rounded-b-lg">
+                {notices.map((notice, index) => (
+                  <div key={notice.id} className="mb-3 last:mb-0">
+                    <div className="font-bold text-lg text-gray-800 mb-1">
+                      {notice.title}
+                    </div>
+                    <div className="text-gray-700">
+                      {notice.content}
+                    </div>
+                    {notice.priority === 'high' && (
+                      <div className="text-red-600 text-sm font-bold mt-1">⚠️ עדיפות גבוהה</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
           {user?.welcome_text && (
             <div className="mt-4 text-xl text-center">
               {user.welcome_text}
