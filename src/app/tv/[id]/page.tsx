@@ -398,15 +398,15 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       onClick={handleSecretClick}
     >
       {/* Top Bar - Welcome, Date & Time in one row */}
-      <div className="w-full bg-white/90 shadow-lg px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+      <div className="w-full bg-gradient-to-r from-blue-50 to-white shadow-lg px-8 py-4 flex items-center justify-between border-b-2 border-blue-200">
+        <div className="flex items-center space-x-6">
           <div className="text-2xl font-bold text-blue-800">
             ברוכים הבאים {user?.street_name} {user?.building_number}
           </div>
-          <div className="text-lg text-gray-800 flex items-center gap-2">
-            {hebrewDate && <span className="font-bold">{hebrewDate}</span>}
-            <span>|</span>
-            <span>{formatHebrewDate(currentTime)}</span>
+          <div className="text-lg text-gray-700 flex items-center gap-3">
+            {hebrewDate && <span className="font-bold text-blue-600">{hebrewDate}</span>}
+            <span className="text-blue-400">|</span>
+            <span className="text-gray-600">{formatHebrewDate(currentTime)}</span>
           </div>
         </div>
         <div className="flex items-center space-x-6">
@@ -416,13 +416,13 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           <div className="text-lg text-gray-600">
             {/* Digital Snow Effect */}
             <div className="flex space-x-1">
-              {[...Array(6)].map((_, i) => (
+              {[...Array(8)].map((_, i) => (
                 <div
                   key={i}
-                  className="w-1 h-1 bg-blue-400 rounded-full animate-pulse"
+                  className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
                   style={{
-                    animationDelay: `${i * 0.2}s`,
-                    animationDuration: '2s'
+                    animationDelay: `${i * 0.1}s`,
+                    animationDuration: '1.5s'
                   }}
                 />
               ))}
@@ -527,9 +527,32 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           )}
         </div>
 
-        {/* Left Column - News Feed (28%) */}
+        {/* Left Column - News Feed & Shabbat Times (28%) */}
         <div className="p-4 flex flex-col items-center border-r overflow-y-auto" style={{ width: '28%' }}>
           <NewsColumn news={news} />
+          
+          {/* Shabbat Times Card in Left Column */}
+          {(shabbatTimes.entry || shabbatTimes.exit) && (
+            <div className="rounded-xl shadow-lg bg-gradient-to-br from-blue-50 to-blue-100 p-4 mt-4 w-full">
+              <div className="text-lg font-bold text-blue-800 mb-3 text-center border-b-2 border-blue-200 pb-2">
+                זמני שבת
+              </div>
+              <div className="space-y-2">
+                {shabbatTimes.entry && (
+                  <div className="flex justify-between items-center text-blue-700">
+                    <span className="font-medium">כניסת שבת:</span>
+                    <span className="font-bold">{shabbatTimes.entry}</span>
+                  </div>
+                )}
+                {shabbatTimes.exit && (
+                  <div className="flex justify-between items-center text-blue-700">
+                    <span className="font-medium">יציאת שבת:</span>
+                    <span className="font-bold">{shabbatTimes.exit}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -580,15 +603,16 @@ function NewsColumn({ news }) {
   return (
     <div className="w-full space-y-4">
       {order.map((src) => (
-        <div key={src} className="rounded-xl shadow-lg bg-white/90 p-4">
-          <div className="text-lg font-bold text-red-700 mb-3 border-b-2 border-red-200 pb-2">
+        <div key={src} className="rounded-xl shadow-lg bg-gradient-to-br from-white to-gray-50 p-4 border border-gray-100">
+          <div className="text-lg font-bold text-red-700 mb-3 border-b-2 border-red-200 pb-2 flex items-center">
+            <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
             {sourceTitles[src]}
           </div>
           <div className="min-h-[3em] flex items-start">
             {grouped[src]?.length ? (
               <>
-                <span className="mt-1 mr-2 text-xs text-blue-400">•</span>
-                <span className="text-sm font-medium text-gray-900 leading-relaxed">
+                <span className="mt-1 mr-2 text-xs text-blue-500">•</span>
+                <span className="text-sm font-medium text-gray-800 leading-relaxed">
                   {grouped[src][indexes[src]]?.title}
                 </span>
               </>
