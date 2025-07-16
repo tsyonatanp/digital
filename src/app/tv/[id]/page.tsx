@@ -34,6 +34,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   const [currentNewsIndex, setCurrentNewsIndex] = useState(0)
   const [currentNoticeIndex, setCurrentNoticeIndex] = useState(0)
   const [noticePaused, setNoticePaused] = useState(false)
+  const [noticeFade, setNoticeFade] = useState(false)
   const clickCount = useRef(0)
   const lastClickTime = useRef(0)
   const [hebrewDate, setHebrewDate] = useState('');
@@ -183,7 +184,11 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     // Auto-advance notices
     const noticeTimer = setInterval(() => {
       if (notices.length > 0 && !noticePaused) {
-        setCurrentNoticeIndex((prev) => (prev + 1) % notices.length)
+        setNoticeFade(true)
+        setTimeout(() => {
+          setCurrentNoticeIndex((prev) => (prev + 1) % notices.length)
+          setNoticeFade(false)
+        }, 300)
       }
     }, 4000) // Change notice every 4 seconds
 
@@ -373,33 +378,27 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           </div>
           
           {/* הודעות ועד */}
-          {notices.length > 0 && (
-            <div className="w-full mb-4">
-              <div className="bg-red-600 text-white px-4 py-2 rounded-t-lg text-center font-bold flex items-center justify-center">
-                <span>הודעות ועד</span>
-                {noticePaused && (
-                  <span className="mr-2 text-yellow-300">⏸️</span>
-                )}
-              </div>
-              <div 
-                className="bg-white/90 p-4 rounded-b-lg min-h-[200px] flex flex-col justify-center overflow-hidden cursor-pointer"
-                onClick={() => setNoticePaused(!noticePaused)}
-                title={noticePaused ? "לחץ להפעלת קרוסלה" : "לחץ לעצירת קרוסלה"}
-              >
+          <div className="w-full mb-4">
+            <div className="bg-red-600 text-white px-4 py-2 rounded-t-lg text-center font-bold flex items-center justify-center">
+              <span>הודעות ועד</span>
+              {notices.length > 0 && noticePaused && (
+                <span className="mr-2 text-yellow-300">⏸️</span>
+              )}
+            </div>
+            <div className="bg-white/90 p-4 rounded-b-lg min-h-[200px] flex flex-col justify-center">
+              {notices.length > 0 ? (
                 <div 
-                  className="text-center transition-all duration-500 ease-in-out"
-                  style={{
-                    transform: `translateY(-${currentNoticeIndex * 100}%)`,
-                    opacity: 1
-                  }}
+                  className={`text-center transition-opacity duration-300 ${noticeFade ? 'opacity-0' : 'opacity-100'} cursor-pointer`}
+                  onClick={() => setNoticePaused(!noticePaused)}
+                  title={noticePaused ? "לחץ להפעלת קרוסלה" : "לחץ לעצירת קרוסלה"}
                 >
                   <div className="font-bold text-lg text-gray-800 mb-2">
-                    {notices[currentNoticeIndex].title}
+                    {notices[currentNoticeIndex]?.title || 'אין כותרת'}
                   </div>
                   <div className="text-gray-700 mb-3">
-                    {notices[currentNoticeIndex].content}
+                    {notices[currentNoticeIndex]?.content || 'אין תוכן'}
                   </div>
-                  {notices[currentNoticeIndex].priority === 'high' && (
+                  {notices[currentNoticeIndex]?.priority === 'high' && (
                     <div className="text-red-600 text-sm font-bold">⚠️ עדיפות גבוהה</div>
                   )}
                   {notices.length > 1 && (
@@ -415,9 +414,14 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
                     </div>
                   )}
                 </div>
-              </div>
+              ) : (
+                <div className="text-center text-gray-500">
+                  <div className="text-lg mb-2">אין הודעות להצגה</div>
+                  <div className="text-sm">הודעות חדשות יופיעו כאן</div>
+                </div>
+              )}
             </div>
-          )}
+          </div>
           
           {user?.welcome_text && (
             <div className="mt-4 text-xl text-center">
