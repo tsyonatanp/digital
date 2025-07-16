@@ -19,6 +19,7 @@ export default function NoticeList({ userId, onAddNotice, onEditNotice }: Notice
   const [notices, setNotices] = useState<Notice[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
 
   useEffect(() => {
     fetchNotices()
@@ -46,7 +47,10 @@ export default function NoticeList({ userId, onAddNotice, onEditNotice }: Notice
   }
 
   const deleteNotice = async (id: string) => {
-    if (!confirm('האם אתה בטוח שברצונך למחוק הודעה זו?')) {
+    const noticeToDelete = notices.find(n => n.id === id)
+    if (!noticeToDelete) return
+    
+    if (!confirm(`האם אתה בטוח שברצונך למחוק את ההודעה "${noticeToDelete.title}"?\n\nפעולה זו אינה הפיכה.`)) {
       return
     }
 
@@ -63,6 +67,8 @@ export default function NoticeList({ userId, onAddNotice, onEditNotice }: Notice
 
       // Refresh the list
       fetchNotices()
+      setSuccessMessage('ההודעה נמחקה בהצלחה')
+      setTimeout(() => setSuccessMessage(''), 3000)
     } catch (err) {
       setError('שגיאה במחיקת הודעה')
     }
@@ -82,6 +88,8 @@ export default function NoticeList({ userId, onAddNotice, onEditNotice }: Notice
 
       // Refresh the list
       fetchNotices()
+      setSuccessMessage(`ההודעה ${!notice.is_active ? 'הופעלה' : 'הושבתה'} בהצלחה`)
+      setTimeout(() => setSuccessMessage(''), 3000)
     } catch (err) {
       setError('שגיאה בעדכון סטטוס הודעה')
     }
@@ -111,6 +119,38 @@ export default function NoticeList({ userId, onAddNotice, onEditNotice }: Notice
     return <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">פעיל</span>
   }
 
+  const getPriorityBadge = (priority: string) => {
+    switch (priority) {
+      case 'high':
+        return (
+          <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full flex items-center gap-1">
+            <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+            גבוהה
+          </span>
+        )
+      case 'medium':
+        return (
+          <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full flex items-center gap-1">
+            <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
+            בינונית
+          </span>
+        )
+      case 'low':
+        return (
+          <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full flex items-center gap-1">
+            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+            נמוכה
+          </span>
+        )
+      default:
+        return (
+          <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full">
+            לא מוגדר
+          </span>
+        )
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -138,6 +178,12 @@ export default function NoticeList({ userId, onAddNotice, onEditNotice }: Notice
         </div>
       )}
 
+      {successMessage && (
+        <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-md">
+          {successMessage}
+        </div>
+      )}
+
       {notices.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
           <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-300" />
@@ -155,12 +201,11 @@ export default function NoticeList({ userId, onAddNotice, onEditNotice }: Notice
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     {getStatusBadge(notice)}
-                    <span className="text-sm text-gray-500">
-                      עדיפות: {notice.priority}
-                    </span>
+                    {getPriorityBadge(notice.priority)}
                   </div>
                   
-                  <p className="text-gray-900 mb-3 line-clamp-2">
+                  <h3 className="font-semibold text-gray-900 mb-2">{notice.title}</h3>
+                  <p className="text-gray-700 mb-3 line-clamp-2">
                     {notice.content}
                   </p>
                   

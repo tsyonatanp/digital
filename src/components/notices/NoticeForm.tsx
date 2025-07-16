@@ -178,10 +178,13 @@ export default function NoticeForm({ notice, userId, onSave, onCancel }: NoticeF
               {...register('priority')}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="low">נמוכה</option>
-              <option value="medium">בינונית</option>
-              <option value="high">גבוהה</option>
+              <option value="low">נמוכה - הודעות רגילות</option>
+              <option value="medium">בינונית - הודעות חשובות</option>
+              <option value="high">גבוהה - הודעות דחופות</option>
             </select>
+            <p className="mt-1 text-sm text-gray-500">
+              העדיפות תשפיע על איך ההודעה תוצג בממשק התצוגה
+            </p>
             {errors.priority && (
               <p className="mt-1 text-sm text-red-600">{errors.priority.message}</p>
             )}
