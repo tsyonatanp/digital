@@ -38,6 +38,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   const clickCount = useRef(0)
   const lastClickTime = useRef(0)
   const [hebrewDate, setHebrewDate] = useState('');
+  const [shabbatTimes, setShabbatTimes] = useState({ entry: '', exit: '' });
 
   // Resolve params (could be Promise or object)
   useEffect(() => {
@@ -302,6 +303,40 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     fetchHebrewDate();
   }, []);
 
+  // קריאה לזמני שבת
+  useEffect(() => {
+    const fetchShabbatTimes = async () => {
+      try {
+        const date = new Date();
+        const yyyy = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
+        const url = `https://www.hebcal.com/shabbat?cfg=json&lg=h&gy=${yyyy}&gm=${mm}&gd=${dd}&m=50&s=on&b=18&M=on&year=h`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data && data.items && data.items.length > 0) {
+          const shabbat = data.items.find((item: any) => item.category === 'candles');
+          if (shabbat) {
+            const entryTime = new Date(shabbat.date).toLocaleTimeString('he-IL', {
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+            const exitTime = new Date(shabbat.date);
+            exitTime.setHours(exitTime.getHours() + 25); // שבת יוצאת בערך 25 שעות אחרי כניסה
+            const exitTimeStr = exitTime.toLocaleTimeString('he-IL', {
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+            setShabbatTimes({ entry: entryTime, exit: exitTimeStr });
+          }
+        }
+      } catch (e) {
+        setShabbatTimes({ entry: '', exit: '' });
+      }
+    };
+    fetchShabbatTimes();
+  }, []);
+
   const handleSecretClick = () => {
     const now = Date.now()
     if (now - lastClickTime.current < 1000) {
@@ -362,16 +397,37 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       }}
       onClick={handleSecretClick}
     >
-      {/* Top Bar - Welcome, Date & Time */}
-      <div className="w-full bg-white/90 shadow-lg px-6 py-4 text-center">
-        <h1 className="text-3xl md:text-4xl font-bold text-blue-800 mb-2">ברוכים הבאים {user?.street_name} {user?.building_number}</h1>
-        <div className="text-lg md:text-xl text-gray-800 mb-1 flex flex-col md:flex-row items-center justify-center gap-2">
-          {hebrewDate && <span className="font-bold">{hebrewDate}</span>}
-          <span className="mx-2">|</span>
-          <span>{formatHebrewDate(currentTime)}</span>
+      {/* Top Bar - Welcome, Date & Time in one row */}
+      <div className="w-full bg-white/90 shadow-lg px-6 py-3 flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <div className="text-2xl font-bold text-blue-800">
+            ברוכים הבאים {user?.street_name} {user?.building_number}
+          </div>
+          <div className="text-lg text-gray-800 flex items-center gap-2">
+            {hebrewDate && <span className="font-bold">{hebrewDate}</span>}
+            <span>|</span>
+            <span>{formatHebrewDate(currentTime)}</span>
+          </div>
         </div>
-        <div className="text-3xl md:text-4xl font-extrabold text-blue-900">
-          {formatTime(currentTime)}
+        <div className="flex items-center space-x-6">
+          <div className="text-3xl font-extrabold text-blue-900">
+            {formatTime(currentTime)}
+          </div>
+          <div className="text-lg text-gray-600">
+            {/* Digital Snow Effect */}
+            <div className="flex space-x-1">
+              {[...Array(6)].map((_, i) => (
+                <div
+                  key={i}
+                  className="w-1 h-1 bg-blue-400 rounded-full animate-pulse"
+                  style={{
+                    animationDelay: `${i * 0.2}s`,
+                    animationDuration: '2s'
+                  }}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -379,7 +435,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         {/* Right Column - Management Info & Notices (28%) */}
         <div className="p-4 flex flex-col items-center border-l" style={{ width: '28%' }}>
           {/* Management Info Card */}
-          <div className="rounded-xl shadow-lg bg-white/80 px-6 py-4 mb-8 w-full text-center" style={{maxWidth: 420}}>
+          <div className="rounded-xl shadow-lg bg-white/80 px-6 py-4 mb-4 w-full text-center" style={{maxWidth: 420}}>
             {user?.management_company && (
               <div className="text-lg md:text-xl text-gray-700 mb-2">
                 חברת ניהול: {user.management_company}
@@ -396,6 +452,23 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
               </div>
             )}
           </div>
+
+          {/* Shabbat Times Card */}
+          {(shabbatTimes.entry || shabbatTimes.exit) && (
+            <div className="rounded-xl shadow-lg bg-blue-50 px-6 py-4 mb-4 w-full text-center" style={{maxWidth: 420}}>
+              <div className="text-lg font-bold text-blue-800 mb-2">זמני שבת</div>
+              {shabbatTimes.entry && (
+                <div className="text-base text-blue-700 mb-1">
+                  כניסת שבת: {shabbatTimes.entry}
+                </div>
+              )}
+              {shabbatTimes.exit && (
+                <div className="text-base text-blue-700">
+                  יציאת שבת: {shabbatTimes.exit}
+                </div>
+              )}
+            </div>
+          )}
           
           {/* הודעות ועד */}
           <div className="w-full mb-4">
@@ -468,7 +541,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   )
 } 
 
-// קומפוננטת עמודת חדשות מעוצבת עם קרוסלה לכל קבוצה
+// קומפוננטת עמודת חדשות מעוצבת עם כרטיסיות נפרדות
 function NewsColumn({ news }) {
   // קיבוץ לפי מקור
   const grouped = news.reduce((acc, item) => {
@@ -505,23 +578,22 @@ function NewsColumn({ news }) {
   }, [news.length]);
 
   return (
-    <div className="w-full space-y-8">
+    <div className="w-full space-y-4">
       {order.map((src) => (
-        <div key={src} className="min-h-24 flex flex-col justify-center">
-          <div className="text-xl font-bold text-red-700 mb-2 flex items-center justify-between">
-            <span>{sourceTitles[src]}</span>
-            <span className="flex-1 border-b-2 border-red-200 ml-2"></span>
+        <div key={src} className="rounded-xl shadow-lg bg-white/90 p-4">
+          <div className="text-lg font-bold text-red-700 mb-3 border-b-2 border-red-200 pb-2">
+            {sourceTitles[src]}
           </div>
-          <div className="flex items-center min-h-[2.5em]">
+          <div className="min-h-[3em] flex items-start">
             {grouped[src]?.length ? (
               <>
-                <span className="mt-2 mr-2 text-xs text-blue-400">•</span>
-                <span className="text-base font-bold text-gray-900" style={{fontWeight: 500}}>
+                <span className="mt-1 mr-2 text-xs text-blue-400">•</span>
+                <span className="text-sm font-medium text-gray-900 leading-relaxed">
                   {grouped[src][indexes[src]]?.title}
                 </span>
               </>
             ) : (
-              <span className="text-gray-400">אין עדכונים</span>
+              <span className="text-gray-400 text-sm">אין עדכונים</span>
             )}
           </div>
         </div>
