@@ -86,7 +86,19 @@ export default function StyleSelector({ userId, currentStyleId, onStyleChange }:
   }, [userId])
 
   const fetchStyles = async () => {
-    if (!supabase) return
+    if (!supabase) {
+      console.error('❌ Supabase לא זמין')
+      return
+    }
+    
+    if (!userId) {
+      console.error('❌ userId לא זמין:', userId)
+      setError('מזהה משתמש לא זמין')
+      setLoading(false)
+      return
+    }
+    
+    console.log('🔍 טוען סגנונות עבור משתמש:', userId)
     
     try {
       const { data, error } = await supabase
@@ -96,12 +108,15 @@ export default function StyleSelector({ userId, currentStyleId, onStyleChange }:
         .order('created_at', { ascending: false })
 
       if (error) {
+        console.error('❌ שגיאה בטעינת סגנונות:', error)
         setError('שגיאה בטעינת סגנונות')
         return
       }
 
+      console.log('✅ סגנונות נטענו בהצלחה:', data)
       setStyles(data || [])
     } catch (err) {
+      console.error('💥 שגיאה כללית בטעינת סגנונות:', err)
       setError('שגיאה בטעינת סגנונות')
     } finally {
       setLoading(false)
@@ -115,19 +130,21 @@ export default function StyleSelector({ userId, currentStyleId, onStyleChange }:
       const { data, error } = await supabase
         .from('styles')
         .insert({
+          user_id: userId,
           name: styleData.name,
-          description: styleData.description,
           background_color: styleData.preview.backgroundColor,
           text_color: styleData.preview.textColor,
-          font_family: 'Arial',
-          font_size: 16,
-          is_default: false,
-          slide_duration: 8
+          layout_type: 'standard',
+          text_size: 'normal',
+          weather_enabled: true,
+          news_enabled: true,
+          slide_duration: 8000
         })
         .select()
         .single()
 
       if (error) {
+        console.error('❌ שגיאה ביצירת סגנון:', error)
         setError('שגיאה ביצירת סגנון')
         return
       }
@@ -138,6 +155,7 @@ export default function StyleSelector({ userId, currentStyleId, onStyleChange }:
       // Select the new style
       onStyleChange(data.id)
     } catch (err) {
+      console.error('💥 שגיאה כללית ביצירת סגנון:', err)
       setError('שגיאה ביצירת סגנון')
     }
   }
@@ -170,7 +188,13 @@ export default function StyleSelector({ userId, currentStyleId, onStyleChange }:
   }
 
   const isPredefinedStyleUsed = (styleId: string) => {
-    return styles.some(style => style.name === predefinedStyles.find(p => p.id === styleId)?.name)
+    const predefinedStyle = predefinedStyles.find(p => p.id === styleId)
+    if (!predefinedStyle) return false
+    
+    return styles.some(style => 
+      style.background_color === predefinedStyle.preview.backgroundColor &&
+      style.text_color === predefinedStyle.preview.textColor
+    )
   }
 
   if (loading) {
@@ -201,7 +225,7 @@ export default function StyleSelector({ userId, currentStyleId, onStyleChange }:
           <div className="flex items-center gap-3">
             <Monitor className="w-5 h-5 text-blue-600" />
             <span className="text-blue-800">
-              {styles.find(s => s.id === currentStyleId)?.name || 'סגנון לא ידוע'}
+              {styles.find(s => s.id === currentStyleId) ? 'סגנון מותאם אישית' : 'סגנון לא ידוע'}
             </span>
           </div>
         </div>
@@ -214,7 +238,10 @@ export default function StyleSelector({ userId, currentStyleId, onStyleChange }:
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {predefinedStyles.map((style) => {
             const isUsed = isPredefinedStyleUsed(style.id)
-            const usedStyle = styles.find(s => s.name === style.name)
+            const usedStyle = styles.find(s => 
+              s.background_color === style.preview.backgroundColor &&
+              s.text_color === style.preview.textColor
+            )
             
             return (
               <div
@@ -317,14 +344,14 @@ export default function StyleSelector({ userId, currentStyleId, onStyleChange }:
                         className="text-sm font-medium"
                         style={{ color: style.text_color || '#1f2937' }}
                       >
-                        {style.name}
+                        סגנון מותאם
                       </span>
                     </div>
                   </div>
                   
                   <div>
-                    <h4 className="font-medium text-gray-900">{style.name}</h4>
-                    <p className="text-sm text-gray-500">גודל טקסט: {style.font_size}</p>
+                    <h4 className="font-medium text-gray-900">סגנון מותאם אישית</h4>
+                    <p className="text-sm text-gray-500">גודל טקסט: {style.text_size || 'רגיל'}</p>
                   </div>
                   
                   <div className="flex items-center justify-between">

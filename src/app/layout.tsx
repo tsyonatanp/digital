@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "../components/auth/AuthProvider";
+import ErrorBoundary from "../components/ErrorBoundary";
+import { ToastProvider } from "../components/ui/Toast";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -28,7 +30,11 @@ export default function RootLayout({
   return (
     <html lang="he" dir="rtl">
       <body className={`${inter.variable} font-sans antialiased`}>
-        <AuthProvider>{children}</AuthProvider>
+        <ErrorBoundary>
+          <ToastProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </ToastProvider>
+        </ErrorBoundary>
       </body>
     </html>
   )

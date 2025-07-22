@@ -2,8 +2,41 @@
 
 import Link from 'next/link'
 import { Building2, Monitor, Users } from 'lucide-react'
+import { useAuthStore } from '../store/auth'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function HomePage() {
+  const user = useAuthStore((state) => state.user)
+  const loading = useAuthStore((state) => state.loading)
+  const router = useRouter()
+
+  useEffect(() => {
+    // אם יש משתמש מחובר ולא בטעינה, העבר לדף התצוגה עם מזהה אישי
+    if (user && !loading) {
+      const displayId = user.id;
+      if (displayId) {
+        router.push(`/tv/${displayId}`);
+      }
+    }
+  }, [user, loading, router])
+
+  // אם עדיין בטעינה, הצג loading
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">טוען...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // אם יש משתמש מחובר, אל תציג כלום (כי הוא יועבר לדף התצוגה)
+  if (user) {
+    return null
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">

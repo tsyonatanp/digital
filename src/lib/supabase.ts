@@ -21,6 +21,28 @@ export const supabase = supabaseUrl && supabaseAnonKey
     })
   : null
 
+// Type guard to check if supabase is available
+export function isSupabaseAvailable(): supabase is NonNullable<typeof supabase> {
+  return supabase !== null
+}
+
+// Safe supabase operations
+export async function safeSupabaseOperation<T>(
+  operation: (client: NonNullable<typeof supabase>) => Promise<T>
+): Promise<{ data: T | null; error: string | null }> {
+  if (!isSupabaseAvailable()) {
+    return { data: null, error: 'Supabase client not available' }
+  }
+
+  try {
+    const data = await operation(supabase!)
+    return { data, error: null }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    return { data: null, error: errorMessage }
+  }
+}
+
 // Database types based on our schema
 export type Database = {
   public: {
@@ -145,39 +167,45 @@ export type Database = {
       styles: {
         Row: {
           id: string
+          user_id: string
           name: string
-          description: string | null
           background_color: string
           text_color: string
-          font_family: string
-          font_size: number
-          is_default: boolean
+          layout_type: string
+          text_size: string
+          weather_enabled: boolean
+          news_enabled: boolean
+          slide_duration: number
           created_at: string
-          slide_duration?: number
+          updated_at: string
         }
         Insert: {
           id?: string
+          user_id: string
           name: string
-          description?: string | null
           background_color?: string
           text_color?: string
-          font_family?: string
-          font_size?: number
-          is_default?: boolean
-          created_at?: string
+          layout_type?: string
+          text_size?: string
+          weather_enabled?: boolean
+          news_enabled?: boolean
           slide_duration?: number
+          created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
+          user_id?: string
           name?: string
-          description?: string | null
           background_color?: string
           text_color?: string
-          font_family?: string
-          font_size?: number
-          is_default?: boolean
-          created_at?: string
+          layout_type?: string
+          text_size?: string
+          weather_enabled?: boolean
+          news_enabled?: boolean
           slide_duration?: number
+          created_at?: string
+          updated_at?: string
         }
       }
     }

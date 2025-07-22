@@ -16,7 +16,7 @@ export async function GET() {
     // Fetch from Ynet
     try {
       const feed = await parser.parseURL(RSS_FEEDS.ynet)
-      const items = feed.items.slice(0, 7).map(item => ({
+      const items = feed.items.map(item => ({
         title: item.title || '',
         link: item.link || '',
         source: 'ynet'
@@ -30,7 +30,7 @@ export async function GET() {
     let oneNewsAdded = false;
     try {
       const feed = await parser.parseURL(RSS_FEEDS.one)
-      const items = feed.items.slice(0, 7).map(item => ({
+      const items = feed.items.map(item => ({
         title: item.title || '',
         link: item.link || '',
         source: 'ONE'
@@ -45,7 +45,7 @@ export async function GET() {
       try {
         const oneResponse = await fetch("https://api.rss2json.com/v1/api.json?rss_url=https://www.one.co.il/rss/");
         const oneData = await oneResponse.json();
-        const oneNewsItems = (oneData.items || []).slice(0, 7).map(item => ({
+        const oneNewsItems = (oneData.items || []).map(item => ({
           title: item.title || '',
           link: item.link || '',
           source: 'ONE'
@@ -59,7 +59,7 @@ export async function GET() {
     // Fetch from Globes
     try {
       const feed = await parser.parseURL(RSS_FEEDS.globes)
-      const items = feed.items.slice(0, 7).map(item => ({
+      const items = feed.items.map(item => ({
         title: item.title || '',
         link: item.link || '',
         source: 'גלובס'
@@ -69,12 +69,8 @@ export async function GET() {
       console.error('Error fetching from Globes:', error)
     }
 
-    // Shuffle the news items
-    const shuffledNews = newsItems
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 10)
-
-    return NextResponse.json(shuffledNews)
+    // החזר את כל החדשות ללא הגבלה
+    return NextResponse.json(newsItems)
   } catch (error) {
     console.error('Error fetching news:', error)
     return NextResponse.json({ error: 'Failed to fetch news' }, { status: 500 })

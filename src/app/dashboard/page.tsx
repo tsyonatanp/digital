@@ -69,6 +69,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     console.log('🏠 Dashboard: בדיקת משתמש:', user)
+    console.log('🏠 Dashboard: user.id:', user?.id)
     
     if (!user) {
       console.log('❌ אין משתמש - מעבר להתחברות')
@@ -78,6 +79,7 @@ export default function Dashboard() {
 
     console.log('✅ יש משתמש - טעינת פרופיל')
     console.log('📧 אימייל משתמש:', user.email)
+    console.log('🆔 מזהה משתמש:', user.id)
     fetchProfile()
   }, [user, router])
 
@@ -410,11 +412,15 @@ export default function Dashboard() {
 
           {activeTab === 'styles' && (
             <div className="p-6">
-              <StyleSelector
-                userId={user.id}
-                currentStyleId={profile.selected_style_id}
-                onStyleChange={handleStyleChange}
-              />
+              {user ? (
+                <StyleSelector
+                  userId={user.id}
+                  currentStyleId={profile.selected_style_id}
+                  onStyleChange={handleStyleChange}
+                />
+              ) : (
+                <div className="text-center text-gray-500">טוען...</div>
+              )}
             </div>
           )}
         </div>

@@ -4,10 +4,12 @@ import React, { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { supabase } from '../../lib/supabase'
-import { useAuthStore } from '../../store/auth'
+import { useAuth } from '@/hooks/useAuth'
+import { useAuthStore } from '@/store/auth'
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import { LoginFormData } from '@/types'
 
 console.log('🔐 LoginForm נטען')
 
@@ -16,21 +18,17 @@ const loginSchema = z.object({
   password: z.string().min(6, 'סיסמה חייבת להכיל לפחות 6 תווים'),
 })
 
-type LoginFormData = z.infer<typeof loginSchema>
-
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const setUser = useAuthStore((state) => state.setUser)
+  const { signIn, isLoading } = useAuth()
   const user = useAuthStore((state) => state.user)
-  const router = useRouter();
+  const router = useRouter()
 
   useEffect(() => {
     if (user) {
-      router.push('/dashboard');
+      router.push('/dashboard')
     }
-  }, [user, router]);
+  }, [user, router])
 
   const {
     register,
@@ -43,38 +41,12 @@ export default function LoginForm() {
   const onSubmit = async (data: LoginFormData) => {
     console.log('🔐 ניסיון התחברות עם:', data.email)
     
-    if (!supabase) {
-      setError('שגיאה בחיבור למערכת')
-      return
-    }
+    const result = await signIn(data.email, data.password)
     
-    setLoading(true)
-    setError('')
-
-    try {
-      const { data: authData, error } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
-      })
-
-      if (error) {
-        console.error('❌ שגיאה בהתחברות:', error)
-        setError('אימייל או סיסמה שגויים')
-        return
-      }
-
-      if (authData.user) {
-        console.log('✅ התחברות הצליחה! משתמש:', authData.user.email)
-        setUser(authData.user)
-        // useEffect יטפל בהפניה ל-TV
-      } else {
-        setError('שגיאה בהתחברות')
-      }
-    } catch (err) {
-      console.error('💥 שגיאה כללית בהתחברות:', err)
-      setError('שגיאה בהתחברות')
-    } finally {
-      setLoading(false)
+    if (result.error) {
+      console.error('❌ שגיאה בהתחברות:', result.error)
+    } else {
+      console.log('✅ התחברות הצליחה!')
     }
   }
 
@@ -151,18 +123,20 @@ export default function LoginForm() {
               )}
             </div>
           </div>
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
-              {error}
-            </div>
-          )}
           <div>
             <button
               type="submit"
-              disabled={loading}
+              disabled={isLoading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'מתחבר...' : 'התחבר'}
+              {isLoading ? (
+                <div className="flex items-center">
+                  <LoadingSpinner size="sm" color="white" className="mr-2" />
+                  מתחבר...
+                </div>
+              ) : (
+                'התחבר'
+              )}
             </button>
           </div>
           <div className="text-center">
