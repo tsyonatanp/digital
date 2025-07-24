@@ -118,7 +118,25 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
 
     const fetchData = async () => {
       try {
+        if (!supabase) {
+          console.error('❌ Supabase client לא זמין')
+          return
+        }
+        
+        // בדוק session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        if (sessionError) {
+          console.error('❌ שגיאה בבדיקת session:', sessionError)
+          return
+        }
+        
+        if (!session) {
+          console.error('❌ אין session פעיל')
+          return
+        }
+        
         console.log('🚀 התחלת טעינת נתונים עבור ID:', resolvedParams.id)
+        console.log('🔐 Session user ID:', session.user.id)
         
         // Fetch user data
         const { data: userData, error: userError } = await supabase
@@ -129,6 +147,12 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
 
         if (userError) {
           console.error('❌ שגיאה באחזור משתמש:', userError)
+          console.error('❌ פרטי השגיאה:', {
+            message: userError.message,
+            details: userError.details,
+            hint: userError.hint,
+            code: userError.code
+          })
           return
         }
 
