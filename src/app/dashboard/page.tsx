@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react'
 export const dynamic = 'force-dynamic'
 import { useAuthStore } from '../../store/auth'
 import { supabase } from '../../lib/supabase'
-import { LogOut, User, Settings, Bell, Image, Palette } from 'lucide-react'
+import { LogOut, User, Settings, Bell, Image, Palette, Users } from 'lucide-react'
 import NoticeList from '../../components/notices/NoticeList'
 import NoticeForm from '../../components/notices/NoticeForm'
 import ImageManager from '../../components/images/ImageManager'
@@ -25,6 +25,7 @@ interface UserProfile {
   management_phone: string
   management_email: string
   selected_style_id?: string | null
+  is_super_admin?: boolean
 }
 
 export default function Dashboard() {
@@ -239,6 +240,15 @@ export default function Dashboard() {
                 </svg>
                 תצוגת TV
               </button>
+              {profile.is_super_admin && (
+                <button
+                  onClick={() => router.push('/admin')}
+                  className="flex items-center px-3 py-2 text-sm text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-md border border-purple-200"
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  ניהול משתמשים
+                </button>
+              )}
               <span className="text-sm text-gray-600">{profile.email}</span>
               <button
                 onClick={handleLogout}

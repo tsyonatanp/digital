@@ -99,12 +99,20 @@ export default function HomePage() {
             </Link>
           </div>
           
-          <p className="text-sm text-gray-500 mt-6">
-            כבר יש לכם מסך? 
-            <Link href="/tv" className="text-blue-600 hover:underline mr-1">
-              צפו בתצוגה
-            </Link>
-          </p>
+                                <p className="text-sm text-gray-500 mt-6">
+                        כבר יש לכם מסך? 
+                        <Link href="/tv" className="text-blue-600 hover:underline mr-1">
+                          צפו בתצוגה
+                        </Link>
+                        {user?.is_super_admin && (
+                          <>
+                            {' | '}
+                            <Link href="/admin" className="text-purple-600 hover:underline mr-1">
+                              ניהול משתמשים
+                            </Link>
+                          </>
+                        )}
+                      </p>
         </div>
       </div>
     </div>

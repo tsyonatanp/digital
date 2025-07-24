@@ -58,6 +58,8 @@ export type Database = {
           management_phone: string | null
           management_email: string | null
           welcome_text: string | null
+          is_super_admin: boolean
+          is_active: boolean
           created_at: string
           updated_at: string
         }
@@ -71,6 +73,8 @@ export type Database = {
           management_phone?: string | null
           management_email?: string | null
           welcome_text?: string | null
+          is_super_admin?: boolean
+          is_active?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -84,6 +88,8 @@ export type Database = {
           management_phone?: string | null
           management_email?: string | null
           welcome_text?: string | null
+          is_super_admin?: boolean
+          is_active?: boolean
           created_at?: string
           updated_at?: string
         }

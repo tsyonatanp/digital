@@ -9,6 +9,8 @@ BEGIN
     building_number,
     management_company,
     welcome_text,
+    is_super_admin,
+    is_active,
     created_at,
     updated_at
   ) VALUES (
@@ -18,6 +20,8 @@ BEGIN
     COALESCE(NEW.raw_user_meta_data->>'building_number', ''),
     COALESCE(NEW.raw_user_meta_data->>'management_company', NULL),
     COALESCE(NEW.raw_user_meta_data->>'welcome_text', ''),
+    FALSE,
+    TRUE,
     NOW(),
     NOW()
   );
