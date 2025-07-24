@@ -28,6 +28,9 @@ interface User {
   management_email: string | null
   is_active: boolean
   is_super_admin: boolean
+  email_verified_at: string | null
+  email_verification_sent_at: string | null
+  trial_expires_at: string | null
   created_at: string
   last_login: string | null
 }
@@ -127,6 +130,32 @@ export default function AdminPage() {
       setError('שגיאה בעדכון סטטוס משתמש')
     } finally {
       setUpdating(null)
+    }
+  }
+
+  const handleResendVerification = async (userEmail: string) => {
+    if (!supabase) {
+      setError('Supabase client לא זמין')
+      return
+    }
+
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: userEmail,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`
+        }
+      })
+
+      if (error) {
+        setError('שגיאה בשליחת אימייל אישור')
+        return
+      }
+
+      alert('אימייל אישור נשלח בהצלחה!')
+    } catch (err) {
+      setError('שגיאה בשליחת אימייל אישור')
     }
   }
 
@@ -281,6 +310,9 @@ export default function AdminPage() {
                     תאריך רישום
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    אישור אימייל
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     סטטוס
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -334,6 +366,34 @@ export default function AdminPage() {
                         <div className="text-sm text-gray-900">
                           {formatDate(user.created_at)}
                         </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex flex-col space-y-1">
+                        {user.email_verified_at ? (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            מאושר
+                          </span>
+                        ) : (
+                          <div className="flex flex-col space-y-1">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                              <XCircle className="h-3 w-3 mr-1" />
+                              לא מאושר
+                            </span>
+                            <button
+                              onClick={() => handleResendVerification(user.email)}
+                              className="text-xs text-blue-600 hover:text-blue-800 underline"
+                            >
+                              שלח מחדש
+                            </button>
+                          </div>
+                        )}
+                        {user.trial_expires_at && (
+                          <div className="text-xs text-gray-500">
+                            ניסיון עד: {formatDate(user.trial_expires_at)}
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

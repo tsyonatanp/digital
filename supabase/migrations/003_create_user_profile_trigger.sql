@@ -11,6 +11,9 @@ BEGIN
     welcome_text,
     is_super_admin,
     is_active,
+    email_verified_at,
+    email_verification_sent_at,
+    trial_expires_at,
     created_at,
     updated_at
   ) VALUES (
@@ -21,7 +24,10 @@ BEGIN
     COALESCE(NEW.raw_user_meta_data->>'management_company', NULL),
     COALESCE(NEW.raw_user_meta_data->>'welcome_text', ''),
     FALSE,
-    TRUE,
+    FALSE,
+    NULL,
+    NOW(),
+    NOW() + INTERVAL '24 hours',
     NOW(),
     NOW()
   );
