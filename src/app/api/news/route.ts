@@ -16,7 +16,7 @@ export async function GET() {
     // Fetch from Ynet
     try {
       const feed = await parser.parseURL(RSS_FEEDS.ynet)
-      const items = feed.items.map(item => ({
+      const items = feed.items.map((item: any) => ({
         title: item.title || '',
         link: item.link || '',
         source: 'ynet'
@@ -30,7 +30,7 @@ export async function GET() {
     let oneNewsAdded = false;
     try {
       const feed = await parser.parseURL(RSS_FEEDS.one)
-      const items = feed.items.map(item => ({
+      const items = feed.items.map((item: any) => ({
         title: item.title || '',
         link: item.link || '',
         source: 'ONE'
@@ -45,7 +45,7 @@ export async function GET() {
       try {
         const oneResponse = await fetch("https://api.rss2json.com/v1/api.json?rss_url=https://www.one.co.il/rss/");
         const oneData = await oneResponse.json();
-        const oneNewsItems = (oneData.items || []).map(item => ({
+        const oneNewsItems = (oneData.items || []).map((item: any) => ({
           title: item.title || '',
           link: item.link || '',
           source: 'ONE'
@@ -59,7 +59,7 @@ export async function GET() {
     // Fetch from Globes
     try {
       const feed = await parser.parseURL(RSS_FEEDS.globes)
-      const items = feed.items.map(item => ({
+      const items = feed.items.map((item: any) => ({
         title: item.title || '',
         link: item.link || '',
         source: 'גלובס'
