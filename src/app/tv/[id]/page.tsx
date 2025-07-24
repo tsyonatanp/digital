@@ -773,7 +773,7 @@ function NewsColumn({ news, style }: { news: NewsItem[], style: Style | null }) 
         const next = { ...prev };
         order.forEach(src => {
           const arr = grouped[src] || [];
-          next[src] = arr.length > 0 ? (prev[src] + 1) % arr.length : 0;
+          next[src] = arr.length > 0 ? ((prev[src] || 0) + 1) % arr.length : 0;
         });
         return next;
       });
@@ -802,7 +802,7 @@ function NewsColumn({ news, style }: { news: NewsItem[], style: Style | null }) 
               <>
                 <span className="mt-2 mr-4 text-xl text-blue-500">•</span>
                 <span className="text-xl font-medium text-gray-800 leading-relaxed">
-                  {grouped[src][indexes[src]]?.title}
+                  {grouped[src]?.[indexes[src] || 0]?.title}
                 </span>
               </>
             ) : (

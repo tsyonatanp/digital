@@ -302,7 +302,7 @@ export default function ImageManager({ userId }: ImageManagerProps) {
                     {image.filename}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {formatFileSize(image.size_bytes)}
+                    {image.size_bytes ? formatFileSize(image.size_bytes) : 'גודל לא ידוע'}
                   </p>
                   <p className="text-xs text-gray-500">
                     {new Date(image.created_at).toLocaleDateString('he-IL')}

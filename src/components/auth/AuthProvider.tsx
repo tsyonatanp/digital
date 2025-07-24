@@ -19,6 +19,13 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
     // Get initial session
     const getInitialSession = async () => {
+      if (!supabase) {
+        console.log('❌ Supabase client לא זמין')
+        setUser(null)
+        setLoading(false)
+        return
+      }
+
       console.log('🔐 בדיקת session ראשונית...')
       try {
         const { data: { session } } = await supabase.auth.getSession()
@@ -43,6 +50,11 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     }
 
     // Listen for auth changes
+    if (!supabase) {
+      console.log('❌ Supabase client לא זמין - לא מאזין לשינויים')
+      return
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('🔄 שינוי במצב האימות:', event, session)
       if (session) {

@@ -44,6 +44,12 @@ export default function Dashboard() {
 
   useEffect(() => {
     const checkAuthAndRedirect = async () => {
+      if (!supabase) {
+        console.error('❌ Supabase client לא זמין')
+        router.push('/login')
+        return
+      }
+
       try {
         // בדיקת session
         const { data: { session }, error } = await supabase.auth.getSession()
@@ -172,7 +178,7 @@ export default function Dashboard() {
   }
 
   const handleStyleChange = async (styleId: string) => {
-    if (!profile) return
+    if (!profile || !supabase) return
 
     try {
       const { error } = await supabase
@@ -193,7 +199,7 @@ export default function Dashboard() {
   }
 
   const handleSaveProfile = async () => {
-    if (!editingProfile) return
+    if (!editingProfile || !supabase) return
 
     try {
       const { error } = await supabase
