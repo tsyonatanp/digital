@@ -60,6 +60,9 @@ export type Database = {
           welcome_text: string | null
           is_super_admin: boolean
           is_active: boolean
+          email_verified_at: string | null
+          email_verification_sent_at: string | null
+          trial_expires_at: string | null
           created_at: string
           updated_at: string
         }
@@ -75,6 +78,9 @@ export type Database = {
           welcome_text?: string | null
           is_super_admin?: boolean
           is_active?: boolean
+          email_verified_at?: string | null
+          email_verification_sent_at?: string | null
+          trial_expires_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -90,6 +96,9 @@ export type Database = {
           welcome_text?: string | null
           is_super_admin?: boolean
           is_active?: boolean
+          email_verified_at?: string | null
+          email_verification_sent_at?: string | null
+          trial_expires_at?: string | null
           created_at?: string
           updated_at?: string
         }

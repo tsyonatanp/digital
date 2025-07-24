@@ -75,37 +75,17 @@ export default function RegisterForm() {
       if (authData.user) {
         console.log('✅ רישום הצלח! משתמש:', authData.user.id)
         
-        // Create user profile in public.users table
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert([
-            {
-              id: authData.user.id,
-              email: authData.user.email,
-              street_name: data.street_name,
-              building_number: data.building_number,
-              management_company: data.management_company || null,
-              welcome_text: ''
-            }
-          ])
-
-        if (profileError) {
-          console.error('❌ שגיאה ביצירת פרופיל:', profileError)
-          // לא נעצור כאן כי ההרשמה הצליחה
-        } else {
-          console.log('✅ פרופיל נוצר בהצלחה!')
-        }
-        
-        setUser(authData.user)
+        // הפרופיל נוצר אוטומטית על ידי הטריגר
+        console.log('✅ פרופיל נוצר בהצלחה על ידי הטריגר!')
         
         // Show success message
-        setSuccess('🎉 הרשמה הושלמה בהצלחה! בדוק את האימייל שלך לאישור החשבון.')
+        setSuccess('🎉 הרשמה הושלמה בהצלחה!\n\n✅ יש לך גישה חופשית ל-24 שעות\n📧 בדוק את האימייל שלך לאישור החשבון\n⏰ אחרי 24 שעות תצטרך אישור מנהל')
         setError('')
         
-        // Redirect to login after a short delay
+        // Redirect to dashboard after a short delay
         setTimeout(() => {
-          window.location.href = '/login'
-        }, 3000)
+          window.location.href = '/dashboard'
+        }, 5000)
       }
       
     } catch (err) {
