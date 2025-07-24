@@ -50,6 +50,11 @@ export default function AdminPage() {
       return
     }
 
+    if (!supabase) {
+      setError('Supabase client לא זמין')
+      return
+    }
+
     try {
       // בדוק אם המשתמש הוא מנהל
       const { data: profile, error } = await supabase
@@ -72,6 +77,11 @@ export default function AdminPage() {
   }
 
   const fetchUsers = async () => {
+    if (!supabase) {
+      setError('Supabase client לא זמין')
+      return
+    }
+
     try {
       const { data, error } = await supabase
         .from('users')
@@ -92,6 +102,11 @@ export default function AdminPage() {
   }
 
   const handleToggleUserStatus = async (userId: string, currentStatus: boolean) => {
+    if (!supabase) {
+      setError('Supabase client לא זמין')
+      return
+    }
+
     setUpdating(userId)
     try {
       const { error } = await supabase
