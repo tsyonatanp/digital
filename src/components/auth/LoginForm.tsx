@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useAuth } from '@/hooks/useAuth'
 import { useAuthStore } from '@/store/auth'
-import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, HelpCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { LoginFormData } from '@/types'
@@ -20,7 +20,10 @@ const loginSchema = z.object({
 
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
-  const { signIn, isLoading } = useAuth()
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('')
+  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false)
+  const { signIn, resetPassword, isLoading } = useAuth()
   const user = useAuthStore((state) => state.user)
   const router = useRouter()
 
@@ -47,6 +50,24 @@ export default function LoginForm() {
       console.error('❌ שגיאה בהתחברות:', result.error)
     } else {
       console.log('✅ התחברות הצליחה!')
+    }
+  }
+
+  const handleForgotPassword = async () => {
+    if (!forgotPasswordEmail) {
+      alert('אנא הכנס את האימייל שלך')
+      return
+    }
+
+    setForgotPasswordLoading(true)
+    try {
+      const result = await resetPassword(forgotPasswordEmail)
+      if (result.success) {
+        setShowForgotPassword(false)
+        setForgotPasswordEmail('')
+      }
+    } finally {
+      setForgotPasswordLoading(false)
     }
   }
 
@@ -122,6 +143,18 @@ export default function LoginForm() {
                 <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
               )}
             </div>
+            
+            {/* Forgot Password Link */}
+            <div className="text-left">
+              <button
+                type="button"
+                onClick={() => setShowForgotPassword(true)}
+                className="text-sm text-blue-600 hover:text-blue-500 flex items-center"
+              >
+                <HelpCircle className="w-4 h-4 mr-1" />
+                שכחתי סיסמה
+              </button>
+            </div>
           </div>
           <div>
             <button
@@ -148,6 +181,67 @@ export default function LoginForm() {
             </a>
           </div>
         </form>
+
+        {/* Forgot Password Modal */}
+        {showForgotPassword && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-md w-full p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">איפוס סיסמה</h3>
+                <button
+                  onClick={() => setShowForgotPassword(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600">
+                  הכנס את האימייל שלך ונשלח לך הוראות לאיפוס הסיסמה
+                </p>
+                
+                <div>
+                  <label htmlFor="forgot-email" className="block text-sm font-medium text-gray-700 mb-2">
+                    אימייל
+                  </label>
+                  <input
+                    type="email"
+                    id="forgot-email"
+                    value={forgotPasswordEmail}
+                    onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="הכנס את האימייל שלך"
+                  />
+                </div>
+                
+                <div className="flex space-x-3">
+                  <button
+                    onClick={handleForgotPassword}
+                    disabled={forgotPasswordLoading}
+                    className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {forgotPasswordLoading ? (
+                      <div className="flex items-center justify-center">
+                        <LoadingSpinner size="sm" color="white" className="mr-2" />
+                        שולח...
+                      </div>
+                    ) : (
+                      'שלח הוראות'
+                    )}
+                  </button>
+                  
+                  <button
+                    onClick={() => setShowForgotPassword(false)}
+                    className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400"
+                  >
+                    ביטול
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
