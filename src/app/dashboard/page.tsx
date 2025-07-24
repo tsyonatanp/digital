@@ -85,8 +85,27 @@ export default function Dashboard() {
   }, [user, router])
 
   const fetchProfile = async () => {
+    if (!user || !supabase) {
+      console.error('❌ חסר user או supabase client')
+      return
+    }
+
     try {
       console.log('📡 טוען פרופיל למשתמש:', user?.id)
+      
+      // בדוק session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError) {
+        console.error('❌ שגיאה בבדיקת session:', sessionError)
+        return
+      }
+      
+      if (!session) {
+        console.error('❌ אין session פעיל')
+        return
+      }
+      
+      console.log('🔐 Session user ID:', session.user.id)
       
       // Get user profile from database
       const { data: profile, error } = await supabase
@@ -97,6 +116,12 @@ export default function Dashboard() {
       
       if (error) {
         console.error('❌ שגיאה בטעינת פרופיל:', error)
+        console.error('❌ פרטי השגיאה:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        })
         setError('שגיאה בטעינת פרופיל המשתמש')
         return
       }
