@@ -26,6 +26,11 @@ export default function NoticeList({ userId, onAddNotice, onEditNotice }: Notice
   }, [userId])
 
   const fetchNotices = async () => {
+    if (!supabase) {
+      setError('Supabase client לא זמין')
+      return
+    }
+
     try {
       const { data, error } = await supabase
         .from('notices')
@@ -47,6 +52,11 @@ export default function NoticeList({ userId, onAddNotice, onEditNotice }: Notice
   }
 
   const deleteNotice = async (id: string) => {
+    if (!supabase) {
+      setError('Supabase client לא זמין')
+      return
+    }
+
     const noticeToDelete = notices.find(n => n.id === id)
     if (!noticeToDelete) return
     
@@ -75,6 +85,11 @@ export default function NoticeList({ userId, onAddNotice, onEditNotice }: Notice
   }
 
   const toggleNoticeStatus = async (notice: Notice) => {
+    if (!supabase) {
+      setError('Supabase client לא זמין')
+      return
+    }
+
     try {
       const { error } = await supabase
         .from('notices')

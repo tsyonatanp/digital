@@ -22,7 +22,7 @@ export const supabase = supabaseUrl && supabaseAnonKey
   : null
 
 // Type guard to check if supabase is available
-export function isSupabaseAvailable(): supabase is NonNullable<typeof supabase> {
+export function isSupabaseAvailable(): boolean {
   return supabase !== null
 }
 

@@ -62,6 +62,11 @@ export default function NoticeForm({ notice, userId, onSave, onCancel }: NoticeF
   const onSubmit = async (data: NoticeFormData) => {
     if (error) return
 
+    if (!supabase) {
+      setError('Supabase client לא זמין')
+      return
+    }
+
     setLoading(true)
     try {
       const noticeData = {

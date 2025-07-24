@@ -104,14 +104,7 @@ export default function HomePage() {
                         <Link href="/tv" className="text-blue-600 hover:underline mr-1">
                           צפו בתצוגה
                         </Link>
-                        {user?.is_super_admin && (
-                          <>
-                            {' | '}
-                            <Link href="/admin" className="text-purple-600 hover:underline mr-1">
-                              ניהול משתמשים
-                            </Link>
-                          </>
-                        )}
+
                       </p>
         </div>
       </div>
