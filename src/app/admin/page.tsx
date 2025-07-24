@@ -163,17 +163,25 @@ export default function AdminPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-600 mb-4">{error}</p>
-          <button 
+          <div className="text-red-600 mb-4">
+            <XCircle className="h-12 w-12 mx-auto mb-2" />
+            <p className="text-lg font-semibold">שגיאה</p>
+            <p className="text-sm">{error}</p>
+          </div>
+          <button
             onClick={() => router.push('/dashboard')}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
           >
-            חזור לדשבורד
+            חזרה לדשבורד
           </button>
         </div>
       </div>
     )
   }
+
+  const activeUsers = users.filter(u => u.is_active)
+  const suspendedUsers = users.filter(u => !u.is_active)
+  const uniqueBuildings = new Set(users.map(u => `${u.street_name} ${u.building_number}`)).size
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -181,19 +189,24 @@ export default function AdminPage() {
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <div className="flex items-center">
-              <Users className="w-8 h-8 text-blue-600 mr-3" />
-              <h1 className="text-2xl font-bold text-gray-900">ניהול משתמשים</h1>
+            <div className="flex items-center space-x-4">
+              <h1 className="text-2xl font-bold text-gray-900 flex items-center">
+                <Users className="h-8 w-8 mr-2 text-blue-600" />
+                ניהול משתמשים
+              </h1>
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">
-                מנהל: {user?.email}
+                {user?.email} [התנתק]
+              </span>
+              <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">
+                מנהל
               </span>
               <button
                 onClick={handleLogout}
-                className="flex items-center px-3 py-2 text-sm text-gray-600 hover:text-gray-900"
+                className="bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700 flex items-center text-sm"
               >
-                <LogOut className="w-4 h-4 mr-1" />
+                <LogOut className="h-4 w-4 mr-1" />
                 התנתק
               </button>
             </div>
@@ -201,19 +214,12 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
-            {error}
-          </div>
-        )}
-
-        {/* Stats */}
+      {/* Stats */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
-              <Users className="w-8 h-8 text-blue-600" />
+              <Users className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">סה"כ משתמשים</p>
                 <p className="text-2xl font-bold text-gray-900">{users.length}</p>
@@ -223,43 +229,37 @@ export default function AdminPage() {
           
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
-              <CheckCircle className="w-8 h-8 text-green-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">משתמשים פעילים</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {users.filter(u => u.is_active).length}
-                </p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <XCircle className="w-8 h-8 text-red-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">משתמשים מושעים</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {users.filter(u => !u.is_active).length}
-                </p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <Building className="w-8 h-8 text-purple-600" />
+              <Building className="h-8 w-8 text-green-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">בניינים</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {new Set(users.map(u => `${u.street_name} ${u.building_number}`)).size}
-                </p>
+                <p className="text-2xl font-bold text-gray-900">{uniqueBuildings}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <CheckCircle className="h-8 w-8 text-green-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">משתמשים פעילים</p>
+                <p className="text-2xl font-bold text-gray-900">{activeUsers.length}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <XCircle className="h-8 w-8 text-red-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">משתמשים מושעים</p>
+                <p className="text-2xl font-bold text-gray-900">{suspendedUsers.length}</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Users Table */}
-        <div className="bg-white shadow rounded-lg overflow-hidden">
+        <div className="bg-white rounded-lg shadow">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-lg font-medium text-gray-900">רשימת משתמשים</h2>
           </div>
@@ -289,104 +289,84 @@ export default function AdminPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {users.map((userItem) => (
-                  <tr key={userItem.id} className="hover:bg-gray-50">
+                {users.map((user) => (
+                  <tr key={user.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10">
-                          <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                            <Mail className="h-5 w-5 text-blue-600" />
-                          </div>
-                        </div>
-                        <div className="mr-4">
+                        <Mail className="h-4 w-4 text-blue-500 mr-2" />
+                        <div>
                           <div className="text-sm font-medium text-gray-900">
-                            {userItem.email}
+                            {user.email}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {userItem.is_super_admin ? 'מנהל' : 'משתמש רגיל'}
+                            {user.is_super_admin ? 'מנהל' : 'משתמש רגיל'}
                           </div>
                         </div>
                       </div>
                     </td>
-                    
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {userItem.street_name} {userItem.building_number}
-                      </div>
-                      {userItem.management_company && (
-                        <div className="text-sm text-gray-500">
-                          {userItem.management_company}
+                      <div className="flex items-center">
+                        <Building className="h-4 w-4 text-gray-400 mr-2" />
+                        <div className="text-sm text-gray-900">
+                          {user.street_name} {user.building_number}
                         </div>
-                      )}
+                      </div>
                     </td>
-                    
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {userItem.management_contact && (
+                        {user.management_contact && (
                           <div className="flex items-center mb-1">
-                            <Users className="w-4 h-4 mr-1 text-gray-400" />
-                            {userItem.management_contact}
+                            <Users className="h-4 w-4 text-gray-400 mr-2" />
+                            {user.management_contact}
                           </div>
                         )}
-                        {userItem.management_phone && (
-                          <div className="flex items-center mb-1">
-                            <Phone className="w-4 h-4 mr-1 text-gray-400" />
-                            {userItem.management_phone}
-                          </div>
-                        )}
-                        {userItem.management_email && (
+                        {user.management_phone && (
                           <div className="flex items-center">
-                            <Mail className="w-4 h-4 mr-1 text-gray-400" />
-                            {userItem.management_email}
+                            <Phone className="h-4 w-4 text-gray-400 mr-2" />
+                            {user.management_phone}
                           </div>
                         )}
                       </div>
                     </td>
-                    
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {formatDate(userItem.created_at)}
-                      </div>
-                      {userItem.last_login && (
-                        <div className="text-sm text-gray-500">
-                          כניסה אחרונה: {formatDate(userItem.last_login)}
+                      <div className="flex items-center">
+                        <Calendar className="h-4 w-4 text-gray-400 mr-2" />
+                        <div className="text-sm text-gray-900">
+                          {formatDate(user.created_at)}
                         </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {user.is_active ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          <CheckCircle className="h-4 w-4 mr-1" />
+                          פעיל
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                          <XCircle className="h-4 w-4 mr-1" />
+                          מושעה
+                        </span>
                       )}
                     </td>
-                    
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        userItem.is_active 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {userItem.is_active ? 'פעיל' : 'מושעה'}
-                      </span>
-                    </td>
-                    
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
-                        onClick={() => handleToggleUserStatus(userItem.id, userItem.is_active)}
-                        disabled={updating === userItem.id}
-                        className={`inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-white ${
-                          userItem.is_active
-                            ? 'bg-red-600 hover:bg-red-700'
-                            : 'bg-green-600 hover:bg-green-700'
-                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                        onClick={() => handleToggleUserStatus(user.id, user.is_active)}
+                        disabled={updating === user.id}
+                        className={`inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium ${
+                          user.is_active
+                            ? 'bg-red-100 text-red-800 hover:bg-red-200'
+                            : 'bg-green-100 text-green-800 hover:bg-green-200'
+                        } disabled:opacity-50`}
                       >
-                        {updating === userItem.id ? (
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        ) : userItem.is_active ? (
-                          <>
-                            <XCircle className="w-4 h-4 mr-1" />
-                            השעה
-                          </>
+                        {updating === user.id ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                        ) : user.is_active ? (
+                          <XCircle className="h-4 w-4 mr-1" />
                         ) : (
-                          <>
-                            <CheckCircle className="w-4 h-4 mr-1" />
-                            הפעל
-                          </>
+                          <CheckCircle className="h-4 w-4 mr-1" />
                         )}
+                        {user.is_active ? 'השעה' : 'הפעל'}
                       </button>
                     </td>
                   </tr>
