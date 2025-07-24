@@ -10,6 +10,12 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     const handleAuthCallback = async () => {
+      if (!supabase) {
+        console.error('Supabase client לא זמין')
+        router.push('/login?error=client')
+        return
+      }
+
       const { data: { session }, error } = await supabase.auth.getSession()
 
       if (error) {
