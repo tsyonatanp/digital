@@ -5,13 +5,53 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
 // Only create client if environment variables are available
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('❌ משתני סביבה חסרים:')
+  console.error('NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? 'מוגדר' : 'חסר')
+  console.error('NEXT_PUBLIC_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'מוגדר' : 'חסר')
+  console.error('אנא צור קובץ .env.local עם המשתנים הנדרשים')
+}
+
 export const supabase = supabaseUrl && supabaseAnonKey 
   ? createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: true,
-        flowType: 'pkce'
+        flowType: 'pkce',
+        storage: {
+          getItem: (key) => {
+            try {
+              const item = localStorage.getItem(key)
+              if (item) {
+                const parsed = JSON.parse(item)
+                // בדוק שהטוקן לא פג תוקף
+                if (parsed.expires_at && Date.now() > parsed.expires_at) {
+                  localStorage.removeItem(key)
+                  return null
+                }
+              }
+              return item
+            } catch (error) {
+              console.error('Error reading from storage:', error)
+              return null
+            }
+          },
+          setItem: (key, value) => {
+            try {
+              localStorage.setItem(key, value)
+            } catch (error) {
+              console.error('Error writing to storage:', error)
+            }
+          },
+          removeItem: (key) => {
+            try {
+              localStorage.removeItem(key)
+            } catch (error) {
+              console.error('Error removing from storage:', error)
+            }
+          }
+        }
       },
       global: {
         headers: {
@@ -110,8 +150,6 @@ export type Database = {
           title: string
           content: string
           is_active: boolean
-          priority: 'low' | 'medium' | 'high'
-          expires_at: string | null
           created_at: string
           updated_at: string
         }
@@ -121,8 +159,6 @@ export type Database = {
           title: string
           content: string
           is_active?: boolean
-          priority?: 'low' | 'medium' | 'high'
-          expires_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -132,8 +168,6 @@ export type Database = {
           title?: string
           content?: string
           is_active?: boolean
-          priority?: 'low' | 'medium' | 'high'
-          expires_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -143,12 +177,11 @@ export type Database = {
           id: string
           user_id: string
           filename: string
-          original_name: string
-          url: string
+          original_name: string | null
+          url: string | null
           size_bytes: number | null
           mime_type: string | null
           is_active: boolean
-          display_duration: number
           created_at: string
           updated_at: string
         }
@@ -156,12 +189,11 @@ export type Database = {
           id?: string
           user_id: string
           filename: string
-          original_name: string
-          url: string
+          original_name?: string | null
+          url?: string | null
           size_bytes?: number | null
           mime_type?: string | null
           is_active?: boolean
-          display_duration?: number
           created_at?: string
           updated_at?: string
         }
@@ -169,16 +201,16 @@ export type Database = {
           id?: string
           user_id?: string
           filename?: string
-          original_name?: string
-          url?: string
+          original_name?: string | null
+          url?: string | null
           size_bytes?: number | null
           mime_type?: string | null
           is_active?: boolean
-          display_duration?: number
           created_at?: string
           updated_at?: string
         }
       }
+      
       styles: {
         Row: {
           id: string
@@ -191,6 +223,7 @@ export type Database = {
           weather_enabled: boolean
           news_enabled: boolean
           slide_duration: number
+
           created_at: string
           updated_at: string
         }

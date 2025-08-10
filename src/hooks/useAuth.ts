@@ -3,6 +3,7 @@ import { useAuthStore } from '@/store/auth'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/components/ui/Toast'
 import { useRouter } from 'next/navigation'
+import { logger } from '@/lib/logger'
 
 export function useAuth() {
   const { user, setUser, setLoading } = useAuthStore()
@@ -27,6 +28,9 @@ export function useAuth() {
       })
 
       if (error) {
+        // Log failed login attempt
+        logger.failedLogin(email, 'unknown', 'unknown')
+        
         addToast({
           type: 'error',
           title: 'שגיאה בהתחברות',

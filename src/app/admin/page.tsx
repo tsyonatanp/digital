@@ -14,8 +14,10 @@ import {
   Building,
   Mail,
   Phone,
-  Calendar
+  Calendar,
+  Shield
 } from 'lucide-react'
+import SecurityDashboard from '../../components/admin/SecurityDashboard'
 
 interface User {
   id: string
@@ -41,6 +43,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [updating, setUpdating] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<'users' | 'security'>('users')
   const router = useRouter()
 
   useEffect(() => {
@@ -221,12 +224,12 @@ export default function AdminPage() {
             <div className="flex items-center space-x-4">
               <h1 className="text-2xl font-bold text-gray-900 flex items-center">
                 <Users className="h-8 w-8 mr-2 text-blue-600" />
-                ניהול משתמשים
+                ניהול מערכת
               </h1>
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">
-                {user?.email} [התנתק]
+                {user?.email}
               </span>
               <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">
                 מנהל
@@ -243,9 +246,48 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Tab Navigation */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="border-b border-gray-200 mb-8">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveTab('users')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'users'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                משתמשים
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('security')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'security'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4" />
+                אבטחה
+              </div>
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        {activeTab === 'security' ? (
+          <SecurityDashboard />
+        ) : (
+          <>
+            {/* Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <Users className="h-8 w-8 text-blue-600" />
@@ -435,6 +477,8 @@ export default function AdminPage() {
             </table>
           </div>
         </div>
+          </>
+        )}
       </div>
     </div>
   )
