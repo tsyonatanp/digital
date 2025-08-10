@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useAuth } from '@/hooks/useAuth'
 import { useAuthStore } from '@/store/auth'
+import { supabase } from '@/lib/supabase'
 import { Eye, EyeOff, Mail, Lock, HelpCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
@@ -43,6 +44,12 @@ export default function LoginForm() {
 
   const onSubmit = async (data: LoginFormData) => {
     console.log('🔐 ניסיון התחברות עם:', data.email)
+    
+    // בדוק אם Supabase זמין
+    if (!supabase) {
+      alert('❌ שגיאה: משתני סביבה חסרים. אנא צור קובץ .env.local עם NEXT_PUBLIC_SUPABASE_URL ו-NEXT_PUBLIC_SUPABASE_ANON_KEY')
+      return
+    }
     
     const result = await signIn(data.email, data.password)
     

@@ -115,56 +115,13 @@ export default function NoticeList({ userId, onAddNotice, onEditNotice }: Notice
   }
 
   const getStatusBadge = (notice: Notice) => {
-    const now = new Date()
-    const createdDate = new Date(notice.created_at)
-    const expiresDate = notice.expires_at ? new Date(notice.expires_at) : null
-
     if (!notice.is_active) {
       return <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">לא פעיל</span>
     }
-
-    if (createdDate > now) {
-      return <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded">מתוזמן</span>
-    }
-
-    if (expiresDate && expiresDate < now) {
-      return <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded">פג תוקף</span>
-    }
-
     return <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">פעיל</span>
   }
 
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return (
-          <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full flex items-center gap-1">
-            <span className="w-2 h-2 bg-red-500 rounded-full"></span>
-            גבוהה
-          </span>
-        )
-      case 'medium':
-        return (
-          <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full flex items-center gap-1">
-            <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
-            בינונית
-          </span>
-        )
-      case 'low':
-        return (
-          <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full flex items-center gap-1">
-            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-            נמוכה
-          </span>
-        )
-      default:
-        return (
-          <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full">
-            לא מוגדר
-          </span>
-        )
-    }
-  }
+
 
   if (loading) {
     return (
@@ -216,7 +173,6 @@ export default function NoticeList({ userId, onAddNotice, onEditNotice }: Notice
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     {getStatusBadge(notice)}
-                    {getPriorityBadge(notice.priority)}
                   </div>
                   
                   <h3 className="font-semibold text-gray-900 mb-2">{notice.title}</h3>
@@ -229,12 +185,6 @@ export default function NoticeList({ userId, onAddNotice, onEditNotice }: Notice
                       <Clock className="w-4 h-4" />
                       <span>נוצר: {formatDate(notice.created_at)}</span>
                     </div>
-                    {notice.expires_at && (
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        <span>פג תוקף: {formatDate(notice.expires_at)}</span>
-                      </div>
-                    )}
                   </div>
                 </div>
                 

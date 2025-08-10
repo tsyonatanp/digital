@@ -24,8 +24,6 @@ export interface RegisterFormData {
 export interface NoticeFormData {
   title: string
   content: string
-  priority: 'low' | 'medium' | 'high'
-  expires_at?: string
   is_active: boolean
 }
 

@@ -15,63 +15,103 @@ interface StyleSelectorProps {
 
 const predefinedStyles = [
   {
-    id: 'modern-blue',
-    name: 'כחול מודרני',
-    description: 'עיצוב נקי עם דגש על כחול',
+    id: 'deep-wine',
+    name: '🍷 בורדו יוקרתי',
+    description: 'יין כהה עם ורדרד בהיר - יוקרה וחום',
     preview: {
-      backgroundColor: '#1e40af',
-      textColor: '#ffffff',
-      accentColor: '#3b82f6'
+      backgroundColor: '#3B0A2A',
+      textColor: '#F8E9F0',
+      accentColor: '#FF4E84'
     }
   },
   {
-    id: 'warm-orange',
-    name: 'כתום חם',
-    description: 'עיצוב חם ונעים עם גווני כתום',
+    id: 'pistachio-cream',
+    name: '🌿 ירוק פיסטוק עם שמנת',
+    description: 'אוורירי ונעים - קהילתי ומודרני',
     preview: {
-      backgroundColor: '#ea580c',
-      textColor: '#ffffff',
-      accentColor: '#f97316'
+      backgroundColor: '#EFFBF1',
+      textColor: '#1B3B2F',
+      accentColor: '#A5D6A7'
     }
   },
   {
-    id: 'elegant-dark',
-    name: 'כהה אלגנטי',
-    description: 'עיצוב כהה ומעודן',
+    id: 'sunset-orange',
+    name: '🌇 כתום שקיעה רך',
+    description: 'חם ונעים - מתאים לחדר אוכל',
     preview: {
-      backgroundColor: '#1f2937',
-      textColor: '#ffffff',
-      accentColor: '#6b7280'
+      backgroundColor: '#FFF3E0',
+      textColor: '#E65100',
+      accentColor: '#FFB74D'
     }
   },
   {
-    id: 'fresh-green',
-    name: 'ירוק רענן',
-    description: 'עיצוב טבעי עם גווני ירוק',
+    id: 'lilac-modern',
+    name: '🪻 סגול לילך נקי',
+    description: 'אוורירי ועדכני - מתאים לוועדים',
     preview: {
-      backgroundColor: '#059669',
-      textColor: '#ffffff',
-      accentColor: '#10b981'
+      backgroundColor: '#EDE7F6',
+      textColor: '#4527A0',
+      accentColor: '#9575CD'
     }
   },
   {
-    id: 'classic-white',
-    name: 'לבן קלאסי',
-    description: 'עיצוב נקי ומינימליסטי',
+    id: 'sky-contrast',
+    name: '🔵 כחול שמים ונייטרלים',
+    description: 'רענן ומודרני - מקצועי עם קונטרסט מצוין',
     preview: {
-      backgroundColor: '#ffffff',
-      textColor: '#1f2937',
-      accentColor: '#6b7280'
+      backgroundColor: '#E3F2FD',
+      textColor: '#0D47A1',
+      accentColor: '#2196F3'
     }
   },
   {
-    id: 'vibrant-purple',
-    name: 'סגול חי',
-    description: 'עיצוב דינמי עם גווני סגול',
+    id: 'clean-night',
+    name: '⚫ שחור נקי עם טורקיז',
+    description: 'מתוחכם ודרמטי - מתאים ללילות',
     preview: {
-      backgroundColor: '#7c3aed',
-      textColor: '#ffffff',
-      accentColor: '#a855f7'
+      backgroundColor: '#121212',
+      textColor: '#E0F7FA',
+      accentColor: '#00BCD4'
+    }
+  },
+  {
+    id: 'warm-beige',
+    name: '🥖 בז חם וטבעי',
+    description: 'טבעי ונעים - מתאים לכל מקום',
+    preview: {
+      backgroundColor: '#F5F5DC',
+      textColor: '#8B4513',
+      accentColor: '#D2B48C'
+    }
+  },
+  {
+    id: 'cool-gray',
+    name: '🌫️ אפור קר ומודרני',
+    description: 'מקצועי ונקי - מתאים לעסקים',
+    preview: {
+      backgroundColor: '#F8F9FA',
+      textColor: '#495057',
+      accentColor: '#6C757D'
+    }
+  },
+  {
+    id: 'forest-green',
+    name: '🌲 ירוק יער טבעי',
+    description: 'טבעי ומרגיע - מתאים לגינות',
+    preview: {
+      backgroundColor: '#F0F8F0',
+      textColor: '#2E7D32',
+      accentColor: '#66BB6A'
+    }
+  },
+  {
+    id: 'ocean-blue',
+    name: '🌊 כחול אוקיינוס עמוק',
+    description: 'מרגיע ועמוק - מתאים לכניסות',
+    preview: {
+      backgroundColor: '#E0F2F1',
+      textColor: '#00695C',
+      accentColor: '#26A69A'
     }
   }
 ]
@@ -80,6 +120,12 @@ export default function StyleSelector({ userId, currentStyleId, onStyleChange }:
   const [styles, setStyles] = useState<Style[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [showCustomStyle, setShowCustomStyle] = useState(false)
+  const [customColors, setCustomColors] = useState({
+    backgroundColor: '#FFFFFF',
+    textColor: '#000000'
+  })
+
 
   useEffect(() => {
     fetchStyles()
@@ -123,17 +169,55 @@ export default function StyleSelector({ userId, currentStyleId, onStyleChange }:
     }
   }
 
-  const createStyle = async (styleData: typeof predefinedStyles[0]) => {
+  // פונקציה לחישוב צבע טקסט אוטומטי
+  const getContrastingTextColor = (backgroundColor: string): string => {
+    // המרה ל-RGB
+    const hex = backgroundColor.replace('#', '')
+    const r = parseInt(hex.substr(0, 2), 16)
+    const g = parseInt(hex.substr(2, 2), 16)
+    const b = parseInt(hex.substr(4, 2), 16)
+    
+    // חישוב בהירות פשוט
+    const brightness = (r + g + b) / 3
+    
+    // אם רקע בהיר (מעל 128) → טקסט שחור
+    // אם רקע כהה (מתחת ל-128) → טקסט לבן
+    const textColor = brightness > 128 ? '#000000' : '#ffffff'
+    
+    console.log('🎨 חישוב צבעים:', {
+      backgroundColor,
+      r, g, b,
+      brightness,
+      textColor
+    })
+    
+    return textColor
+  }
+
+  // פונקציה ליצירת סגנון עם צבעים אוטומטיים
+  const createStyleWithAutoColors = async (backgroundColor: string, styleName: string, textColor?: string) => {
     if (!supabase) return
     
+    // אם יש צבע טקסט מוגדר, השתמש בו. אחרת, חשב אוטומטית
+    const finalTextColor = textColor || getContrastingTextColor(backgroundColor)
+    
     try {
+      // מחק סגנון קיים אם יש
+      if (styles.length > 0) {
+        await supabase
+          .from('styles')
+          .delete()
+          .eq('user_id', userId)
+      }
+      
+      // צור סגנון חדש
       const { data, error } = await supabase
         .from('styles')
         .insert({
           user_id: userId,
-          name: styleData.name,
-          background_color: styleData.preview.backgroundColor,
-          text_color: styleData.preview.textColor,
+          name: styleName,
+          background_color: backgroundColor,
+          text_color: finalTextColor,
           layout_type: 'standard',
           text_size: 'normal',
           weather_enabled: true,
@@ -149,14 +233,67 @@ export default function StyleSelector({ userId, currentStyleId, onStyleChange }:
         return
       }
 
-      // Add to local state
-      setStyles(prev => [data, ...prev])
-      
-      // Select the new style
+      // עדכן state
+      setStyles([data])
       onStyleChange(data.id)
     } catch (err) {
-      console.error('💥 שגיאה כללית ביצירת סגנון:', err)
+      console.error(' שגיאה כללית ביצירת סגנון:', err)
       setError('שגיאה ביצירת סגנון')
+    }
+  }
+
+  const createStyle = async (styleData: typeof predefinedStyles[0]) => {
+    // השתמש בצבע הטקסט מהסגנון המוכן
+    await createStyleWithAutoColors(
+      styleData.preview.backgroundColor, 
+      styleData.name, 
+      styleData.preview.textColor
+    )
+  }
+
+  const createCustomStyle = async () => {
+    if (!supabase) return
+    
+    try {
+      // מחק סגנון קיים אם יש
+      if (styles.length > 0) {
+        await supabase
+          .from('styles')
+          .delete()
+          .eq('user_id', userId)
+      }
+      
+      // צור סגנון מותאם אישית
+      const { data, error } = await supabase
+        .from('styles')
+        .insert({
+          user_id: userId,
+          name: 'סגנון מותאם אישית',
+          background_color: customColors.backgroundColor,
+          text_color: customColors.textColor,
+          layout_type: 'standard',
+          text_size: 'normal',
+          weather_enabled: true,
+          news_enabled: true,
+          slide_duration: 8000,
+
+        })
+        .select()
+        .single()
+
+      if (error) {
+        console.error('❌ שגיאה ביצירת סגנון מותאם:', error)
+        setError('שגיאה ביצירת סגנון מותאם')
+        return
+      }
+
+      // עדכן state
+      setStyles([data])
+      onStyleChange(data.id)
+      setShowCustomStyle(false)
+    } catch (err) {
+      console.error('💥 שגיאה כללית ביצירת סגנון מותאם:', err)
+      setError('שגיאה ביצירת סגנון מותאם')
     }
   }
 
@@ -225,16 +362,106 @@ export default function StyleSelector({ userId, currentStyleId, onStyleChange }:
           <div className="flex items-center gap-3">
             <Monitor className="w-5 h-5 text-blue-600" />
             <span className="text-blue-800">
-              {styles.find(s => s.id === currentStyleId) ? 'סגנון מותאם אישית' : 'סגנון לא ידוע'}
+              {styles.find(s => s.id === currentStyleId) ? 'סגנון נבחר' : 'סגנון לא ידוע'}
             </span>
           </div>
         </div>
       )}
 
-      {/* Predefined Styles */}
+      {/* Available Styles */}
       <div className="space-y-4">
-        <h3 className="text-lg font-medium text-gray-900">סגנונות מוכנים מראש</h3>
+        <h3 className="text-lg font-medium text-gray-900">סגנונות זמינים</h3>
         
+        {/* Custom Style Section */}
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-md font-medium text-gray-900">סגנון מותאם אישית</h4>
+            <button
+              onClick={() => setShowCustomStyle(!showCustomStyle)}
+              className="text-sm text-blue-600 hover:text-blue-700"
+            >
+              {showCustomStyle ? 'הסתר' : 'הצג'}
+            </button>
+          </div>
+          
+          {showCustomStyle && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    צבע רקע
+                  </label>
+                  <input
+                    type="color"
+                    value={customColors.backgroundColor}
+                    onChange={(e) => setCustomColors(prev => ({ ...prev, backgroundColor: e.target.value }))}
+                    className="w-full h-10 border border-gray-300 rounded-md"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    צבע טקסט
+                  </label>
+                  <input
+                    type="color"
+                    value={customColors.textColor}
+                    onChange={(e) => setCustomColors(prev => ({ ...prev, textColor: e.target.value }))}
+                    className="w-full h-10 border border-gray-300 rounded-md"
+                  />
+                </div>
+              </div>
+              
+
+              
+              {/* Preview */}
+              <div className="border border-gray-300 rounded-lg p-4">
+                <h5 className="text-sm font-medium text-gray-700 mb-2">תצוגה מקדימה:</h5>
+                <div
+                  className="w-full h-20 rounded-md flex items-center justify-center"
+                  style={{ backgroundColor: customColors.backgroundColor }}
+                >
+                  <span
+                    className="text-sm font-medium"
+                    style={{ color: customColors.textColor }}
+                  >
+                    טקסט לדוגמה
+                  </span>
+                </div>
+              </div>
+              
+              <button
+                onClick={createCustomStyle}
+                className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                צור סגנון מותאם
+              </button>
+            </div>
+          )}
+        </div>
+        
+        {/* Style Recommendations */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h4 className="text-md font-medium text-blue-900 mb-3">המלצות לפי סוג בניין:</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div>
+              <span className="font-medium text-blue-800">בניין מגורים:</span>
+              <span className="text-blue-700"> בז חם, ירוק פיסטוק, כחול שמים</span>
+            </div>
+            <div>
+              <span className="font-medium text-blue-800">בניין משרדים:</span>
+              <span className="text-blue-700"> אפור קר, כחול אוקיינוס, שחור נקי</span>
+            </div>
+            <div>
+              <span className="font-medium text-blue-800">בניין עם גינה:</span>
+              <span className="text-blue-700"> ירוק יער, בז חם, בורדו יוקרתי</span>
+            </div>
+            <div>
+              <span className="font-medium text-blue-800">בניין יוקרתי:</span>
+              <span className="text-blue-700"> בורדו יוקרתי, שחור נקי, סגול לילך</span>
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {predefinedStyles.map((style) => {
             const isUsed = isPredefinedStyleUsed(style.id)
@@ -287,7 +514,7 @@ export default function StyleSelector({ userId, currentStyleId, onStyleChange }:
                   
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-400">
-                      {isUsed ? 'נוצר' : 'לחץ ליצירה'}
+                      {isUsed ? 'נבחר' : 'לחץ לבחירה'}
                     </span>
                     
                     {isUsed && usedStyle && (
@@ -309,10 +536,10 @@ export default function StyleSelector({ userId, currentStyleId, onStyleChange }:
         </div>
       </div>
 
-      {/* Custom Styles */}
+      {/* Selected Style */}
       {styles.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-lg font-medium text-gray-900">סגנונות מותאמים אישית</h3>
+          <h3 className="text-lg font-medium text-gray-900">סגנון נבחר</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {styles.map((style) => (
@@ -344,19 +571,19 @@ export default function StyleSelector({ userId, currentStyleId, onStyleChange }:
                         className="text-sm font-medium"
                         style={{ color: style.text_color || '#1f2937' }}
                       >
-                        סגנון מותאם
+                        סגנון נבחר
                       </span>
                     </div>
                   </div>
                   
                   <div>
-                    <h4 className="font-medium text-gray-900">סגנון מותאם אישית</h4>
+                    <h4 className="font-medium text-gray-900">{style.name}</h4>
                     <p className="text-sm text-gray-500">גודל טקסט: {style.text_size || 'רגיל'}</p>
                   </div>
                   
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-400">
-                      מותאם אישית
+                      נבחר
                     </span>
                     
                     <button
