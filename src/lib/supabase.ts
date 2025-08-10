@@ -25,8 +25,8 @@ export const supabase = supabaseUrl && supabaseAnonKey
               const item = localStorage.getItem(key)
               if (item) {
                 const parsed = JSON.parse(item)
-                // בדוק שהטוקן לא פג תוקף
-                if (parsed.expires_at && Date.now() > parsed.expires_at) {
+                // בדוק שהטוקן לא פג תוקף (expires_at מגיע בשניות, Date.now במילישניות)
+                if (parsed.expires_at && Date.now() > parsed.expires_at * 1000) {
                   localStorage.removeItem(key)
                   return null
                 }
