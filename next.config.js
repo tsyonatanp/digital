@@ -29,7 +29,7 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: `
               default-src 'self';
-              script-src 'self' 'unsafe-inline' 'unsafe-eval';
+              script-src 'self' 'unsafe-inline' 'unsafe-eval' https://weatherwidget.org https://*.weatherwidget.org https://app.weatherwidget.org https://app3.weatherwidget.org;
               style-src 'self' 'unsafe-inline';
               img-src 'self' data: https: blob:;
               font-src 'self';
