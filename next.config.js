@@ -33,7 +33,7 @@ const nextConfig = {
               style-src 'self' 'unsafe-inline';
               img-src 'self' data: https: blob:;
               font-src 'self';
-              connect-src 'self' https://api.openweathermap.org https://api.rss2json.com https://www.ynet.co.il https://www.one.co.il https://www.globes.co.il https://api.hebcal.com;
+              connect-src 'self' https://api.openweathermap.org https://api.rss2json.com https://www.ynet.co.il https://www.one.co.il https://www.globes.co.il https://api.hebcal.com https://*.supabase.co https://*.supabase.in wss://*.supabase.co wss://*.supabase.in;
               frame-ancestors 'none';
               base-uri 'self';
               form-action 'self';
