@@ -152,21 +152,86 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   useEffect(() => {
     audioRef.current = new Audio(musicTracks[0]);
     audioRef.current.volume = 0.3;
-    
+
+    // זיהוי דפדפן קיוסק (Fully Kiosk וכו')
+    const isKioskBrowser = () => {
+      try {
+        const ua = navigator.userAgent || ''
+        // Fully Kiosk בדרך כלל מכניס מחרוזת מזהה ב-UA
+        const hasKioskUA = /fully|kiosk|fulllykiosk|kioskbrowser/i.test(ua)
+        const hasKioskGlobal = typeof (window as any).FullyKiosk !== 'undefined' || typeof (window as any).fully !== 'undefined'
+        const hasParam = new URLSearchParams(window.location.search).get('autoplay') === '1'
+        return hasKioskUA || hasKioskGlobal || hasParam
+      } catch {
+        return false
+      }
+    }
+
+    // נסיונות הפעלה אוטומטית בקיוסק
+    let retryInterval: number | null = null
+    let retryCount = 0
+    const maxRetries = 20 // ~20*1s = 20 שניות
+
+    const tryAutoPlay = async () => {
+      if (!audioRef.current) return
+      if (isMusicPlaying) return
+      try {
+        console.log('🔊 ניסיון הפעלה אוטומטית...')
+        // ודא שמוגדר autoplay
+        audioRef.current.autoplay = true
+        await audioRef.current.play()
+        setIsMusicPlaying(true)
+        console.log('✅ מוזיקה הופעלה אוטומטית')
+        if (retryInterval) window.clearInterval(retryInterval)
+      } catch (err) {
+        retryCount += 1
+        console.warn('⏳ Autoplay נחסם, ניסיון', retryCount, err)
+        if (retryCount >= maxRetries && retryInterval) {
+          window.clearInterval(retryInterval)
+        }
+      }
+    }
+
     // רק event listener בסיסי לסיום שיר
     const handleEnded = () => {
       console.log('🎵 שיר הסתיים');
       playNextTrack();
     };
-    
     audioRef.current.addEventListener('ended', handleEnded);
-    
+
+    // אם זה קיוסק, נסה להפעיל אוטומטית עם ריטריים קצרים
+    if (isKioskBrowser()) {
+      // נסיון מיידי
+      tryAutoPlay()
+      // ריטריי כל שניה עד הצלחה/מקסימום
+      retryInterval = window.setInterval(tryAutoPlay, 1000)
+      // נסה גם כאשר הדף מקבל פוקוס/נראה
+      const onFocus = () => tryAutoPlay()
+      const onVisible = () => { if (document.visibilityState === 'visible') tryAutoPlay() }
+      window.addEventListener('focus', onFocus)
+      document.addEventListener('visibilitychange', onVisible)
+
+      // ניקוי מאזינים
+      return () => {
+        if (audioRef.current) {
+          audioRef.current.removeEventListener('ended', handleEnded);
+          audioRef.current.pause();
+          audioRef.current = null;
+        }
+        if (retryInterval) window.clearInterval(retryInterval)
+        window.removeEventListener('focus', onFocus)
+        document.removeEventListener('visibilitychange', onVisible)
+      };
+    }
+
+    // נתיב רגיל (לא קיוסק) – ניקוי בסיסי
     return () => {
       if (audioRef.current) {
         audioRef.current.removeEventListener('ended', handleEnded);
         audioRef.current.pause();
         audioRef.current = null;
       }
+      if (retryInterval) window.clearInterval(retryInterval)
     };
   }, []);
 
