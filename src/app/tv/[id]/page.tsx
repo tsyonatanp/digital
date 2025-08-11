@@ -67,34 +67,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   const [hebrewDate, setHebrewDate] = useState('');
   const [shabbatTimes, setShabbatTimes] = useState({ entry: '', exit: '', parsha: '' });
   
-  // התאמת מסך: קנבס ביחס 16:9 שמקבל רוחב/גובה אמיתיים במקום scale
-  const TARGET_ASPECT = 16 / 9
-  const [canvasSize, setCanvasSize] = useState<{ width: number; height: number }>({ width: 1920, height: 1080 })
-
-  useEffect(() => {
-    const computeSize = () => {
-      const vw = window.innerWidth
-      const vh = window.innerHeight
-      const safe = 0.98 // שוליים נגד overscan
-
-      // נסה קודם להתאים לרוחב
-      let width = Math.floor(vw * safe)
-      let height = Math.floor(width / TARGET_ASPECT)
-      // אם הגובה חורג, התאם לפי גובה
-      if (height > vh * safe) {
-        height = Math.floor(vh * safe)
-        width = Math.floor(height * TARGET_ASPECT)
-      }
-      setCanvasSize({ width, height })
-    }
-    computeSize()
-    window.addEventListener('resize', computeSize)
-    window.addEventListener('orientationchange', computeSize)
-    return () => {
-      window.removeEventListener('resize', computeSize)
-      window.removeEventListener('orientationchange', computeSize)
-    }
-  }, [])
+  // התאמת מסך: שימוש בפריסה מלאה 100vw/100vh ושמירת שוליים נגד overscan באמצעות padding
   
   // הוספת state למוזיקה
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
@@ -691,20 +664,19 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   }
 
   return (
-    <div className="min-h-screen w-screen h-screen flex items-center justify-center bg-black" onClick={handleSecretClick}>
-      {/* קנבס ביחס 16:9 מותאם למסך בפועל */}
-      <div
-        className="relative overflow-hidden font-hebrew shadow-2xl flex flex-col"
-        style={{
-          width: canvasSize.width,
-          height: canvasSize.height,
-          background: style?.background_color ? 
-            `linear-gradient(135deg, ${style.background_color}10, ${style.background_color}20, ${style.background_color}10)` : 
-            'linear-gradient(135deg, #f8fafc, #e2e8f0, #f8fafc)',
-          color: style?.text_color || '#1f2937',
-          borderRadius: 8
-        }}
-      >
+    <div className="min-h-screen w-screen h-screen bg-black" onClick={handleSecretClick}>
+      {/* מעטפת בטוחה נגד overscan */}
+      <div className="w-full h-full p-[2vh] box-border">
+        {/* קנבס מלא מסך עם פריסה קודמת (ללא שינוי יחסי) */}
+        <div
+          className="relative overflow-hidden font-hebrew flex flex-col w-full h-full rounded-md shadow-2xl"
+          style={{
+            background: style?.background_color ? 
+              `linear-gradient(135deg, ${style.background_color}10, ${style.background_color}20, ${style.background_color}10)` : 
+              'linear-gradient(135deg, #f8fafc, #e2e8f0, #f8fafc)',
+            color: style?.text_color || '#1f2937'
+          }}
+        >
       {/* Top Bar - Enhanced Design */}
       <div 
         className="w-full shadow-lg px-6 py-4 relative h-24 shrink-0"
@@ -1078,6 +1050,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
             </div>
           </button>
         </div>
+      </div>
       </div>
       </div>
     </div>
