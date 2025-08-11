@@ -694,7 +694,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     <div className="min-h-screen w-screen h-screen flex items-center justify-center bg-black" onClick={handleSecretClick}>
       {/* קנבס ביחס 16:9 מותאם למסך בפועל */}
       <div
-        className="relative overflow-hidden font-hebrew shadow-2xl"
+        className="relative overflow-hidden font-hebrew shadow-2xl flex flex-col"
         style={{
           width: canvasSize.width,
           height: canvasSize.height,
@@ -707,7 +707,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       >
       {/* Top Bar - Enhanced Design */}
       <div 
-        className="w-full shadow-lg px-6 py-4 relative"
+        className="w-full shadow-lg px-6 py-4 relative h-24 shrink-0"
         style={{
           background: style?.background_color ? 
             `linear-gradient(135deg, ${style.background_color}, ${style.background_color}DD, ${style.background_color})` : 
@@ -817,9 +817,9 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         </div>
       </div>
 
-      <div className="flex gap-6 p-6" style={{ height: canvasSize.height - (96 + 64) }}>
+      <div className="flex gap-6 p-6 flex-1 overflow-hidden">
         {/* Right Column - Management Info & Notices (30%) */}
-        <div className="flex flex-col min-h-full" style={{ width: '30%' }}>
+        <div className="flex flex-col min-h-full overflow-auto pr-2" style={{ width: '30%' }}>
           {/* Management Info Card */}
           <div 
             className="px-6 py-4 w-full text-center transition-all duration-500 hover:shadow-2xl relative mb-6"
@@ -959,7 +959,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         </div>
 
         {/* Left Column - News Feed & Shabbat Times (30%) */}
-        <div className="flex flex-col min-h-full" style={{ width: '30%' }}>
+        <div className="flex flex-col min-h-full overflow-auto pl-2" style={{ width: '30%' }}>
           <div className="flex-1 flex flex-col">
             <NewsColumn news={news} style={style} />
           </div>
@@ -1023,7 +1023,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
 
       {/* Weather Widget - Bottom Bar */}
       <div 
-        className="absolute bottom-0 left-0 w-full h-16 z-40 flex items-center justify-center text-white shadow-lg"
+        className="w-full h-16 z-40 flex items-center justify-center text-white shadow-lg shrink-0"
         style={{
           background: style?.background_color ? 
             `linear-gradient(135deg, ${style.background_color}, ${style.background_color}DD, ${style.background_color})` : 
