@@ -67,6 +67,28 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   const [hebrewDate, setHebrewDate] = useState('');
   const [shabbatTimes, setShabbatTimes] = useState({ entry: '', exit: '', parsha: '' });
   
+  // התאמת מסך: סקייל דינמי לקנבס בסיס 1920x1080
+  const BASE_WIDTH = 1920
+  const BASE_HEIGHT = 1080
+  const [scale, setScale] = useState(1)
+  
+  useEffect(() => {
+    const computeScale = () => {
+      const vw = window.innerWidth
+      const vh = window.innerHeight
+      const containScale = Math.min(vw / BASE_WIDTH, vh / BASE_HEIGHT)
+      const safeAreaFactor = 0.96 // השאר שוליים קטנים נגד overscan בטלוויזיות
+      setScale(containScale * safeAreaFactor)
+    }
+    computeScale()
+    window.addEventListener('resize', computeScale)
+    window.addEventListener('orientationchange', computeScale)
+    return () => {
+      window.removeEventListener('resize', computeScale)
+      window.removeEventListener('orientationchange', computeScale)
+    }
+  }, [])
+  
   // הוספת state למוזיקה
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
@@ -662,16 +684,22 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   }
 
   return (
-    <div 
-      className="min-h-screen relative overflow-hidden font-hebrew"
-      style={{
-        background: style?.background_color ? 
-          `linear-gradient(135deg, ${style.background_color}10, ${style.background_color}20, ${style.background_color}10)` : 
-          'linear-gradient(135deg, #f8fafc, #e2e8f0, #f8fafc)',
-        color: style?.text_color || '#1f2937',
-      }}
-      onClick={handleSecretClick}
-    >
+    <div className="min-h-screen w-screen h-screen flex items-center justify-center bg-black" onClick={handleSecretClick}>
+      {/* קנבס בסיס 1920x1080 שעובר scale לפי המסך */}
+      <div
+        className="relative overflow-hidden font-hebrew shadow-2xl"
+        style={{
+          width: BASE_WIDTH,
+          height: BASE_HEIGHT,
+          transform: `scale(${scale})`,
+          transformOrigin: 'center center',
+          background: style?.background_color ? 
+            `linear-gradient(135deg, ${style.background_color}10, ${style.background_color}20, ${style.background_color}10)` : 
+            'linear-gradient(135deg, #f8fafc, #e2e8f0, #f8fafc)',
+          color: style?.text_color || '#1f2937',
+          borderRadius: 8
+        }}
+      >
       {/* Top Bar - Enhanced Design */}
       <div 
         className="w-full shadow-lg px-6 py-4 relative"
@@ -784,7 +812,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         </div>
       </div>
 
-      <div className="flex gap-6 p-6" style={{ height: 'calc(100vh - 6rem - 4rem)' }}>
+      <div className="flex gap-6 p-6" style={{ height: BASE_HEIGHT - (96 + 64) }}>
         {/* Right Column - Management Info & Notices (30%) */}
         <div className="flex flex-col min-h-full" style={{ width: '30%' }}>
           {/* Management Info Card */}
@@ -990,7 +1018,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
 
       {/* Weather Widget - Bottom Bar */}
       <div 
-        className="fixed bottom-0 left-0 w-full h-16 z-40 flex items-center justify-center text-white shadow-lg relative"
+        className="absolute bottom-0 left-0 w-full h-16 z-40 flex items-center justify-center text-white shadow-lg"
         style={{
           background: style?.background_color ? 
             `linear-gradient(135deg, ${style.background_color}, ${style.background_color}DD, ${style.background_color})` : 
@@ -1045,6 +1073,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
             </div>
           </button>
         </div>
+      </div>
       </div>
     </div>
   )
