@@ -67,6 +67,8 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   const [hebrewDate, setHebrewDate] = useState('');
   const [shabbatTimes, setShabbatTimes] = useState({ entry: '', exit: '', parsha: '' });
   
+  // התאמת מסך: שימוש בפריסה מלאה 100vw/100vh ושמירת שוליים נגד overscan באמצעות padding
+  
   // הוספת state למוזיקה
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
@@ -152,21 +154,86 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   useEffect(() => {
     audioRef.current = new Audio(musicTracks[0]);
     audioRef.current.volume = 0.3;
-    
+
+    // זיהוי דפדפן קיוסק (Fully Kiosk וכו')
+    const isKioskBrowser = () => {
+      try {
+        const ua = navigator.userAgent || ''
+        // Fully Kiosk בדרך כלל מכניס מחרוזת מזהה ב-UA
+        const hasKioskUA = /fully|kiosk|fulllykiosk|kioskbrowser/i.test(ua)
+        const hasKioskGlobal = typeof (window as any).FullyKiosk !== 'undefined' || typeof (window as any).fully !== 'undefined'
+        const hasParam = new URLSearchParams(window.location.search).get('autoplay') === '1'
+        return hasKioskUA || hasKioskGlobal || hasParam
+      } catch {
+        return false
+      }
+    }
+
+    // נסיונות הפעלה אוטומטית בקיוסק
+    let retryInterval: number | null = null
+    let retryCount = 0
+    const maxRetries = 20 // ~20*1s = 20 שניות
+
+    const tryAutoPlay = async () => {
+      if (!audioRef.current) return
+      if (isMusicPlaying) return
+      try {
+        console.log('🔊 ניסיון הפעלה אוטומטית...')
+        // ודא שמוגדר autoplay
+        audioRef.current.autoplay = true
+        await audioRef.current.play()
+        setIsMusicPlaying(true)
+        console.log('✅ מוזיקה הופעלה אוטומטית')
+        if (retryInterval) window.clearInterval(retryInterval)
+      } catch (err) {
+        retryCount += 1
+        console.warn('⏳ Autoplay נחסם, ניסיון', retryCount, err)
+        if (retryCount >= maxRetries && retryInterval) {
+          window.clearInterval(retryInterval)
+        }
+      }
+    }
+
     // רק event listener בסיסי לסיום שיר
     const handleEnded = () => {
       console.log('🎵 שיר הסתיים');
       playNextTrack();
     };
-    
     audioRef.current.addEventListener('ended', handleEnded);
-    
+
+    // אם זה קיוסק, נסה להפעיל אוטומטית עם ריטריים קצרים
+    if (isKioskBrowser()) {
+      // נסיון מיידי
+      tryAutoPlay()
+      // ריטריי כל שניה עד הצלחה/מקסימום
+      retryInterval = window.setInterval(tryAutoPlay, 1000)
+      // נסה גם כאשר הדף מקבל פוקוס/נראה
+      const onFocus = () => tryAutoPlay()
+      const onVisible = () => { if (document.visibilityState === 'visible') tryAutoPlay() }
+      window.addEventListener('focus', onFocus)
+      document.addEventListener('visibilitychange', onVisible)
+
+      // ניקוי מאזינים
+      return () => {
+        if (audioRef.current) {
+          audioRef.current.removeEventListener('ended', handleEnded);
+          audioRef.current.pause();
+          audioRef.current = null;
+        }
+        if (retryInterval) window.clearInterval(retryInterval)
+        window.removeEventListener('focus', onFocus)
+        document.removeEventListener('visibilitychange', onVisible)
+      };
+    }
+
+    // נתיב רגיל (לא קיוסק) – ניקוי בסיסי
     return () => {
       if (audioRef.current) {
         audioRef.current.removeEventListener('ended', handleEnded);
         audioRef.current.pause();
         audioRef.current = null;
       }
+      if (retryInterval) window.clearInterval(retryInterval)
     };
   }, []);
 
@@ -597,19 +664,22 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   }
 
   return (
-    <div 
-      className="min-h-screen relative overflow-hidden font-hebrew"
-      style={{
-        background: style?.background_color ? 
-          `linear-gradient(135deg, ${style.background_color}10, ${style.background_color}20, ${style.background_color}10)` : 
-          'linear-gradient(135deg, #f8fafc, #e2e8f0, #f8fafc)',
-        color: style?.text_color || '#1f2937',
-      }}
-      onClick={handleSecretClick}
-    >
+    <div className="min-h-screen w-screen h-screen bg-black" onClick={handleSecretClick}>
+      {/* מעטפת בטוחה נגד overscan */}
+          <div className="w-full h-full px-[2vw] py-[2vh] box-border">
+        {/* קנבס מלא מסך עם פריסה קודמת (ללא שינוי יחסי) */}
+        <div
+          className="relative overflow-hidden font-hebrew flex flex-col w-full h-full rounded-md shadow-2xl"
+          style={{
+            background: style?.background_color ? 
+              `linear-gradient(135deg, ${style.background_color}10, ${style.background_color}20, ${style.background_color}10)` : 
+              'linear-gradient(135deg, #f8fafc, #e2e8f0, #f8fafc)',
+            color: style?.text_color || '#1f2937'
+          }}
+        >
       {/* Top Bar - Enhanced Design */}
       <div 
-        className="w-full shadow-lg px-6 py-4 relative"
+        className="w-full shadow-lg px-6 py-4 relative h-24 shrink-0"
         style={{
           background: style?.background_color ? 
             `linear-gradient(135deg, ${style.background_color}, ${style.background_color}DD, ${style.background_color})` : 
@@ -719,9 +789,9 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         </div>
       </div>
 
-      <div className="flex gap-6 p-6" style={{ height: 'calc(100vh - 6rem - 4rem)' }}>
+      <div className="grid grid-cols-10 gap-6 p-6 flex-1 overflow-hidden">
         {/* Right Column - Management Info & Notices (30%) */}
-        <div className="flex flex-col min-h-full" style={{ width: '30%' }}>
+        <div className="flex flex-col min-h-full overflow-hidden pr-2 col-span-3">
           {/* Management Info Card */}
           <div 
             className="px-6 py-4 w-full text-center transition-all duration-500 hover:shadow-2xl relative mb-6"
@@ -822,10 +892,9 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         </div>
 
         {/* Center Column - Image Carousel (40%) */}
-             <div
-       className="h-full flex items-center justify-center transition-all duration-500 relative overflow-hidden"
+        <div
+       className="h-full flex items-center justify-center transition-all duration-500 relative overflow-hidden col-span-4"
        style={{
-         width: '40%',
          background: style?.background_color 
            ? `linear-gradient(135deg, ${style.background_color}90, ${style.background_color}95, ${style.background_color}90)`
            : 'linear-gradient(45deg, #000000, #1a1a1a)'
@@ -861,7 +930,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         </div>
 
         {/* Left Column - News Feed & Shabbat Times (30%) */}
-        <div className="flex flex-col min-h-full" style={{ width: '30%' }}>
+        <div className="flex flex-col min-h-full overflow-hidden pl-2 col-span-3">
           <div className="flex-1 flex flex-col">
             <NewsColumn news={news} style={style} />
           </div>
@@ -925,7 +994,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
 
       {/* Weather Widget - Bottom Bar */}
       <div 
-        className="fixed bottom-0 left-0 w-full h-16 z-40 flex items-center justify-center text-white shadow-lg relative"
+        className="w-full h-16 z-40 flex items-center justify-center text-white shadow-lg shrink-0"
         style={{
           background: style?.background_color ? 
             `linear-gradient(135deg, ${style.background_color}, ${style.background_color}DD, ${style.background_color})` : 
@@ -980,6 +1049,8 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
             </div>
           </button>
         </div>
+      </div>
+      </div>
       </div>
     </div>
   )
