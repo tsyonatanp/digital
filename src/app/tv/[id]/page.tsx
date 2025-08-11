@@ -666,7 +666,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   return (
     <div className="min-h-screen w-screen h-screen bg-black" onClick={handleSecretClick}>
       {/* מעטפת בטוחה נגד overscan */}
-      <div className="w-full h-full p-[2vh] box-border">
+          <div className="w-full h-full px-[2vw] py-[2vh] box-border">
         {/* קנבס מלא מסך עם פריסה קודמת (ללא שינוי יחסי) */}
         <div
           className="relative overflow-hidden font-hebrew flex flex-col w-full h-full rounded-md shadow-2xl"
@@ -789,9 +789,9 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         </div>
       </div>
 
-      <div className="flex gap-6 p-6 flex-1 overflow-hidden">
+      <div className="grid grid-cols-10 gap-6 p-6 flex-1 overflow-hidden">
         {/* Right Column - Management Info & Notices (30%) */}
-        <div className="flex flex-col min-h-full overflow-auto pr-2" style={{ width: '30%' }}>
+        <div className="flex flex-col min-h-full overflow-hidden pr-2 col-span-3">
           {/* Management Info Card */}
           <div 
             className="px-6 py-4 w-full text-center transition-all duration-500 hover:shadow-2xl relative mb-6"
@@ -892,10 +892,9 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         </div>
 
         {/* Center Column - Image Carousel (40%) */}
-             <div
-       className="h-full flex items-center justify-center transition-all duration-500 relative overflow-hidden"
+        <div
+       className="h-full flex items-center justify-center transition-all duration-500 relative overflow-hidden col-span-4"
        style={{
-         width: '40%',
          background: style?.background_color 
            ? `linear-gradient(135deg, ${style.background_color}90, ${style.background_color}95, ${style.background_color}90)`
            : 'linear-gradient(45deg, #000000, #1a1a1a)'
@@ -931,7 +930,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         </div>
 
         {/* Left Column - News Feed & Shabbat Times (30%) */}
-        <div className="flex flex-col min-h-full overflow-auto pl-2" style={{ width: '30%' }}>
+        <div className="flex flex-col min-h-full overflow-hidden pl-2 col-span-3">
           <div className="flex-1 flex flex-col">
             <NewsColumn news={news} style={style} />
           </div>
