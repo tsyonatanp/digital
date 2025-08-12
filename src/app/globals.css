@@ -187,6 +187,31 @@ textarea {
   .tv-display .mb-2 {
     margin-bottom: 0.25rem !important;
   }
+  
+  /* Reduce icon sizes for TV */
+  .tv-display .w-8 {
+    width: 1.5rem !important;
+  }
+  
+  .tv-display .h-8 {
+    height: 1.5rem !important;
+  }
+  
+  .tv-display .w-12 {
+    width: 2rem !important;
+  }
+  
+  .tv-display .h-12 {
+    height: 2rem !important;
+  }
+  
+  .tv-display .w-16 {
+    width: 2.5rem !important;
+  }
+  
+  .tv-display .h-16 {
+    height: 2.5rem !important;
+  }
 }
 
 /* Gradient animation for Digital Snow */

@@ -1042,7 +1042,7 @@ function NewsColumn({ news, style }: { news: NewsItem[], style: Style | null }) 
               borderColor: style?.background_color ? `${style.background_color}40` : '#fecaca'
             }}
           >
-            <Newspaper className="w-16 h-16 mr-4" />
+            <Newspaper className="w-8 h-8 mr-4" />
             {sourceTitles[src]}
           </div>
           <div className="min-h-[4em] flex items-start">
