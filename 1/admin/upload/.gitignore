@@ -1,8 +1,0 @@
-# התעלם מכל הקבצים בתיקייה
-*
-
-# אל תתעלם מהקבצים הבאים
-!.gitignore
-!README.md
-!index.html
-!.htaccess 
