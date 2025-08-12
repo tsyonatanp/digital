@@ -265,6 +265,16 @@ textarea {
   .tv-display .h-12 {
     height: 1.5rem !important;
   }
+  
+  /* Reduce min-height for TV */
+  .tv-display [style*="minHeight: '20vh'"] {
+    min-height: 15vh !important;
+  }
+  
+  /* Reduce min-height for very small TV */
+  .tv-display [style*="minHeight: '20vh'"] {
+    min-height: 10vh !important;
+  }
 }
 
 /* Gradient animation for Digital Snow */

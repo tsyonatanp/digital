@@ -731,7 +731,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
                 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.98))',
               color: style?.text_color || '#374151',
               boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15), 0 4px 10px rgba(0, 0, 0, 0.1)',
-              minHeight: '25vh'
+              minHeight: '20vh'
             }}
           >
                          <div className="flex items-center justify-center mb-6">
