@@ -81,7 +81,7 @@ Write-Host "1. Ensure web server (Apache) is running" -ForegroundColor White
 Write-Host "2. Open browser: http://localhost/shabanim1/admin/" -ForegroundColor White
 Write-Host "3. Login with:" -ForegroundColor White
 Write-Host "   Username: admin" -ForegroundColor White
-Write-Host "   Password: Ts123qwe!@#" -ForegroundColor White
+Write-Host "   Password: <SET-ADMIN-PASSWORD-IN-ENV>" -ForegroundColor White
 Write-Host ""
 Write-Host "To access building bulletin board:" -ForegroundColor Cyan
 Write-Host "http://localhost/shabanim1/index.html?building=building_name" -ForegroundColor White
