@@ -731,7 +731,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
                 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.98))',
               color: style?.text_color || '#374151',
               boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15), 0 4px 10px rgba(0, 0, 0, 0.1)',
-              minHeight: '20vh'
+              minHeight: '25vh'
             }}
           >
                          <div className="flex items-center justify-center mb-6">
@@ -1042,7 +1042,7 @@ function NewsColumn({ news, style }: { news: NewsItem[], style: Style | null }) 
               borderColor: style?.background_color ? `${style.background_color}40` : '#fecaca'
             }}
           >
-            <Newspaper className="w-8 h-8 mr-4" />
+            <Newspaper className="w-6 h-6 mr-4" />
             {sourceTitles[src]}
           </div>
           <div className="min-h-[4em] flex items-start">
