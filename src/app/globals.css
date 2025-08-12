@@ -145,6 +145,50 @@ textarea {
   touch-action: none !important;
 }
 
+/* TV-specific optimizations for smaller screens */
+@media (max-height: 800px) {
+  .tv-display .text-4xl {
+    font-size: 2rem !important;
+  }
+  
+  .tv-display .text-3xl {
+    font-size: 1.5rem !important;
+  }
+  
+  .tv-display .text-5xl {
+    font-size: 2.5rem !important;
+  }
+  
+  .tv-display .text-6xl {
+    font-size: 3rem !important;
+  }
+  
+  .tv-display .text-7xl {
+    font-size: 3.5rem !important;
+  }
+  
+  /* Reduce margins and padding for TV */
+  .tv-display .mb-6 {
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .tv-display .p-4 {
+    padding: 0.5rem !important;
+  }
+  
+  .tv-display .pb-4 {
+    padding-bottom: 0.5rem !important;
+  }
+  
+  .tv-display .mb-4 {
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .tv-display .mb-2 {
+    margin-bottom: 0.25rem !important;
+  }
+}
+
 /* Gradient animation for Digital Snow */
 @keyframes gradientShift {
   0% {
