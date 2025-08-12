@@ -574,31 +574,31 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 to-purple-900 font-hebrew">
-        <div className="text-white text-5xl font-bold animate-fade-in">טוען...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 to-purple-900 font-hebrew tv-display">
+        <div className="text-white text-7xl font-bold animate-fade-in">טוען...</div>
       </div>
     )
   }
 
   if (accessDenied) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-900 to-red-700 font-hebrew">
-        <div className="text-white text-5xl font-bold animate-fade-in">גישה נדחתה</div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-900 to-red-700 font-hebrew tv-display">
+        <div className="text-white text-7xl font-bold animate-fade-in">גישה נדחתה</div>
       </div>
     )
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 to-purple-900 font-hebrew">
-        <div className="text-white text-5xl font-bold animate-fade-in">בניין לא נמצא</div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 to-purple-900 font-hebrew tv-display">
+        <div className="text-white text-7xl font-bold animate-fade-in">בניין לא נמצא</div>
       </div>
     )
   }
 
   return (
     <div 
-      className="min-h-screen relative overflow-hidden font-hebrew"
+      className="min-h-screen relative overflow-hidden font-hebrew tv-display"
       style={{
         background: style?.background_color ? 
           `linear-gradient(135deg, ${style.background_color}10, ${style.background_color}20, ${style.background_color}10)` : 
@@ -620,7 +620,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         <div className="flex items-center justify-between">
           {/* Left Side - Building Info */}
           <div 
-            className="text-4xl font-bold tracking-wide drop-shadow-lg flex items-center"
+            className="text-6xl font-bold tracking-wide drop-shadow-lg flex items-center"
             style={{ color: style?.text_color || '#ffffff' }}
           >
             ברוכים הבאים {user?.street_name} {user?.building_number}
@@ -628,12 +628,12 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           
           {/* Center - Time with Hebrew Date */}
           <div 
-            className="absolute left-1/2 transform -translate-x-1/2 text-4xl md:text-5xl font-bold flex items-center justify-center gap-8"
+            className="absolute left-1/2 transform -translate-x-1/2 text-6xl md:text-7xl font-bold flex items-center justify-center gap-8"
             style={{ color: style?.text_color || '#ffffff' }}
           >
-            <span className="text-2xl font-bold" style={{ opacity: 0.9 }}>{hebrewDate}</span>
-            <span className="text-5xl">{formatTime(currentTime)}</span>
-            <span className="text-2xl" style={{ opacity: 0.8 }}>{currentTime.toLocaleDateString('he-IL')}</span>
+            <span className="text-4xl font-bold" style={{ opacity: 0.9 }}>{hebrewDate}</span>
+            <span className="text-7xl">{formatTime(currentTime)}</span>
+            <span className="text-4xl" style={{ opacity: 0.8 }}>{currentTime.toLocaleDateString('he-IL')}</span>
           </div>
           
           {/* Right Side - System Info & Music Controls */}
@@ -734,45 +734,45 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
               minHeight: '25vh'
             }}
           >
-            <div className="flex items-center justify-center mb-6">
-              <h3 className="text-5xl font-bold" style={{ color: style?.text_color || '#1f2937' }}>פרטי ניהול</h3>
-            </div>
+                         <div className="flex items-center justify-center mb-6">
+               <h3 className="text-7xl font-bold" style={{ color: style?.text_color || '#1f2937' }}>פרטי ניהול</h3>
+             </div>
             
-            {user?.management_company && (
-              <div className="text-3xl mb-4 font-semibold" style={{ color: style?.text_color || '#374151' }}>
-                חברת ניהול: {user.management_company}
-              </div>
-            )}
-            {user?.management_contact && (
-              <div className="text-2xl mb-4 flex items-center justify-center" style={{ color: style?.text_color || '#6b7280' }}>
-                איש קשר: {user.management_contact}
-                <User className="w-8 h-8 ml-2" />
-              </div>
-            )}
-            {user?.management_phone && (
-              <div className="text-2xl flex items-center justify-center" style={{ color: style?.text_color || '#6b7280' }}>
-                טלפון: {user.management_phone}
-                <Phone className="w-8 h-8 ml-2" />
-              </div>
-            )}
+                         {user?.management_company && (
+               <div className="text-5xl mb-4 font-semibold" style={{ color: style?.text_color || '#374151' }}>
+                 חברת ניהול: {user.management_company}
+               </div>
+             )}
+             {user?.management_contact && (
+               <div className="text-4xl mb-4 flex items-center justify-center" style={{ color: style?.text_color || '#6b7280' }}>
+                 איש קשר: {user.management_contact}
+                 <User className="w-12 h-12 ml-2" />
+               </div>
+             )}
+             {user?.management_phone && (
+               <div className="text-4xl flex items-center justify-center" style={{ color: style?.text_color || '#6b7280' }}>
+                 טלפון: {user.management_phone}
+                 <Phone className="w-12 h-12 ml-2" />
+               </div>
+             )}
           </div>
           
           {/* הודעות ועד */}
           <div className="w-full flex-1 flex flex-col">
-            <div 
-              className="px-6 py-4 text-center font-bold tracking-wide text-5xl"
-              style={{
-                background: style?.background_color ? 
-                  `linear-gradient(135deg, ${style.background_color}, ${style.background_color}DD, ${style.background_color})` : 
-                  'linear-gradient(135deg, #dc2626, #b91c1c, #dc2626)',
-                color: style?.text_color || '#ffffff'
-              }}
-            >
-              הודעות ועד
-              {notices.length > 0 && noticePaused && (
-                <span className="mr-2 text-2xl align-middle" style={{ color: style?.text_color || '#fbbf24' }}>⏸️</span>
-              )}
-            </div>
+                         <div 
+               className="px-6 py-4 text-center font-bold tracking-wide text-7xl"
+               style={{
+                 background: style?.background_color ? 
+                   `linear-gradient(135deg, ${style.background_color}, ${style.background_color}DD, ${style.background_color})` : 
+                   'linear-gradient(135deg, #dc2626, #b91c1c, #dc2626)',
+                 color: style?.text_color || '#ffffff'
+               }}
+             >
+               הודעות ועד
+               {notices.length > 0 && noticePaused && (
+                 <span className="mr-2 text-4xl align-middle" style={{ color: style?.text_color || '#fbbf24' }}>⏸️</span>
+               )}
+             </div>
                           <div 
                 className="p-4 flex flex-col justify-center transition-all duration-300 hover:shadow-2xl relative flex-1"
                 style={{
@@ -789,36 +789,36 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
                   onClick={() => setNoticePaused(!noticePaused)}
                   title={noticePaused ? "לחץ להפעלת קרוסלה" : "לחץ לעצירת קרוסלה"}
                 >
-                  <div className="font-bold text-4xl mb-6 tracking-wide" style={{ color: style?.text_color || '#1f2937' }}>
-                    {notices[currentNoticeIndex]?.title || 'אין כותרת'}
-                  </div>
-                  <div className="mb-8 text-3xl leading-relaxed" style={{ color: style?.text_color || '#374151' }}>
-                    {notices[currentNoticeIndex]?.content || 'אין תוכן'}
-                  </div>
+                                     <div className="font-bold text-6xl mb-6 tracking-wide" style={{ color: style?.text_color || '#1f2937' }}>
+                     {notices[currentNoticeIndex]?.title || 'אין כותרת'}
+                   </div>
+                   <div className="mb-8 text-5xl leading-relaxed" style={{ color: style?.text_color || '#374151' }}>
+                     {notices[currentNoticeIndex]?.content || 'אין תוכן'}
+                   </div>
 
                 </div>
                               ) : (
-                  <div className="text-center" style={{ color: style?.text_color || '#6b7280' }}>
-                    <div className="text-2xl mb-4">אין הודעות להצגה</div>
-                    <div className="text-lg">הודעות חדשות יופיעו כאן</div>
-                  </div>
+                                     <div className="text-center" style={{ color: style?.text_color || '#6b7280' }}>
+                     <div className="text-4xl mb-4">אין הודעות להצגה</div>
+                     <div className="text-3xl">הודעות חדשות יופיעו כאן</div>
+                   </div>
                 )}
             </div>
           </div>
           
-                      {user?.welcome_text && (
-              <div 
-                className="mt-4 text-2xl text-center font-bold py-4 px-6 shadow-lg"
-                style={{
-                  background: style?.background_color ? 
-                    `linear-gradient(135deg, ${style.background_color}20, ${style.background_color}30, ${style.background_color}20)` : 
-                    'linear-gradient(135deg, #dbeafe, #bfdbfe, #dbeafe)',
-                  color: style?.text_color || '#1e40af'
-                }}
-              >
-                {user.welcome_text}
-              </div>
-            )}
+                                   {user?.welcome_text && (
+               <div 
+                 className="mt-4 text-4xl text-center font-bold py-4 px-6 shadow-lg"
+                 style={{
+                   background: style?.background_color ? 
+                     `linear-gradient(135deg, ${style.background_color}20, ${style.background_color}30, ${style.background_color}20)` : 
+                     'linear-gradient(135deg, #dbeafe, #bfdbfe, #dbeafe)',
+                   color: style?.text_color || '#1e40af'
+                 }}
+               >
+                 {user.welcome_text}
+               </div>
+             )}
         </div>
 
         {/* Center Column - Image Carousel (40%) */}
@@ -848,15 +848,15 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
                }}
              />
           ) : (
-              <div 
-                className="text-center text-5xl font-bold p-12 shadow-lg"
-                style={{
-                  color: style?.text_color || '#374151',
-                  background: style?.background_color ? `linear-gradient(135deg, ${style.background_color}90, ${style.background_color}95, ${style.background_color}90)` : 'rgba(255, 255, 255, 0.9)'
-                }}
-              >
-                {images.length === 0 ? 'אין תמונות להצגה' : 'טוען תמונות...'}
-              </div>
+                             <div 
+                 className="text-center text-7xl font-bold p-12 shadow-lg"
+                 style={{
+                   color: style?.text_color || '#374151',
+                   background: style?.background_color ? `linear-gradient(135deg, ${style.background_color}90, ${style.background_color}95, ${style.background_color}90)` : 'rgba(255, 255, 255, 0.9)'
+                 }}
+               >
+                 {images.length === 0 ? 'אין תמונות להצגה' : 'טוען תמונות...'}
+               </div>
             )}
         </div>
 
@@ -882,42 +882,42 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
               className="flex items-center justify-between mb-3 pb-2 border-b"
               style={{ borderColor: style?.text_color ? `${style.text_color}30` : 'rgba(255, 255, 255, 0.3)' }}
             >
-              <div className="flex items-center">
-                <span className="text-3xl font-bold tracking-wide" style={{ color: style?.text_color || '#ffffff' }}>זמני שבת</span>
-              </div>
-              <Clock className="w-10 h-10" style={{ color: style?.text_color || '#ffffff' }} />
+                             <div className="flex items-center">
+                 <span className="text-5xl font-bold tracking-wide" style={{ color: style?.text_color || '#ffffff' }}>זמני שבת</span>
+               </div>
+               <Clock className="w-16 h-16" style={{ color: style?.text_color || '#ffffff' }} />
             </div>
             
             {/* Main Content */}
             <div className="flex items-center justify-between">
               {/* Left Side - Times */}
                               <div className="text-right">
-                  {shabbatTimes.parsha ? (
-                    <div className="font-bold text-2xl mb-4 tracking-wide" style={{ color: style?.text_color || '#ffffff' }}>{shabbatTimes.parsha}</div>
-                  ) : (
-                    <div className="text-xl mb-4" style={{ color: style?.text_color ? `${style.text_color}80` : 'rgba(255, 255, 255, 0.8)' }}>טוען פרשת השבוע...</div>
-                  )}
-                  {shabbatTimes.entry ? (
-                    <div className="text-xl mb-2" style={{ color: style?.text_color ? `${style.text_color}90` : 'rgba(255, 255, 255, 0.9)' }}>כניסת שבת: <span className="font-bold">{shabbatTimes.entry}</span></div>
-                  ) : (
-                    <div className="text-xl mb-2" style={{ color: style?.text_color ? `${style.text_color}80` : 'rgba(255, 255, 255, 0.8)' }}>טוען זמני שבת...</div>
-                  )}
-                  {shabbatTimes.exit ? (
-                    <div className="text-xl" style={{ color: style?.text_color ? `${style.text_color}90` : 'rgba(255, 255, 255, 0.9)' }}>צאת שבת: <span className="font-bold">{shabbatTimes.exit}</span></div>
-                  ) : (
-                    <div className="text-xl" style={{ color: style?.text_color ? `${style.text_color}80` : 'rgba(255, 255, 255, 0.8)' }}>טוען זמני שבת...</div>
-                  )}
+                                     {shabbatTimes.parsha ? (
+                     <div className="font-bold text-4xl mb-4 tracking-wide" style={{ color: style?.text_color || '#ffffff' }}>{shabbatTimes.parsha}</div>
+                   ) : (
+                     <div className="text-3xl mb-4" style={{ color: style?.text_color ? `${style.text_color}80` : 'rgba(255, 255, 255, 0.8)' }}>טוען פרשת השבוע...</div>
+                   )}
+                   {shabbatTimes.entry ? (
+                     <div className="text-3xl mb-2" style={{ color: style?.text_color ? `${style.text_color}90` : 'rgba(255, 255, 255, 0.9)' }}>כניסת שבת: <span className="font-bold">{shabbatTimes.entry}</span></div>
+                   ) : (
+                     <div className="text-3xl mb-2" style={{ color: style?.text_color ? `${style.text_color}80` : 'rgba(255, 255, 255, 0.8)' }}>טוען זמני שבת...</div>
+                   )}
+                   {shabbatTimes.exit ? (
+                     <div className="text-3xl" style={{ color: style?.text_color ? `${style.text_color}90` : 'rgba(255, 255, 255, 0.9)' }}>צאת שבת: <span className="font-bold">{shabbatTimes.exit}</span></div>
+                   ) : (
+                     <div className="text-3xl" style={{ color: style?.text_color ? `${style.text_color}80` : 'rgba(255, 255, 255, 0.8)' }}>טוען זמני שבת...</div>
+                   )}
                 </div>
               
               {/* Right Side - Animated Candles */}
-              <div className="flex items-center justify-center">
-                <img 
-                  src="/images/shabbat-candles.gif" 
-                  alt="נרות שבת מונפשים" 
-                  className="w-40 h-24"
-                  style={{ filter: 'drop-shadow(0 0 5px rgba(255, 215, 0, 0.5))' }}
-                />
-              </div>
+                             <div className="flex items-center justify-center">
+                 <img 
+                   src="/images/shabbat-candles.gif" 
+                   alt="נרות שבת מונפשים" 
+                   className="w-60 h-36"
+                   style={{ filter: 'drop-shadow(0 0 5px rgba(255, 215, 0, 0.5))' }}
+                 />
+               </div>
             </div>
           </div>
         </div>
@@ -1036,25 +1036,25 @@ function NewsColumn({ news, style }: { news: NewsItem[], style: Style | null }) 
             }}
           >
           <div 
-            className="text-2xl font-bold mb-6 border-b-2 pb-4 flex items-center tracking-wide"
+            className="text-4xl font-bold mb-6 border-b-2 pb-4 flex items-center tracking-wide"
             style={{ 
               color: style?.text_color || '#b91c1c',
               borderColor: style?.background_color ? `${style.background_color}40` : '#fecaca'
             }}
           >
-            <Newspaper className="w-10 h-10 mr-4" />
+            <Newspaper className="w-16 h-16 mr-4" />
             {sourceTitles[src]}
           </div>
           <div className="min-h-[4em] flex items-start">
             {grouped[src]?.length ? (
               <>
-                <span className="mt-2 mr-4 text-xl" style={{ color: style?.text_color || '#3b82f6' }}>•</span>
-                <span className="text-xl font-medium leading-relaxed" style={{ color: style?.text_color || '#1f2937' }}>
+                <span className="mt-2 mr-4 text-3xl" style={{ color: style?.text_color || '#3b82f6' }}>•</span>
+                <span className="text-3xl font-medium leading-relaxed" style={{ color: style?.text_color || '#1f2937' }}>
                   {grouped[src]?.[indexes[src] || 0]?.title}
                 </span>
               </>
             ) : (
-              <span className="text-xl" style={{ color: style?.text_color || '#9ca3af' }}>אין עדכונים</span>
+              <span className="text-3xl" style={{ color: style?.text_color || '#9ca3af' }}>אין עדכונים</span>
             )}
           </div>
         </div>
