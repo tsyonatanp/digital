@@ -146,7 +146,7 @@ textarea {
 }
 
 /* TV-specific optimizations for smaller screens */
-@media (max-height: 800px) {
+@media (max-height: 800px), (max-width: 1200px) {
   .tv-display .text-4xl {
     font-size: 2rem !important;
   }
@@ -211,6 +211,59 @@ textarea {
   
   .tv-display .h-16 {
     height: 2.5rem !important;
+  }
+}
+
+/* Extra small TV optimizations */
+@media (max-height: 600px), (max-width: 1000px) {
+  .tv-display .text-4xl {
+    font-size: 1.5rem !important;
+  }
+  
+  .tv-display .text-3xl {
+    font-size: 1.2rem !important;
+  }
+  
+  .tv-display .text-5xl {
+    font-size: 2rem !important;
+  }
+  
+  .tv-display .text-6xl {
+    font-size: 2.5rem !important;
+  }
+  
+  .tv-display .text-7xl {
+    font-size: 3rem !important;
+  }
+  
+  /* Even smaller margins */
+  .tv-display .mb-6 {
+    margin-bottom: 0.25rem !important;
+  }
+  
+  .tv-display .p-4 {
+    padding: 0.25rem !important;
+  }
+  
+  .tv-display .mb-4 {
+    margin-bottom: 0.25rem !important;
+  }
+  
+  /* Smaller icons */
+  .tv-display .w-8 {
+    width: 1rem !important;
+  }
+  
+  .tv-display .h-8 {
+    height: 1rem !important;
+  }
+  
+  .tv-display .w-12 {
+    width: 1.5rem !important;
+  }
+  
+  .tv-display .h-12 {
+    height: 1.5rem !important;
   }
 }
 
