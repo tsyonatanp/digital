@@ -71,6 +71,15 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const fullyPlayingRef = useRef(false);
+
+  const getTrackUrl = (index: number): string => {
+    try {
+      return new URL(musicTracks[index] || '', window.location.origin).toString();
+    } catch {
+      return musicTracks[index] || '';
+    }
+  };
   
   // רשימת קבצי המוזיקה
   const musicTracks = [
@@ -89,6 +98,13 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       audioRef.current.pause();
       setIsMusicPlaying(false);
       console.log('⏸️ מוזיקה הושהתה');
+      try {
+        const fully: any = (window as any).fully;
+        if (fully && typeof fully.stopSound === 'function') {
+          fully.stopSound();
+          fullyPlayingRef.current = false;
+        }
+      } catch {}
     } else {
       // ודא שהנגן אינו מושתק לפני ניסיון ניגון יזום
       audioRef.current.muted = false;
@@ -97,9 +113,20 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           setIsMusicPlaying(true);
           console.log('▶️ מוזיקה הופעלה');
         })
-        .catch((error) => {
-          console.error('❌ שגיאה בהפעלת מוזיקה:', error);
-          alert('לא ניתן להפעיל מוזיקה. נסה ללחוץ על המסך קודם.');
+        .catch(() => {
+          //fallback ל-Fully Kiosk אם קיים
+          try {
+            const fully: any = (window as any).fully;
+            if (fully && typeof fully.playSound === 'function') {
+              fully.playSound(getTrackUrl(currentTrackIndex));
+              fullyPlayingRef.current = true;
+              setIsMusicPlaying(true);
+            } else {
+              alert('לא ניתן להפעיל מוזיקה. נסה ללחוץ על המסך קודם.');
+            }
+          } catch {
+            alert('לא ניתן להפעיל מוזיקה. נסה ללחוץ על המסך קודם.');
+          }
         });
     }
   };
@@ -152,15 +179,23 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
 
   // אתחול אודיו + ניסיון Autoplay מושתק + ביטול השתקה באינטראקציה ראשונה
   useEffect(() => {
-    audioRef.current = new Audio(musicTracks[0]);
+    audioRef.current = new Audio(getTrackUrl(0));
     audioRef.current.volume = 0.3;
-    audioRef.current.loop = true;
+    audioRef.current.loop = false;
     // התחל במצב מושתק כדי לעבור חסימות Autoplay בדפדפנים/Android WebView
     audioRef.current.muted = true;
     // נסה לנגן באופן מושתק. אם חסום, נתעלם מהשגיאה ונחכה למחווה
     audioRef.current.play().catch(() => {
       console.log('Autoplay was blocked - will unlock on first user gesture');
     });
+
+    // אם Fully Kiosk זמין, נסה להפעיל דרך הממשק המקומי (עוקף חסימות דפדפן)
+    try {
+      const fully: any = (window as any).fully;
+      if (fully && typeof fully.setAudioVolume === 'function') {
+        try { fully.setAudioVolume(0.3); } catch {}
+      }
+    } catch {}
     
     // רק event listener בסיסי לסיום שיר
     const handleEnded = () => {
@@ -169,6 +204,36 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     };
     
     audioRef.current.addEventListener('ended', handleEnded);
+
+    // נסיון חוזר אוטומטי למשך דקה ראשונה (כל 5ש׳׳), למקרה שהמדיניות השתחררה
+    let retries = 0;
+    const retryTimer = setInterval(() => {
+      if (!audioRef.current) return;
+      if (!audioRef.current.paused || fullyPlayingRef.current) {
+        clearInterval(retryTimer);
+        return;
+      }
+      if (retries >= 12) {
+        clearInterval(retryTimer);
+        return;
+      }
+      audioRef.current.play().then(() => {
+        setIsMusicPlaying(true);
+        clearInterval(retryTimer);
+      }).catch(() => {
+        try {
+          const fully: any = (window as any).fully;
+          if (fully && typeof fully.playSound === 'function') {
+            fully.playSound(getTrackUrl(currentTrackIndex));
+            fullyPlayingRef.current = true;
+            setIsMusicPlaying(true);
+            clearInterval(retryTimer);
+            return;
+          }
+        } catch {}
+        retries += 1;
+      });
+    }, 5000);
 
     // ביטול השתקה והפעלה בנגיעה/מקש ראשון (עוזר ב-Fully Kiosk / Android)
     const unlockOnInteract = () => {
@@ -191,6 +256,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       }
       window.removeEventListener('pointerdown', unlockOnInteract);
       window.removeEventListener('keydown', unlockOnInteract);
+      clearInterval(retryTimer);
     };
   }, []);
 
