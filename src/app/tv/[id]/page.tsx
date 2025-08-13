@@ -70,6 +70,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   // הוספת state למוזיקה
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fullyPlayingRef = useRef(false);
   const trackDurationMsRef = useRef<number>(0);
@@ -209,13 +210,14 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     window.location.reload();
   };
 
-  // אתחול אודיו + ניסיון Autoplay מושתק + ביטול השתקה באינטראקציה ראשונה
+  // אתחול אודיו + ניסיון Autoplay אגרסיבי + fallback מושתק
   useEffect(() => {
     audioRef.current = new Audio(getTrackUrl(0));
     audioRef.current.volume = 0.3;
     audioRef.current.loop = false;
-    // התחל במצב מושתק כדי לעבור חסימות Autoplay בדפדפנים/Android WebView
-    audioRef.current.muted = true;
+    // תחילה ננסה ללא השתקה
+    audioRef.current.muted = false;
+    
     // עדכון משך רצועה כאשר מטא-דאטה נטענת
     const handleLoadedMeta = () => {
       if (!audioRef.current) return;
@@ -225,10 +227,23 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     };
     audioRef.current.addEventListener('loadedmetadata', handleLoadedMeta);
 
-    // נסה לנגן באופן מושתק. אם חסום, נתעלם מהשגיאה ונחכה למחווה
-    audioRef.current.play().catch(() => {
-      console.log('Autoplay was blocked - will unlock on first user gesture');
-    });
+    // ניסיון ראשון: ניגון עם volume מלא
+    audioRef.current.play()
+      .then(() => {
+        console.log('🎵 מוזיקה הופעלה אוטומטית!');
+        setIsMusicPlaying(true);
+      })
+      .catch(() => {
+        console.log('❌ Autoplay נחסם - מעבר למצב מושתק');
+        setAutoplayBlocked(true);
+        // אם נחסם, עבור למצב מושתק
+        if (audioRef.current) {
+          audioRef.current.muted = true;
+          audioRef.current.play().catch(() => {
+            console.log('גם autoplay מושתק נחסם - מחכה לאינטראקציה');
+          });
+        }
+      });
 
     // אם Fully Kiosk זמין, נסה להפעיל דרך הממשק המקומי (עוקף חסימות דפדפן)
     try {
@@ -260,7 +275,9 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       }
       audioRef.current.play().then(() => {
         setIsMusicPlaying(true);
+        setAutoplayBlocked(false);
         clearInterval(retryTimer);
+        console.log('🎵 מוזיקה הופעלה בניסיון חוזר!');
       }).catch(() => {
         try {
           const fully: any = (window as any).fully;
@@ -268,7 +285,9 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
             fully.playSound(getTrackUrl(currentTrackIndex));
             fullyPlayingRef.current = true;
             setIsMusicPlaying(true);
+            setAutoplayBlocked(false);
             clearInterval(retryTimer);
+            console.log('🎵 מוזיקה הופעלה דרך Fully Kiosk!');
             return;
           }
         } catch {}
@@ -282,7 +301,11 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       audioRef.current.muted = false;
       audioRef.current.play().then(() => {
         setIsMusicPlaying(true);
-      }).catch(() => {});
+        setAutoplayBlocked(false);
+        console.log('🎵 מוזיקה הופעלה לאחר אינטראקציה!');
+      }).catch(() => {
+        console.log('❌ נכשל גם לאחר אינטראקציה');
+      });
       window.removeEventListener('pointerdown', unlockOnInteract);
       window.removeEventListener('keydown', unlockOnInteract);
     };
@@ -1100,6 +1123,13 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         
         {/* Music Control Button */}
         <div className="absolute -top-6 right-6">
+          {/* הודעת autoplay נחסם */}
+          {autoplayBlocked && !isMusicPlaying && (
+            <div className="absolute -top-16 right-0 bg-black bg-opacity-75 text-white px-3 py-2 rounded-lg text-sm whitespace-nowrap animate-pulse">
+              🎵 גע במסך להפעלת מוזיקה
+            </div>
+          )}
+          
           <button
             onClick={toggleMusic}
             className="w-12 h-12 rounded-full shadow-lg border-2 transition-all duration-300 hover:scale-110"
