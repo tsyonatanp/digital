@@ -1,0 +1,20 @@
+[33mcbda210[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m תיקון - החזרת עיצוב למחשב עם media queries מותאמים ל-TV בלבד
+[33meaa30a4[m הקטנת minHeight של כרטיס פרטי ניהול והוספת CSS מותאם ל-TV
+[33m49056b0[m הוספת media queries נוספים למסכים קטנים - תמיכה ב-TV עם רזולוציה נמוכה
+[33mcdf9d14[m הקטנת אייקון החדשות והוספת CSS להקטנת אייקונים על TV
+[33m066d987[m הוספת CSS מותאם ל-TV למסכים קטנים - הקטנת טקסטים ומרווחים
+[33m5c83b68[m שיפור תצוגת TV: הגדלת טקסטים והוספת CSS אופטימיזציה
+[33m3cc8f5c[m[33m ([m[1;31morigin/restore-yesterday-20250810[m[33m, [m[1;32mrestore-yesterday-20250810[m[33m)[m CSP: allow weatherwidget.org in script-src so weather widget loads
+[33m7f48567[m Auth storage: fix expires_at comparison (seconds vs ms) to prevent false session expiry
+[33m55fe66d[m CSP: relax connect-src (https wss data blob) to unblock Supabase auth temporarily
+[33m0791d86[m CSP: allow Supabase domains (https and wss) in connect-src for auth and realtime
+[33m78916f5[m Auth/login: clearer env error if Supabase not configured; LoginForm guard; Security hardening (CSP headers, rate limiting/logging); ImageManager security and limits; Admin security dashboard; env.example updates
+[33m97de66f[m Add forgot password functionality to login form
+[33mb1bb47d[m Add trial period and email verification system - users get 24h trial, need email verification, then admin approval
+[33m39c2658[m Fix all TypeScript errors - add null checks for supabase client
+[33m4467076[m Fix TypeScript error in auth callback page - add null check for supabase client
+[33m4ad3cde[m Fix TypeScript errors in news API route - add explicit types for map parameters
+[33mcc2886a[m Resolve merge conflict in admin page and fix TypeScript errors
+[33md9d14fc[m Fix TypeScript errors in admin page - add null checks for supabase client
+[33me52cfc7[m Add files via upload
+[33meafcfa6[m Add files via upload
