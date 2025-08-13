@@ -72,6 +72,9 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fullyPlayingRef = useRef(false);
+  const trackDurationMsRef = useRef<number>(0);
+  const fullyNextTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const SHOW_MUSIC_CONTROLS = false;
 
   const getTrackUrl = (index: number): string => {
     try {
@@ -79,6 +82,17 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     } catch {
       return musicTracks[index] || '';
     }
+  };
+
+  const scheduleFullyNext = () => {
+    if (fullyNextTimerRef.current) {
+      clearTimeout(fullyNextTimerRef.current);
+      fullyNextTimerRef.current = null;
+    }
+    if (!fullyPlayingRef.current || trackDurationMsRef.current <= 0) return;
+    fullyNextTimerRef.current = setTimeout(() => {
+      playNextTrack();
+    }, Math.max(5_000, trackDurationMsRef.current + 1000));
   };
   
   // רשימת קבצי המוזיקה
@@ -148,9 +162,18 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   const playNextTrack = () => {
     const nextIndex = (currentTrackIndex + 1) % musicTracks.length;
     setCurrentTrackIndex(nextIndex);
-    
+    const nextUrl = getTrackUrl(nextIndex);
+
+    try {
+      const fully: any = (window as any).fully;
+      if (fullyPlayingRef.current && fully && typeof fully.playSound === 'function') {
+        fully.playSound(nextUrl);
+        return;
+      }
+    } catch {}
+
     if (audioRef.current) {
-      audioRef.current.src = musicTracks[nextIndex] || '';
+      audioRef.current.src = nextUrl;
       audioRef.current.load();
       if (isMusicPlaying) {
         audioRef.current.play().catch(console.error);
@@ -162,9 +185,18 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   const playPreviousTrack = () => {
     const prevIndex = currentTrackIndex === 0 ? musicTracks.length - 1 : currentTrackIndex - 1;
     setCurrentTrackIndex(prevIndex);
-    
+    const prevUrl = getTrackUrl(prevIndex);
+
+    try {
+      const fully: any = (window as any).fully;
+      if (fullyPlayingRef.current && fully && typeof fully.playSound === 'function') {
+        fully.playSound(prevUrl);
+        return;
+      }
+    } catch {}
+
     if (audioRef.current) {
-      audioRef.current.src = musicTracks[prevIndex] || '';
+      audioRef.current.src = prevUrl;
       audioRef.current.load();
       if (isMusicPlaying) {
         audioRef.current.play().catch(console.error);
@@ -184,6 +216,15 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     audioRef.current.loop = false;
     // התחל במצב מושתק כדי לעבור חסימות Autoplay בדפדפנים/Android WebView
     audioRef.current.muted = true;
+    // עדכון משך רצועה כאשר מטא-דאטה נטענת
+    const handleLoadedMeta = () => {
+      if (!audioRef.current) return;
+      const dur = Number.isFinite(audioRef.current.duration) ? audioRef.current.duration : 0;
+      trackDurationMsRef.current = isNaN(dur) ? 0 : Math.round(dur * 1000);
+      if (fullyPlayingRef.current) scheduleFullyNext();
+    };
+    audioRef.current.addEventListener('loadedmetadata', handleLoadedMeta);
+
     // נסה לנגן באופן מושתק. אם חסום, נתעלם מהשגיאה ונחכה למחווה
     audioRef.current.play().catch(() => {
       console.log('Autoplay was blocked - will unlock on first user gesture');
@@ -251,12 +292,14 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     return () => {
       if (audioRef.current) {
         audioRef.current.removeEventListener('ended', handleEnded);
+          audioRef.current.removeEventListener('loadedmetadata', handleLoadedMeta);
         audioRef.current.pause();
         audioRef.current = null;
       }
       window.removeEventListener('pointerdown', unlockOnInteract);
       window.removeEventListener('keydown', unlockOnInteract);
       clearInterval(retryTimer);
+        if (fullyNextTimerRef.current) clearTimeout(fullyNextTimerRef.current);
     };
   }, []);
 
