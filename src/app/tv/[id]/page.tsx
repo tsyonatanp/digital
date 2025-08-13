@@ -90,6 +90,8 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       setIsMusicPlaying(false);
       console.log('⏸️ מוזיקה הושהתה');
     } else {
+      // ודא שהנגן אינו מושתק לפני ניסיון ניגון יזום
+      audioRef.current.muted = false;
       audioRef.current.play()
         .then(() => {
           setIsMusicPlaying(true);
@@ -148,10 +150,17 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     window.location.reload();
   };
 
-    // אתחול אודיו - גישה פשוטה
+  // אתחול אודיו + ניסיון Autoplay מושתק + ביטול השתקה באינטראקציה ראשונה
   useEffect(() => {
     audioRef.current = new Audio(musicTracks[0]);
     audioRef.current.volume = 0.3;
+    audioRef.current.loop = true;
+    // התחל במצב מושתק כדי לעבור חסימות Autoplay בדפדפנים/Android WebView
+    audioRef.current.muted = true;
+    // נסה לנגן באופן מושתק. אם חסום, נתעלם מהשגיאה ונחכה למחווה
+    audioRef.current.play().catch(() => {
+      console.log('Autoplay was blocked - will unlock on first user gesture');
+    });
     
     // רק event listener בסיסי לסיום שיר
     const handleEnded = () => {
@@ -160,6 +169,19 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     };
     
     audioRef.current.addEventListener('ended', handleEnded);
+
+    // ביטול השתקה והפעלה בנגיעה/מקש ראשון (עוזר ב-Fully Kiosk / Android)
+    const unlockOnInteract = () => {
+      if (!audioRef.current) return;
+      audioRef.current.muted = false;
+      audioRef.current.play().then(() => {
+        setIsMusicPlaying(true);
+      }).catch(() => {});
+      window.removeEventListener('pointerdown', unlockOnInteract);
+      window.removeEventListener('keydown', unlockOnInteract);
+    };
+    window.addEventListener('pointerdown', unlockOnInteract, { once: true });
+    window.addEventListener('keydown', unlockOnInteract, { once: true });
     
     return () => {
       if (audioRef.current) {
@@ -167,8 +189,22 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         audioRef.current.pause();
         audioRef.current = null;
       }
+      window.removeEventListener('pointerdown', unlockOnInteract);
+      window.removeEventListener('keydown', unlockOnInteract);
     };
   }, []);
+
+  // נסה לחדש ניגון כשחוזרים לפוקוס (למשל לאחר יציאה קצרה ל-Home/Screen saver)
+  useEffect(() => {
+    const onVisibility = () => {
+      if (!audioRef.current) return;
+      if (document.visibilityState === 'visible' && isMusicPlaying) {
+        audioRef.current.play().catch(() => {});
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, [isMusicPlaying]);
 
   // Resolve params
   useEffect(() => {
