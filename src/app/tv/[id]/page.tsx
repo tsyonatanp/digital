@@ -226,10 +226,6 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
 
     const audio = audioRef.current;
     
-    // הסרת listeners ישנים
-    audio.removeEventListener('loadedmetadata', handleLoadedMeta);
-    audio.removeEventListener('ended', handleEnded);
-    
     // listener לטעינת metadata
     const handleLoadedMeta = () => {
       if (!audioRef.current) return;
@@ -253,6 +249,10 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       playNextTrack();
     };
 
+    // הסרת listeners ישנים (אחרי הגדרת הפונקציות)
+    audio.removeEventListener('loadedmetadata', handleLoadedMeta);
+    audio.removeEventListener('ended', handleEnded);
+    
     audio.addEventListener('loadedmetadata', handleLoadedMeta, { once: true });
     audio.addEventListener('ended', handleEnded);
   };
