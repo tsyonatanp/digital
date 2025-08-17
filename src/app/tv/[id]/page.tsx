@@ -124,7 +124,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   }, []);
 
   // פונקציה לשליטה במוזיקה - גישה פשוטה
-  const toggleMusic = () => {
+  const toggleMusic = async () => {
     if (!audioRef.current) return;
     
     if (isMusicPlaying) {
@@ -152,16 +152,20 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           startProgressMonitoring(); // התחלת המוניטורינג
           console.log('▶️ מוזיקה הופעלה');
         })
-        .catch(() => {
+        .catch(async () => {
           //fallback ל-Fully Kiosk אם קיים
           try {
             const fully: any = (window as any).fully;
             if (fully && typeof fully.playSound === 'function') {
-              fully.playSound(getTrackUrl(currentTrackIndex));
+              const toggleUrl = getTrackUrl(currentTrackIndex);
+              const toggleDuration = await getTrackDuration(toggleUrl);
+              trackDurationMsRef.current = toggleDuration > 0 ? toggleDuration : 300000;
+              fully.playSound(toggleUrl);
               fullyPlayingRef.current = true;
               setIsMusicPlaying(true);
               setAutoplayBlocked(false);
               startProgressMonitoring(); // התחלת המוניטורינג גם ב-Fully
+              scheduleFullyNext();
             } else {
               alert('לא ניתן להפעיל מוזיקה. נסה ללחוץ על המסך קודם.');
             }
@@ -258,7 +262,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   };
 
   // פונקציה למעבר לשיר הבא
-  const playNextTrack = () => {
+  const playNextTrack = async () => {
     const nextIndex = (currentTrackIndex + 1) % musicTracks.length;
     console.log(`🎵 מעבר לשיר ${nextIndex + 1}/${musicTracks.length}: ${musicTracks[nextIndex]}`);
     
@@ -273,8 +277,12 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     try {
       const fully: any = (window as any).fully;
       if (fullyPlayingRef.current && fully && typeof fully.playSound === 'function') {
+        // השג duration לפני ניגון
+        const durationMs = await getTrackDuration(nextUrl);
+        trackDurationMsRef.current = durationMs > 0 ? durationMs : 300000; // default 5min if failed
+        
         fully.playSound(nextUrl);
-        scheduleFullyNext(); // חשוב! לזמן את השיר הבא
+        scheduleFullyNext();
         return;
       }
     } catch {}
@@ -311,7 +319,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   };
 
   // פונקציה למעבר לשיר הקודם
-  const playPreviousTrack = () => {
+  const playPreviousTrack = async () => {
     const prevIndex = currentTrackIndex === 0 ? musicTracks.length - 1 : currentTrackIndex - 1;
     console.log(`🎵 מעבר לשיר הקודם ${prevIndex + 1}/${musicTracks.length}: ${musicTracks[prevIndex]}`);
     
@@ -326,8 +334,12 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     try {
       const fully: any = (window as any).fully;
       if (fullyPlayingRef.current && fully && typeof fully.playSound === 'function') {
+        // השג duration לפני ניגון
+        const durationMs = await getTrackDuration(prevUrl);
+        trackDurationMsRef.current = durationMs > 0 ? durationMs : 300000; // default 5min if failed
+        
         fully.playSound(prevUrl);
-        scheduleFullyNext(); // חשוב! לזמן את השיר הבא
+        scheduleFullyNext();
         return;
       }
     } catch {}
@@ -410,7 +422,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
 
     // נסיון חוזר אוטומטי למשך דקה ראשונה (כל 5ש׳׳), למקרה שהמדיניות השתחררה
     let retries = 0;
-    const retryTimer = setInterval(() => {
+    const retryTimer = setInterval(async () => {
       if (!audioRef.current) return;
       if (!audioRef.current.paused || fullyPlayingRef.current) {
         clearInterval(retryTimer);
@@ -426,17 +438,21 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         startProgressMonitoring(); // התחלת המוניטורינג
         clearInterval(retryTimer);
         console.log('🎵 מוזיקה הופעלה בניסיון חוזר!');
-      }).catch(() => {
+      }).catch(async () => {
         try {
           const fully: any = (window as any).fully;
           if (fully && typeof fully.playSound === 'function') {
-            fully.playSound(getTrackUrl(currentTrackIndex));
+            const initialUrl = getTrackUrl(currentTrackIndex);
+            const durationMs = await getTrackDuration(initialUrl);
+            trackDurationMsRef.current = durationMs > 0 ? durationMs : 300000;
+            fully.playSound(initialUrl);
             fullyPlayingRef.current = true;
             setIsMusicPlaying(true);
             setAutoplayBlocked(false);
             startProgressMonitoring(); // התחלת המוניטורינג
             clearInterval(retryTimer);
             console.log('🎵 מוזיקה הופעלה דרך Fully Kiosk!');
+            scheduleFullyNext();
             return;
           }
         } catch {}
@@ -1467,3 +1483,16 @@ function WeatherWidget({ style }: { style: Style | null }) {
     <div ref={widgetRef} className="w-full h-full flex items-center justify-center" />
   );
 } 
+
+// פונקציה חדשה להשגת משך השיר
+const getTrackDuration = async (url: string): Promise<number> => {
+  return new Promise((resolve) => {
+    const tempAudio = new Audio(url);
+    tempAudio.addEventListener('loadedmetadata', () => {
+      const dur = Number.isFinite(tempAudio.duration) ? tempAudio.duration : 0;
+      resolve(Math.round(dur * 1000));
+    }, { once: true });
+    tempAudio.addEventListener('error', () => resolve(0), { once: true });
+    tempAudio.load();
+  });
+};
