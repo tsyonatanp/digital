@@ -492,18 +492,20 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     window.addEventListener('pointerdown', unlockOnInteract, { once: true });
     window.addEventListener('keydown', unlockOnInteract, { once: true });
     
-        return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
+    return () => {
+      const audio = audioRef.current;
+      if (audio) {
+        audio.pause();
+        // הסרת מאזינים מהרפרנס לפני איפוס
+        if (eventHandlersRef.current.handleLoadedMeta) {
+          audio.removeEventListener('loadedmetadata', eventHandlersRef.current.handleLoadedMeta);
+        }
+        if (eventHandlersRef.current.handleEnded) {
+          audio.removeEventListener('ended', eventHandlersRef.current.handleEnded);
+        }
         audioRef.current = null;
       }
-      // הסרת מאזינים מהרפרנס
-      if (eventHandlersRef.current.handleLoadedMeta && audioRef.current) {
-        audioRef.current.removeEventListener('loadedmetadata', eventHandlersRef.current.handleLoadedMeta);
-      }
-      if (eventHandlersRef.current.handleEnded && audioRef.current) {
-        audioRef.current.removeEventListener('ended', eventHandlersRef.current.handleEnded);
-      }
+
       if (progressTimerRef.current) {
         clearInterval(progressTimerRef.current);
       }
