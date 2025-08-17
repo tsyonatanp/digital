@@ -108,6 +108,21 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     '/audio/Reach Out Your Hand The Yanuka  Melodies.mp3'
   ];
 
+  // בדיקת זמינות קבצים
+  useEffect(() => {
+    console.log('🎵 בדיקת זמינות קבצי מוזיקה:');
+    musicTracks.forEach((track, index) => {
+      const audio = new Audio();
+      audio.addEventListener('canplaythrough', () => {
+        console.log(`✅ קובץ ${index + 1} זמין: ${track}`);
+      });
+      audio.addEventListener('error', () => {
+        console.error(`❌ קובץ ${index + 1} לא זמין: ${track}`);
+      });
+      audio.src = track;
+    });
+  }, []);
+
   // פונקציה לשליטה במוזיקה - גישה פשוטה
   const toggleMusic = () => {
     if (!audioRef.current) return;
@@ -180,6 +195,8 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       clearInterval(progressTimerRef.current);
     }
     
+    console.log(`🔍 התחלת מוניטורינג לשיר ${currentTrackIndex + 1}`);
+    
     progressTimerRef.current = setInterval(() => {
       if (!audioRef.current || !isMusicPlaying) return;
       
@@ -188,7 +205,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       
       // בדיקה אם השיר הסתיים
       if (duration > 0 && current >= duration - 0.5) {
-        console.log(`🎵 שיר ${currentTrackIndex + 1} הסתיים - עובר לשיר הבא`);
+        console.log(`🎵 שיר ${currentTrackIndex + 1} הסתיים (מוניטורינג) - עובר לשיר הבא`);
         clearInterval(progressTimerRef.current!);
         playNextTrack();
       }
@@ -209,6 +226,10 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
 
     const audio = audioRef.current;
     
+    // הסרת listeners ישנים
+    audio.removeEventListener('loadedmetadata', handleLoadedMeta);
+    audio.removeEventListener('ended', handleEnded);
+    
     // listener לטעינת metadata
     const handleLoadedMeta = () => {
       if (!audioRef.current) return;
@@ -225,6 +246,10 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     // listener לסיום השיר
     const handleEnded = () => {
       console.log(`🎵 שיר ${currentTrackIndex + 1} הסתיים - עובר לשיר הבא`);
+      // עצירת המוניטורינג הנוכחי
+      if (progressTimerRef.current) {
+        clearInterval(progressTimerRef.current);
+      }
       playNextTrack();
     };
 
@@ -255,9 +280,6 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     } catch {}
 
     if (audioRef.current) {
-      // הסרת event listeners ישנים
-      audioRef.current.removeEventListener('ended', () => {});
-      
       // הפסקת השיר הנוכחי
       audioRef.current.pause();
       audioRef.current.src = nextUrl;
@@ -311,9 +333,6 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     } catch {}
 
     if (audioRef.current) {
-      // הסרת event listeners ישנים
-      audioRef.current.removeEventListener('ended', () => {});
-      
       // הפסקת השיר הנוכחי
       audioRef.current.pause();
       audioRef.current.src = prevUrl;
