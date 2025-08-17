@@ -64,7 +64,10 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
 
   const eventHandlersRef = useRef<{ 
     handleEnded?: () => void; 
-    handleLoadedMeta?: () => void; 
+    handleLoadedMeta?: () => void;
+    handlePlaying?: () => void;
+    handleStalled?: () => void;
+    handleError?: (e: Event) => void;
   }>({});
 
   const clickCount = useRef(0)
@@ -235,13 +238,12 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     const audio = audioRef.current;
   
     // הסר מאזינים קודמים באמצעות הרפרנס השמור
-    if (eventHandlersRef.current.handleLoadedMeta) {
-      audio.removeEventListener('loadedmetadata', eventHandlersRef.current.handleLoadedMeta);
-    }
-    if (eventHandlersRef.current.handleEnded) {
-      audio.removeEventListener('ended', eventHandlersRef.current.handleEnded);
-    }
-  
+    if (eventHandlersRef.current.handleLoadedMeta) audio.removeEventListener('loadedmetadata', eventHandlersRef.current.handleLoadedMeta);
+    if (eventHandlersRef.current.handleEnded) audio.removeEventListener('ended', eventHandlersRef.current.handleEnded);
+    if (eventHandlersRef.current.handlePlaying) audio.removeEventListener('playing', eventHandlersRef.current.handlePlaying);
+    if (eventHandlersRef.current.handleStalled) audio.removeEventListener('stalled', eventHandlersRef.current.handleStalled);
+    if (eventHandlersRef.current.handleError) audio.removeEventListener('error', eventHandlersRef.current.handleError);
+
     // הגדרת המאזינים החדשים
     const newHandleLoadedMeta = () => {
       if (!audioRef.current) return;
@@ -259,14 +261,35 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       console.log(`🎵 אירוע 'ended' התרחש לשיר ${currentTrackIndex + 1}. עובר לשיר הבא.`);
       playNextTrack();
     };
+
+    const newHandlePlaying = () => {
+      console.log(`▶️✅ אירוע 'playing' התרחש לשיר ${currentTrackIndex + 1}. הנגן פעיל.`);
+    };
+
+    const newHandleStalled = () => {
+      console.warn(`⏳ אירוע 'stalled' התרחש לשיר ${currentTrackIndex + 1}. ייתכן שיש בעיית רשת.`);
+    };
+
+    const newHandleError = (e: Event) => {
+      const mediaError = (e.target as HTMLAudioElement).error;
+      console.error(`❌ אירוע 'error' על הנגן לשיר ${currentTrackIndex + 1}. קוד: ${mediaError?.code}, הודעה: ${mediaError?.message}`);
+    };
   
     // הוספת המאזינים החדשים
     audio.addEventListener('loadedmetadata', newHandleLoadedMeta, { once: true });
     audio.addEventListener('ended', newHandleEnded);
+    audio.addEventListener('playing', newHandlePlaying);
+    audio.addEventListener('stalled', newHandleStalled);
+    audio.addEventListener('error', newHandleError);
   
     // שמירת המאזינים החדשים ברפרנס לצורך הסרה עתידית
-    eventHandlersRef.current.handleLoadedMeta = newHandleLoadedMeta;
-    eventHandlersRef.current.handleEnded = newHandleEnded;
+    eventHandlersRef.current = {
+      handleLoadedMeta: newHandleLoadedMeta,
+      handleEnded: newHandleEnded,
+      handlePlaying: newHandlePlaying,
+      handleStalled: newHandleStalled,
+      handleError: newHandleError
+    };
   };
 
   // פונקציה למעבר לשיר הבא
@@ -309,18 +332,21 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
 
       // המתנה קצרה ואז ניגון
       setTimeout(() => {
+        console.log(`[playNextTrack setTimeout] isMusicPlaying: ${isMusicPlaying}, audioRef.current: ${!!audioRef.current}`);
         if (audioRef.current && isMusicPlaying) {
+          console.log(`[playNextTrack setTimeout] קורא ל-play() על ${audioRef.current.src}`);
           audioRef.current.play()
             .then(() => {
-              console.log(`✅ שיר ${nextIndex + 1} התחיל לנגן`);
+              console.log(`✅ [playNextTrack] .then() - שיר ${nextIndex + 1} התחיל לנגן`);
               startProgressMonitoring();
             })
             .catch((error) => {
-              console.error(`❌ שגיאה בניגון שיר ${nextIndex + 1}:`, error);
+              console.error(`❌ [playNextTrack] .catch() - שגיאה בניגון שיר ${nextIndex + 1}:`, error);
               // נסה שוב אחרי שגיאה
               setTimeout(() => {
                 if (audioRef.current) {
-                  audioRef.current.play().catch(console.error);
+                  console.log(`[playNextTrack retry] מנסה לנגן שוב...`);
+                  audioRef.current.play().catch(e => console.error(`[playNextTrack retry] נכשל שוב`, e));
                 }
               }, 1000);
             });
@@ -497,12 +523,12 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       if (audio) {
         audio.pause();
         // הסרת מאזינים מהרפרנס לפני איפוס
-        if (eventHandlersRef.current.handleLoadedMeta) {
-          audio.removeEventListener('loadedmetadata', eventHandlersRef.current.handleLoadedMeta);
-        }
-        if (eventHandlersRef.current.handleEnded) {
-          audio.removeEventListener('ended', eventHandlersRef.current.handleEnded);
-        }
+        if (eventHandlersRef.current.handleLoadedMeta) audio.removeEventListener('loadedmetadata', eventHandlersRef.current.handleLoadedMeta);
+        if (eventHandlersRef.current.handleEnded) audio.removeEventListener('ended', eventHandlersRef.current.handleEnded);
+        if (eventHandlersRef.current.handlePlaying) audio.removeEventListener('playing', eventHandlersRef.current.handlePlaying);
+        if (eventHandlersRef.current.handleStalled) audio.removeEventListener('stalled', eventHandlersRef.current.handleStalled);
+        if (eventHandlersRef.current.handleError) audio.removeEventListener('error', eventHandlersRef.current.handleError);
+
         audioRef.current = null;
       }
 
