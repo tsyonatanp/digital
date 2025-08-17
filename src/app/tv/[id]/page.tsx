@@ -333,7 +333,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       // המתנה קצרה ואז ניגון
       setTimeout(() => {
         console.log(`[playNextTrack setTimeout] isMusicPlaying: ${isMusicPlaying}, audioRef.current: ${!!audioRef.current}`);
-        if (audioRef.current && isMusicPlaying) {
+        if (audioRef.current) {
           console.log(`[playNextTrack setTimeout] קורא ל-play() על ${audioRef.current.src}`);
           audioRef.current.play()
             .then(() => {
@@ -395,7 +395,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
 
       // המתנה קצרה ואז ניגון
       setTimeout(() => {
-        if (audioRef.current && isMusicPlaying) {
+        if (audioRef.current) {
           audioRef.current.play()
             .then(() => {
               console.log(`✅ שיר ${prevIndex + 1} התחיל לנגן`);
