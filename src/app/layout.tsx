@@ -13,6 +13,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "לוח מודעות דיגיטלי",
   description: "מערכת לוח מודעות דיגיטלי לבניינים - תצוגה על גבי טלוויזיה עם ממשק ניהול מובייל",
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export const viewport: Viewport = {

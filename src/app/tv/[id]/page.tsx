@@ -91,7 +91,10 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       fullyNextTimerRef.current = null;
     }
     if (!fullyPlayingRef.current || trackDurationMsRef.current <= 0) return;
+    
+    console.log(`⏰ מזמן מעבר לשיר הבא בעוד ${trackDurationMsRef.current + 1000}ms`);
     fullyNextTimerRef.current = setTimeout(() => {
+      console.log('⏰ טיימר Fully הסתיים - עובר לשיר הבא');
       playNextTrack();
     }, Math.max(5_000, trackDurationMsRef.current + 1000));
   };
@@ -112,6 +115,10 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     if (isMusicPlaying) {
       audioRef.current.pause();
       setIsMusicPlaying(false);
+      // עצירת המוניטורינג
+      if (progressTimerRef.current) {
+        clearInterval(progressTimerRef.current);
+      }
       console.log('⏸️ מוזיקה הושהתה');
       try {
         const fully: any = (window as any).fully;
@@ -126,6 +133,8 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       audioRef.current.play()
         .then(() => {
           setIsMusicPlaying(true);
+          setAutoplayBlocked(false);
+          startProgressMonitoring(); // התחלת המוניטורינג
           console.log('▶️ מוזיקה הופעלה');
         })
         .catch(() => {
@@ -136,6 +145,8 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
               fully.playSound(getTrackUrl(currentTrackIndex));
               fullyPlayingRef.current = true;
               setIsMusicPlaying(true);
+              setAutoplayBlocked(false);
+              startProgressMonitoring(); // התחלת המוניטורינג גם ב-Fully
             } else {
               alert('לא ניתן להפעיל מוזיקה. נסה ללחוץ על המסך קודם.');
             }
@@ -159,9 +170,78 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     }
   };
 
+  // Timer למעקב אחרי התקדמות השיר
+  const progressTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // פונקציה לניטור התקדמות השיר
+  const startProgressMonitoring = () => {
+    // עצירת טיימר קיים
+    if (progressTimerRef.current) {
+      clearInterval(progressTimerRef.current);
+    }
+    
+    progressTimerRef.current = setInterval(() => {
+      if (!audioRef.current || !isMusicPlaying) return;
+      
+      const current = audioRef.current.currentTime;
+      const duration = audioRef.current.duration;
+      
+      // בדיקה אם השיר הסתיים
+      if (duration > 0 && current >= duration - 0.5) {
+        console.log(`🎵 שיר ${currentTrackIndex + 1} הסתיים - עובר לשיר הבא`);
+        clearInterval(progressTimerRef.current!);
+        playNextTrack();
+      }
+      
+      // בדיקה אם השיר נתקע
+      if (audioRef.current.paused && isMusicPlaying) {
+        console.log('⚠️ הנגן נתקע - מנסה להפעיל מחדש');
+        audioRef.current.play().catch(() => {
+          console.log('❌ נכשל להפעיל מחדש');
+        });
+      }
+    }, 1000); // בדיקה כל שנייה
+  };
+
+  // פונקציה פשוטה להוספת event listeners בסיסיים
+  const addBasicAudioListeners = () => {
+    if (!audioRef.current) return;
+
+    const audio = audioRef.current;
+    
+    // listener לטעינת metadata
+    const handleLoadedMeta = () => {
+      if (!audioRef.current) return;
+      const dur = Number.isFinite(audioRef.current.duration) ? audioRef.current.duration : 0;
+      trackDurationMsRef.current = isNaN(dur) ? 0 : Math.round(dur * 1000);
+      console.log(`📀 נטען שיר ${currentTrackIndex + 1}: ${dur.toFixed(1)} שניות`);
+      if (fullyPlayingRef.current) {
+        scheduleFullyNext();
+      } else {
+        console.log(`🎵 נגן רגיל - המעבר יהיה אוטומטי בסיום השיר`);
+      }
+    };
+
+    // listener לסיום השיר
+    const handleEnded = () => {
+      console.log(`🎵 שיר ${currentTrackIndex + 1} הסתיים - עובר לשיר הבא`);
+      playNextTrack();
+    };
+
+    audio.addEventListener('loadedmetadata', handleLoadedMeta, { once: true });
+    audio.addEventListener('ended', handleEnded);
+  };
+
   // פונקציה למעבר לשיר הבא
   const playNextTrack = () => {
     const nextIndex = (currentTrackIndex + 1) % musicTracks.length;
+    console.log(`🎵 מעבר לשיר ${nextIndex + 1}/${musicTracks.length}: ${musicTracks[nextIndex]}`);
+    
+    // עצירת המוניטורינג הנוכחי
+    if (progressTimerRef.current) {
+      clearInterval(progressTimerRef.current);
+    }
+    
     setCurrentTrackIndex(nextIndex);
     const nextUrl = getTrackUrl(nextIndex);
 
@@ -169,22 +249,55 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       const fully: any = (window as any).fully;
       if (fullyPlayingRef.current && fully && typeof fully.playSound === 'function') {
         fully.playSound(nextUrl);
+        scheduleFullyNext(); // חשוב! לזמן את השיר הבא
         return;
       }
     } catch {}
 
     if (audioRef.current) {
+      // הסרת event listeners ישנים
+      audioRef.current.removeEventListener('ended', () => {});
+      
+      // הפסקת השיר הנוכחי
+      audioRef.current.pause();
       audioRef.current.src = nextUrl;
       audioRef.current.load();
-      if (isMusicPlaying) {
-        audioRef.current.play().catch(console.error);
-      }
+      
+      // החלפת listeners
+      addBasicAudioListeners();
+      
+      // המתנה קצרה ואז ניגון
+      setTimeout(() => {
+        if (audioRef.current && isMusicPlaying) {
+          audioRef.current.play()
+            .then(() => {
+              console.log(`✅ שיר ${nextIndex + 1} התחיל לנגן`);
+              startProgressMonitoring();
+            })
+            .catch((error) => {
+              console.error(`❌ שגיאה בניגון שיר ${nextIndex + 1}:`, error);
+              // נסה שוב אחרי שגיאה
+              setTimeout(() => {
+                if (audioRef.current) {
+                  audioRef.current.play().catch(console.error);
+                }
+              }, 1000);
+            });
+        }
+      }, 100);
     }
   };
 
   // פונקציה למעבר לשיר הקודם
   const playPreviousTrack = () => {
     const prevIndex = currentTrackIndex === 0 ? musicTracks.length - 1 : currentTrackIndex - 1;
+    console.log(`🎵 מעבר לשיר הקודם ${prevIndex + 1}/${musicTracks.length}: ${musicTracks[prevIndex]}`);
+    
+    // עצירת המוניטורינג הנוכחי
+    if (progressTimerRef.current) {
+      clearInterval(progressTimerRef.current);
+    }
+    
     setCurrentTrackIndex(prevIndex);
     const prevUrl = getTrackUrl(prevIndex);
 
@@ -192,16 +305,42 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       const fully: any = (window as any).fully;
       if (fullyPlayingRef.current && fully && typeof fully.playSound === 'function') {
         fully.playSound(prevUrl);
+        scheduleFullyNext(); // חשוב! לזמן את השיר הבא
         return;
       }
     } catch {}
 
     if (audioRef.current) {
+      // הסרת event listeners ישנים
+      audioRef.current.removeEventListener('ended', () => {});
+      
+      // הפסקת השיר הנוכחי
+      audioRef.current.pause();
       audioRef.current.src = prevUrl;
       audioRef.current.load();
-      if (isMusicPlaying) {
-        audioRef.current.play().catch(console.error);
-      }
+      
+      // החלפת listeners
+      addBasicAudioListeners();
+      
+      // המתנה קצרה ואז ניגון
+      setTimeout(() => {
+        if (audioRef.current && isMusicPlaying) {
+          audioRef.current.play()
+            .then(() => {
+              console.log(`✅ שיר ${prevIndex + 1} התחיל לנגן`);
+              startProgressMonitoring();
+            })
+            .catch((error) => {
+              console.error(`❌ שגיאה בניגון שיר ${prevIndex + 1}:`, error);
+              // נסה שוב אחרי שגיאה
+              setTimeout(() => {
+                if (audioRef.current) {
+                  audioRef.current.play().catch(console.error);
+                }
+              }, 1000);
+            });
+        }
+      }, 100);
     }
   };
 
@@ -218,20 +357,15 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     // תחילה ננסה ללא השתקה
     audioRef.current.muted = false;
     
-    // עדכון משך רצועה כאשר מטא-דאטה נטענת
-    const handleLoadedMeta = () => {
-      if (!audioRef.current) return;
-      const dur = Number.isFinite(audioRef.current.duration) ? audioRef.current.duration : 0;
-      trackDurationMsRef.current = isNaN(dur) ? 0 : Math.round(dur * 1000);
-      if (fullyPlayingRef.current) scheduleFullyNext();
-    };
-    audioRef.current.addEventListener('loadedmetadata', handleLoadedMeta);
+    // הוספת event listeners בסיסיים
+    addBasicAudioListeners();
 
     // ניסיון ראשון: ניגון עם volume מלא
     audioRef.current.play()
       .then(() => {
         console.log('🎵 מוזיקה הופעלה אוטומטית!');
         setIsMusicPlaying(true);
+        startProgressMonitoring(); // התחלת המוניטורינג
       })
       .catch(() => {
         console.log('❌ Autoplay נחסם - מעבר למצב מושתק');
@@ -253,13 +387,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       }
     } catch {}
     
-    // רק event listener בסיסי לסיום שיר
-    const handleEnded = () => {
-      console.log('🎵 שיר הסתיים');
-      playNextTrack();
-    };
-    
-    audioRef.current.addEventListener('ended', handleEnded);
+    // Event listeners נוספים בפונקציה addAudioEventListeners
 
     // נסיון חוזר אוטומטי למשך דקה ראשונה (כל 5ש׳׳), למקרה שהמדיניות השתחררה
     let retries = 0;
@@ -276,6 +404,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       audioRef.current.play().then(() => {
         setIsMusicPlaying(true);
         setAutoplayBlocked(false);
+        startProgressMonitoring(); // התחלת המוניטורינג
         clearInterval(retryTimer);
         console.log('🎵 מוזיקה הופעלה בניסיון חוזר!');
       }).catch(() => {
@@ -286,6 +415,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
             fullyPlayingRef.current = true;
             setIsMusicPlaying(true);
             setAutoplayBlocked(false);
+            startProgressMonitoring(); // התחלת המוניטורינג
             clearInterval(retryTimer);
             console.log('🎵 מוזיקה הופעלה דרך Fully Kiosk!');
             return;
@@ -302,6 +432,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       audioRef.current.play().then(() => {
         setIsMusicPlaying(true);
         setAutoplayBlocked(false);
+        startProgressMonitoring(); // התחלת המוניטורינג
         console.log('🎵 מוזיקה הופעלה לאחר אינטראקציה!');
       }).catch(() => {
         console.log('❌ נכשל גם לאחר אינטראקציה');
@@ -312,17 +443,18 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     window.addEventListener('pointerdown', unlockOnInteract, { once: true });
     window.addEventListener('keydown', unlockOnInteract, { once: true });
     
-    return () => {
+        return () => {
       if (audioRef.current) {
-        audioRef.current.removeEventListener('ended', handleEnded);
-          audioRef.current.removeEventListener('loadedmetadata', handleLoadedMeta);
         audioRef.current.pause();
         audioRef.current = null;
+      }
+      if (progressTimerRef.current) {
+        clearInterval(progressTimerRef.current);
       }
       window.removeEventListener('pointerdown', unlockOnInteract);
       window.removeEventListener('keydown', unlockOnInteract);
       clearInterval(retryTimer);
-        if (fullyNextTimerRef.current) clearTimeout(fullyNextTimerRef.current);
+      if (fullyNextTimerRef.current) clearTimeout(fullyNextTimerRef.current);
     };
   }, []);
 
