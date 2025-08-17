@@ -101,11 +101,11 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   
   // רשימת קבצי המוזיקה
   const musicTracks = [
-    '/audio/The Time of Our Redemption The Yanuka Melodies.mp3',
+    '/audio/Reach Out Your Hand The Yanuka  Melodies.mp3',  // הקצר ביותר - ראשון
     '/audio/Blossoming of the Trees The Yanuka Melodies.mp3',
-    '/audio/From Distress to Deliverance The Yanuka Melodies.mp3',
     '/audio/The Lone Shepherd The Yanuka Melodies.mp3',
-    '/audio/Reach Out Your Hand The Yanuka  Melodies.mp3'
+    '/audio/The Time of Our Redemption The Yanuka Melodies.mp3',
+    '/audio/From Distress to Deliverance The Yanuka Melodies.mp3'  // הארוך ביותר - אחרון
   ];
 
   // בדיקת זמינות קבצים
