@@ -62,6 +62,11 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   const [noticeFade, setNoticeFade] = useState(false)
   const [accessDenied, setAccessDenied] = useState(false)
 
+  const eventHandlersRef = useRef<{ 
+    handleEnded?: () => void; 
+    handleLoadedMeta?: () => void; 
+  }>({});
+
   const clickCount = useRef(0)
   const lastClickTime = useRef(0)
   const [hebrewDate, setHebrewDate] = useState('');
@@ -227,38 +232,41 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   // פונקציה פשוטה להוספת event listeners בסיסיים
   const addBasicAudioListeners = () => {
     if (!audioRef.current) return;
-
     const audio = audioRef.current;
-    
-    // listener לטעינת metadata
-    const handleLoadedMeta = () => {
+  
+    // הסר מאזינים קודמים באמצעות הרפרנס השמור
+    if (eventHandlersRef.current.handleLoadedMeta) {
+      audio.removeEventListener('loadedmetadata', eventHandlersRef.current.handleLoadedMeta);
+    }
+    if (eventHandlersRef.current.handleEnded) {
+      audio.removeEventListener('ended', eventHandlersRef.current.handleEnded);
+    }
+  
+    // הגדרת המאזינים החדשים
+    const newHandleLoadedMeta = () => {
       if (!audioRef.current) return;
       const dur = Number.isFinite(audioRef.current.duration) ? audioRef.current.duration : 0;
       trackDurationMsRef.current = isNaN(dur) ? 0 : Math.round(dur * 1000);
-      console.log(`📀 נטען שיר ${currentTrackIndex + 1}: ${dur.toFixed(1)} שניות`);
+      console.log(`📀 נטען Meta לשיר ${currentTrackIndex + 1}: ${dur.toFixed(1)} שניות`);
       if (fullyPlayingRef.current) {
         scheduleFullyNext();
       } else {
-        console.log(`🎵 נגן רגיל - המעבר יהיה אוטומטי בסיום השיר`);
+        console.log(`🎵 נגן רגיל - המעבר יתבצע אוטומטית בסיום השיר`);
       }
     };
-
-    // listener לסיום השיר
-    const handleEnded = () => {
-      console.log(`🎵 שיר ${currentTrackIndex + 1} הסתיים - עובר לשיר הבא`);
-      // עצירת המוניטורינג הנוכחי
-      if (progressTimerRef.current) {
-        clearInterval(progressTimerRef.current);
-      }
+  
+    const newHandleEnded = () => {
+      console.log(`🎵 אירוע 'ended' התרחש לשיר ${currentTrackIndex + 1}. עובר לשיר הבא.`);
       playNextTrack();
     };
-
-    // הסרת listeners ישנים (אחרי הגדרת הפונקציות)
-    audio.removeEventListener('loadedmetadata', handleLoadedMeta);
-    audio.removeEventListener('ended', handleEnded);
-    
-    audio.addEventListener('loadedmetadata', handleLoadedMeta, { once: true });
-    audio.addEventListener('ended', handleEnded);
+  
+    // הוספת המאזינים החדשים
+    audio.addEventListener('loadedmetadata', newHandleLoadedMeta, { once: true });
+    audio.addEventListener('ended', newHandleEnded);
+  
+    // שמירת המאזינים החדשים ברפרנס לצורך הסרה עתידית
+    eventHandlersRef.current.handleLoadedMeta = newHandleLoadedMeta;
+    eventHandlersRef.current.handleEnded = newHandleEnded;
   };
 
   // פונקציה למעבר לשיר הבא
@@ -296,6 +304,9 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       // החלפת listeners
       addBasicAudioListeners();
       
+      // ודא שהלופ כבוי
+      audioRef.current.loop = false;
+
       // המתנה קצרה ואז ניגון
       setTimeout(() => {
         if (audioRef.current && isMusicPlaying) {
@@ -353,6 +364,9 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       // החלפת listeners
       addBasicAudioListeners();
       
+      // ודא שהלופ כבוי
+      audioRef.current.loop = false;
+
       // המתנה קצרה ואז ניגון
       setTimeout(() => {
         if (audioRef.current && isMusicPlaying) {
@@ -384,7 +398,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   useEffect(() => {
     audioRef.current = new Audio(getTrackUrl(0));
     audioRef.current.volume = 0.3;
-    audioRef.current.loop = false;
+    audioRef.current.loop = false; // וידוא נוסף שהלופ כבוי בהתחלה
     // תחילה ננסה ללא השתקה
     audioRef.current.muted = false;
     
@@ -482,6 +496,13 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
+      }
+      // הסרת מאזינים מהרפרנס
+      if (eventHandlersRef.current.handleLoadedMeta && audioRef.current) {
+        audioRef.current.removeEventListener('loadedmetadata', eventHandlersRef.current.handleLoadedMeta);
+      }
+      if (eventHandlersRef.current.handleEnded && audioRef.current) {
+        audioRef.current.removeEventListener('ended', eventHandlersRef.current.handleEnded);
       }
       if (progressTimerRef.current) {
         clearInterval(progressTimerRef.current);
