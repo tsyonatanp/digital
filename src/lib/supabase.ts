@@ -22,8 +22,8 @@ export const supabase = supabaseUrl && supabaseAnonKey
         storage: {
           getItem: (key) => {
             try {
-              // בדיקה אם אנחנו בצד הלקוח
-              if (typeof window === 'undefined') {
+              // בדיקה אם localStorage זמין
+              if (typeof localStorage === 'undefined') {
                 return null
               }
               const item = localStorage.getItem(key)
@@ -37,30 +37,30 @@ export const supabase = supabaseUrl && supabaseAnonKey
               }
               return item
             } catch (error) {
-              console.error('Error reading from storage:', error)
+              // לא נדפיס שגיאה כדי לא לזהם את הקונסול
               return null
             }
           },
           setItem: (key, value) => {
             try {
-              // בדיקה אם אנחנו בצד הלקוח
-              if (typeof window === 'undefined') {
+              // בדיקה אם localStorage זמין
+              if (typeof localStorage === 'undefined') {
                 return
               }
               localStorage.setItem(key, value)
             } catch (error) {
-              console.error('Error writing to storage:', error)
+              // לא נדפיס שגיאה כדי לא לזהם את הקונסול
             }
           },
           removeItem: (key) => {
             try {
-              // בדיקה אם אנחנו בצד הלקוח
-              if (typeof window === 'undefined') {
+              // בדיקה אם localStorage זמין
+              if (typeof localStorage === 'undefined') {
                 return
               }
               localStorage.removeItem(key)
             } catch (error) {
-              console.error('Error removing from storage:', error)
+              // לא נדפיס שגיאה כדי לא לזהם את הקונסול
             }
           }
         }

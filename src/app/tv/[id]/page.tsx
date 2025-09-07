@@ -66,6 +66,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     handleEnded?: () => void; 
     handleLoadedMeta?: () => void;
     handlePlaying?: () => void;
+    handlePause?: () => void;
     handleStalled?: () => void;
     handleError?: (e: Event) => void;
   }>({});
@@ -242,6 +243,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     if (eventHandlersRef.current.handleLoadedMeta) audio.removeEventListener('loadedmetadata', eventHandlersRef.current.handleLoadedMeta);
     if (eventHandlersRef.current.handleEnded) audio.removeEventListener('ended', eventHandlersRef.current.handleEnded);
     if (eventHandlersRef.current.handlePlaying) audio.removeEventListener('playing', eventHandlersRef.current.handlePlaying);
+    if (eventHandlersRef.current.handlePause) audio.removeEventListener('pause', eventHandlersRef.current.handlePause);
     if (eventHandlersRef.current.handleStalled) audio.removeEventListener('stalled', eventHandlersRef.current.handleStalled);
     if (eventHandlersRef.current.handleError) audio.removeEventListener('error', eventHandlersRef.current.handleError);
 
@@ -267,6 +269,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     const newHandlePlaying = () => {
       console.log(`▶️✅ אירוע 'playing' התרחש לשיר ${currentTrackIndex + 1}. הנגן פעיל.`);
       setIsMusicPlaying(true);
+      setAutoplayBlocked(false);
     };
 
     const newHandleStalled = () => {
@@ -276,12 +279,19 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     const newHandleError = (e: Event) => {
       const mediaError = (e.target as HTMLAudioElement).error;
       console.error(`❌ אירוע 'error' על הנגן לשיר ${currentTrackIndex + 1}. קוד: ${mediaError?.code}, הודעה: ${mediaError?.message}`);
+      setIsMusicPlaying(false);
+    };
+
+    const newHandlePause = () => {
+      console.log(`⏸️ אירוע 'pause' התרחש לשיר ${currentTrackIndex + 1}.`);
+      setIsMusicPlaying(false);
     };
   
     // הוספת המאזינים החדשים
     audio.addEventListener('loadedmetadata', newHandleLoadedMeta, { once: true });
     audio.addEventListener('ended', newHandleEnded);
     audio.addEventListener('playing', newHandlePlaying);
+    audio.addEventListener('pause', newHandlePause);
     audio.addEventListener('stalled', newHandleStalled);
     audio.addEventListener('error', newHandleError);
   
@@ -290,6 +300,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       handleLoadedMeta: newHandleLoadedMeta,
       handleEnded: newHandleEnded,
       handlePlaying: newHandlePlaying,
+      handlePause: newHandlePause,
       handleStalled: newHandleStalled,
       handleError: newHandleError
     };
@@ -303,6 +314,12 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     // עצירת המוניטורינג הנוכחי
     if (progressTimerRef.current) {
       clearInterval(progressTimerRef.current);
+    }
+    
+    // עצירת הנגן הנוכחי לחלוטין
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
     }
     
     // עדכון מצב הנגן לפני המעבר
@@ -368,6 +385,12 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     // עצירת המוניטורינג הנוכחי
     if (progressTimerRef.current) {
       clearInterval(progressTimerRef.current);
+    }
+    
+    // עצירת הנגן הנוכחי לחלוטין
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
     }
     
     // עדכון מצב הנגן לפני המעבר
@@ -533,6 +556,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         if (eventHandlersRef.current.handleLoadedMeta) audio.removeEventListener('loadedmetadata', eventHandlersRef.current.handleLoadedMeta);
         if (eventHandlersRef.current.handleEnded) audio.removeEventListener('ended', eventHandlersRef.current.handleEnded);
         if (eventHandlersRef.current.handlePlaying) audio.removeEventListener('playing', eventHandlersRef.current.handlePlaying);
+        if (eventHandlersRef.current.handlePause) audio.removeEventListener('pause', eventHandlersRef.current.handlePause);
         if (eventHandlersRef.current.handleStalled) audio.removeEventListener('stalled', eventHandlersRef.current.handleStalled);
         if (eventHandlersRef.current.handleError) audio.removeEventListener('error', eventHandlersRef.current.handleError);
 
