@@ -201,13 +201,14 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   const progressTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // פונקציה לניטור התקדמות השיר
-  const startProgressMonitoring = () => {
+  const startProgressMonitoring = (trackIndex?: number) => {
     // עצירת טיימר קיים
     if (progressTimerRef.current) {
       clearInterval(progressTimerRef.current);
     }
     
-    console.log(`🔍 התחלת מוניטורינג לשיר ${currentTrackIndex + 1}`);
+    const currentIndex = trackIndex !== undefined ? trackIndex : currentTrackIndex;
+    console.log(`🔍 התחלת מוניטורינג לשיר ${currentIndex + 1}`);
     
     progressTimerRef.current = setInterval(() => {
       if (!audioRef.current || !isMusicPlaying) return;
@@ -217,7 +218,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       
       // בדיקה אם השיר הסתיים
       if (duration > 0 && current >= duration - 0.5) {
-        console.log(`🎵 שיר ${currentTrackIndex + 1} הסתיים (מוניטורינג) - עובר לשיר הבא`);
+        console.log(`🎵 שיר ${currentIndex + 1} הסתיים (מוניטורינג) - עובר לשיר הבא`);
         clearInterval(progressTimerRef.current!);
         playNextTrack();
       }
@@ -338,7 +339,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           audioRef.current.play()
             .then(() => {
               console.log(`✅ [playNextTrack] .then() - שיר ${nextIndex + 1} התחיל לנגן`);
-              startProgressMonitoring();
+              startProgressMonitoring(nextIndex);
             })
             .catch((error) => {
               console.error(`❌ [playNextTrack] .catch() - שגיאה בניגון שיר ${nextIndex + 1}:`, error);
@@ -399,7 +400,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           audioRef.current.play()
             .then(() => {
               console.log(`✅ שיר ${prevIndex + 1} התחיל לנגן`);
-              startProgressMonitoring();
+              startProgressMonitoring(prevIndex);
             })
             .catch((error) => {
               console.error(`❌ שגיאה בניגון שיר ${prevIndex + 1}:`, error);
