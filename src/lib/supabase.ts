@@ -21,43 +21,38 @@ export const supabase = supabaseUrl && supabaseAnonKey
         flowType: 'pkce',
         storage: {
           getItem: (key) => {
-            // בדיקה אם אנחנו בצד הלקוח
-            if (typeof window === 'undefined') {
-              return null
-            }
             try {
-              const item = window.localStorage.getItem(key)
-              if (item) {
-                const parsed = JSON.parse(item)
-                // בדוק שהטוקן לא פג תוקף (expires_at מגיע בשניות, Date.now במילישניות)
-                if (parsed.expires_at && Date.now() > parsed.expires_at * 1000) {
-                  window.localStorage.removeItem(key)
-                  return null
+              if (typeof window !== 'undefined' && window.localStorage) {
+                const item = window.localStorage.getItem(key)
+                if (item) {
+                  const parsed = JSON.parse(item)
+                  // בדוק שהטוקן לא פג תוקף (expires_at מגיע בשניות, Date.now במילישניות)
+                  if (parsed.expires_at && Date.now() > parsed.expires_at * 1000) {
+                    window.localStorage.removeItem(key)
+                    return null
+                  }
                 }
+                return item
               }
-              return item
+              return null
             } catch (error) {
               return null
             }
           },
           setItem: (key, value) => {
-            // בדיקה אם אנחנו בצד הלקוח
-            if (typeof window === 'undefined') {
-              return
-            }
             try {
-              window.localStorage.setItem(key, value)
+              if (typeof window !== 'undefined' && window.localStorage) {
+                window.localStorage.setItem(key, value)
+              }
             } catch (error) {
               // לא נדפיס שגיאה
             }
           },
           removeItem: (key) => {
-            // בדיקה אם אנחנו בצד הלקוח
-            if (typeof window === 'undefined') {
-              return
-            }
             try {
-              window.localStorage.removeItem(key)
+              if (typeof window !== 'undefined' && window.localStorage) {
+                window.localStorage.removeItem(key)
+              }
             } catch (error) {
               // לא נדפיס שגיאה
             }
