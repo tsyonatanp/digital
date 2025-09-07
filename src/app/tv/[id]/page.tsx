@@ -220,6 +220,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       // בדיקה אם השיר הסתיים
       if (duration > 0 && current >= duration - 0.5) {
         console.log(`🎵 שיר ${currentIndex + 1} הסתיים (מוניטורינג) - עובר לשיר הבא`);
+        console.log(`🔍 currentTrackIndex במוניטורינג: ${currentIndex}`);
         clearInterval(progressTimerRef.current!);
         playNextTrack();
       }
@@ -262,6 +263,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   
     const newHandleEnded = () => {
       console.log(`🎵 אירוע 'ended' התרחש לשיר ${currentTrackIndex + 1}. עובר לשיר הבא.`);
+      console.log(`🔍 currentTrackIndex ב-ended: ${currentTrackIndex}`);
       setIsMusicPlaying(false);
       playNextTrack();
     };
@@ -310,6 +312,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   const playNextTrack = async () => {
     const nextIndex = (currentTrackIndex + 1) % musicTracks.length;
     console.log(`🎵 מעבר לשיר ${nextIndex + 1}/${musicTracks.length}: ${musicTracks[nextIndex]}`);
+    console.log(`🔍 currentTrackIndex לפני עדכון: ${currentTrackIndex}`);
     
     // עצירת המוניטורינג הנוכחי
     if (progressTimerRef.current) {
@@ -325,6 +328,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     // עדכון מצב הנגן לפני המעבר
     setIsMusicPlaying(false);
     setCurrentTrackIndex(nextIndex);
+    console.log(`🔍 currentTrackIndex אחרי עדכון: ${nextIndex}`);
     const nextUrl = getTrackUrl(nextIndex);
 
     try {

@@ -22,16 +22,16 @@ export const supabase = supabaseUrl && supabaseAnonKey
         storage: {
           getItem: (key) => {
             try {
-              // בדיקה אם localStorage זמין
-              if (typeof localStorage === 'undefined') {
+              // בדיקה אם אנחנו בצד הלקוח
+              if (typeof window === 'undefined' || !window.localStorage) {
                 return null
               }
-              const item = localStorage.getItem(key)
+              const item = window.localStorage.getItem(key)
               if (item) {
                 const parsed = JSON.parse(item)
                 // בדוק שהטוקן לא פג תוקף (expires_at מגיע בשניות, Date.now במילישניות)
                 if (parsed.expires_at && Date.now() > parsed.expires_at * 1000) {
-                  localStorage.removeItem(key)
+                  window.localStorage.removeItem(key)
                   return null
                 }
               }
@@ -43,22 +43,22 @@ export const supabase = supabaseUrl && supabaseAnonKey
           },
           setItem: (key, value) => {
             try {
-              // בדיקה אם localStorage זמין
-              if (typeof localStorage === 'undefined') {
+              // בדיקה אם אנחנו בצד הלקוח
+              if (typeof window === 'undefined' || !window.localStorage) {
                 return
               }
-              localStorage.setItem(key, value)
+              window.localStorage.setItem(key, value)
             } catch (error) {
               // לא נדפיס שגיאה כדי לא לזהם את הקונסול
             }
           },
           removeItem: (key) => {
             try {
-              // בדיקה אם localStorage זמין
-              if (typeof localStorage === 'undefined') {
+              // בדיקה אם אנחנו בצד הלקוח
+              if (typeof window === 'undefined' || !window.localStorage) {
                 return
               }
-              localStorage.removeItem(key)
+              window.localStorage.removeItem(key)
             } catch (error) {
               // לא נדפיס שגיאה כדי לא לזהם את הקונסול
             }
