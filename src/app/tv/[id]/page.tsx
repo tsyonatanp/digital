@@ -260,11 +260,13 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   
     const newHandleEnded = () => {
       console.log(`🎵 אירוע 'ended' התרחש לשיר ${currentTrackIndex + 1}. עובר לשיר הבא.`);
+      setIsMusicPlaying(false);
       playNextTrack();
     };
 
     const newHandlePlaying = () => {
       console.log(`▶️✅ אירוע 'playing' התרחש לשיר ${currentTrackIndex + 1}. הנגן פעיל.`);
+      setIsMusicPlaying(true);
     };
 
     const newHandleStalled = () => {
@@ -303,6 +305,8 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       clearInterval(progressTimerRef.current);
     }
     
+    // עדכון מצב הנגן לפני המעבר
+    setIsMusicPlaying(false);
     setCurrentTrackIndex(nextIndex);
     const nextUrl = getTrackUrl(nextIndex);
 
@@ -366,6 +370,8 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       clearInterval(progressTimerRef.current);
     }
     
+    // עדכון מצב הנגן לפני המעבר
+    setIsMusicPlaying(false);
     setCurrentTrackIndex(prevIndex);
     const prevUrl = getTrackUrl(prevIndex);
 

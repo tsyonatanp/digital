@@ -22,6 +22,10 @@ export const supabase = supabaseUrl && supabaseAnonKey
         storage: {
           getItem: (key) => {
             try {
+              // בדיקה אם אנחנו בצד הלקוח
+              if (typeof window === 'undefined') {
+                return null
+              }
               const item = localStorage.getItem(key)
               if (item) {
                 const parsed = JSON.parse(item)
@@ -39,6 +43,10 @@ export const supabase = supabaseUrl && supabaseAnonKey
           },
           setItem: (key, value) => {
             try {
+              // בדיקה אם אנחנו בצד הלקוח
+              if (typeof window === 'undefined') {
+                return
+              }
               localStorage.setItem(key, value)
             } catch (error) {
               console.error('Error writing to storage:', error)
@@ -46,6 +54,10 @@ export const supabase = supabaseUrl && supabaseAnonKey
           },
           removeItem: (key) => {
             try {
+              // בדיקה אם אנחנו בצד הלקוח
+              if (typeof window === 'undefined') {
+                return
+              }
               localStorage.removeItem(key)
             } catch (error) {
               console.error('Error removing from storage:', error)
