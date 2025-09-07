@@ -84,6 +84,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   const fullyPlayingRef = useRef(false);
   const trackDurationMsRef = useRef<number>(0);
   const fullyNextTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const currentTrackIndexRef = useRef(0);
   const SHOW_MUSIC_CONTROLS = false;
 
   const getTrackUrl = (index: number): string => {
@@ -248,7 +249,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     if (eventHandlersRef.current.handleStalled) audio.removeEventListener('stalled', eventHandlersRef.current.handleStalled);
     if (eventHandlersRef.current.handleError) audio.removeEventListener('error', eventHandlersRef.current.handleError);
 
-    // הגדרת המאזינים החדשים
+    // הגדרת המאזינים החדשים - שימוש ב-refs כדי לקבל ערכים עדכניים
     const newHandleLoadedMeta = () => {
       if (!audioRef.current) return;
       const dur = Number.isFinite(audioRef.current.duration) ? audioRef.current.duration : 0;
@@ -262,30 +263,36 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     };
   
     const newHandleEnded = () => {
-      console.log(`🎵 אירוע 'ended' התרחש לשיר ${currentTrackIndex + 1}. עובר לשיר הבא.`);
-      console.log(`🔍 currentTrackIndex ב-ended: ${currentTrackIndex}`);
+      // קבלת הערך העדכני מ-ref במקום מ-state
+      const currentIndex = currentTrackIndexRef.current;
+      console.log(`🎵 אירוע 'ended' התרחש לשיר ${currentIndex + 1}. עובר לשיר הבא.`);
+      console.log(`🔍 currentTrackIndex ב-ended: ${currentIndex}`);
       setIsMusicPlaying(false);
       playNextTrack();
     };
 
     const newHandlePlaying = () => {
-      console.log(`▶️✅ אירוע 'playing' התרחש לשיר ${currentTrackIndex + 1}. הנגן פעיל.`);
+      const currentIndex = currentTrackIndexRef.current;
+      console.log(`▶️✅ אירוע 'playing' התרחש לשיר ${currentIndex + 1}. הנגן פעיל.`);
       setIsMusicPlaying(true);
       setAutoplayBlocked(false);
     };
 
     const newHandleStalled = () => {
-      console.warn(`⏳ אירוע 'stalled' התרחש לשיר ${currentTrackIndex + 1}. ייתכן שיש בעיית רשת.`);
+      const currentIndex = currentTrackIndexRef.current;
+      console.warn(`⏳ אירוע 'stalled' התרחש לשיר ${currentIndex + 1}. ייתכן שיש בעיית רשת.`);
     };
 
     const newHandleError = (e: Event) => {
+      const currentIndex = currentTrackIndexRef.current;
       const mediaError = (e.target as HTMLAudioElement).error;
-      console.error(`❌ אירוע 'error' על הנגן לשיר ${currentTrackIndex + 1}. קוד: ${mediaError?.code}, הודעה: ${mediaError?.message}`);
+      console.error(`❌ אירוע 'error' על הנגן לשיר ${currentIndex + 1}. קוד: ${mediaError?.code}, הודעה: ${mediaError?.message}`);
       setIsMusicPlaying(false);
     };
 
     const newHandlePause = () => {
-      console.log(`⏸️ אירוע 'pause' התרחש לשיר ${currentTrackIndex + 1}.`);
+      const currentIndex = currentTrackIndexRef.current;
+      console.log(`⏸️ אירוע 'pause' התרחש לשיר ${currentIndex + 1}.`);
       setIsMusicPlaying(false);
     };
   
@@ -328,6 +335,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     // עדכון מצב הנגן לפני המעבר
     setIsMusicPlaying(false);
     setCurrentTrackIndex(nextIndex);
+    currentTrackIndexRef.current = nextIndex;
     console.log(`🔍 currentTrackIndex אחרי עדכון: ${nextIndex}`);
     const nextUrl = getTrackUrl(nextIndex);
 
@@ -400,6 +408,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     // עדכון מצב הנגן לפני המעבר
     setIsMusicPlaying(false);
     setCurrentTrackIndex(prevIndex);
+    currentTrackIndexRef.current = prevIndex;
     const prevUrl = getTrackUrl(prevIndex);
 
     try {

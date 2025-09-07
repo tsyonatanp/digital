@@ -21,11 +21,11 @@ export const supabase = supabaseUrl && supabaseAnonKey
         flowType: 'pkce',
         storage: {
           getItem: (key) => {
+            // בדיקה אם אנחנו בצד הלקוח
+            if (typeof window === 'undefined') {
+              return null
+            }
             try {
-              // בדיקה אם אנחנו בצד הלקוח
-              if (typeof window === 'undefined' || !window.localStorage) {
-                return null
-              }
               const item = window.localStorage.getItem(key)
               if (item) {
                 const parsed = JSON.parse(item)
@@ -37,30 +37,29 @@ export const supabase = supabaseUrl && supabaseAnonKey
               }
               return item
             } catch (error) {
-              // לא נדפיס שגיאה כדי לא לזהם את הקונסול
               return null
             }
           },
           setItem: (key, value) => {
+            // בדיקה אם אנחנו בצד הלקוח
+            if (typeof window === 'undefined') {
+              return
+            }
             try {
-              // בדיקה אם אנחנו בצד הלקוח
-              if (typeof window === 'undefined' || !window.localStorage) {
-                return
-              }
               window.localStorage.setItem(key, value)
             } catch (error) {
-              // לא נדפיס שגיאה כדי לא לזהם את הקונסול
+              // לא נדפיס שגיאה
             }
           },
           removeItem: (key) => {
+            // בדיקה אם אנחנו בצד הלקוח
+            if (typeof window === 'undefined') {
+              return
+            }
             try {
-              // בדיקה אם אנחנו בצד הלקוח
-              if (typeof window === 'undefined' || !window.localStorage) {
-                return
-              }
               window.localStorage.removeItem(key)
             } catch (error) {
-              // לא נדפיס שגיאה כדי לא לזהם את הקונסול
+              // לא נדפיס שגיאה
             }
           }
         }
