@@ -317,9 +317,11 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
 
   // פונקציה למעבר לשיר הבא
   const playNextTrack = async () => {
-    const nextIndex = (currentTrackIndex + 1) % musicTracks.length;
+    // קבלת הערך העדכני מ-ref
+    const currentIndex = currentTrackIndexRef.current;
+    const nextIndex = (currentIndex + 1) % musicTracks.length;
     console.log(`🎵 מעבר לשיר ${nextIndex + 1}/${musicTracks.length}: ${musicTracks[nextIndex]}`);
-    console.log(`🔍 currentTrackIndex לפני עדכון: ${currentTrackIndex}`);
+    console.log(`🔍 currentTrackIndex לפני עדכון: ${currentIndex}`);
     
     // עצירת המוניטורינג הנוכחי
     if (progressTimerRef.current) {
@@ -391,7 +393,9 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
 
   // פונקציה למעבר לשיר הקודם
   const playPreviousTrack = async () => {
-    const prevIndex = currentTrackIndex === 0 ? musicTracks.length - 1 : currentTrackIndex - 1;
+    // קבלת הערך העדכני מ-ref
+    const currentIndex = currentTrackIndexRef.current;
+    const prevIndex = currentIndex === 0 ? musicTracks.length - 1 : currentIndex - 1;
     console.log(`🎵 מעבר לשיר הקודם ${prevIndex + 1}/${musicTracks.length}: ${musicTracks[prevIndex]}`);
     
     // עצירת המוניטורינג הנוכחי
@@ -470,6 +474,9 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     audioRef.current.loop = false; // וידוא נוסף שהלופ כבוי בהתחלה
     // תחילה ננסה ללא השתקה
     audioRef.current.muted = false;
+    
+    // עדכון ה-ref
+    currentTrackIndexRef.current = 0;
     
     // הוספת event listeners בסיסיים
     addBasicAudioListeners();
