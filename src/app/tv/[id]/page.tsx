@@ -1235,7 +1235,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       
       // אם אין שעה היום, נקח את הראשונה למחר
       if (nextRefreshHour === undefined) {
-        nextRefreshHour = refreshHours[0];
+        nextRefreshHour = refreshHours[0] ?? 11; // fallback ל-11:00
       }
       
       // יצירת תאריך לרענון הבא
