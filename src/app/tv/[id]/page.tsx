@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef, useMemo } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { Database } from '../../../lib/supabase'
 import { 
@@ -74,7 +74,70 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   const clickCount = useRef(0)
   const lastClickTime = useRef(0)
   const [hebrewDate, setHebrewDate] = useState('');
-  const [shabbatTimes, setShabbatTimes] = useState({ entry: '', exit: '', parsha: '' });
+  const [shabbatTimes, setShabbatTimes] = useState({ entry: '', exit: '', parsha: '', entryDate: '', exitDate: '' });
+  
+  // State לניהול מצב שבת/חג
+  const [isShabbatMode, setIsShabbatMode] = useState(false);
+  const [currentHolidayName, setCurrentHolidayName] = useState<string>(''); // שם החג/שבת הנוכחי
+  const originalImageIndexRef = useRef<number | null>(null);
+  const wasMusicPlayingRef = useRef(false);
+  const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // מיפוי בין חגים לתמונות ייחודיות
+  const holidayImages: Record<string, string> = {
+    'שבת': '/images/shabbat.gif',
+    'ראש השנה': '/images/rosh-hashana.gif',
+    'יום כיפור': '/images/yom-kippur.gif',
+    'סוכות': '/images/sukkot.gif',
+    'שמיני עצרת': '/images/simchat-torah.gif',
+    'שמחת תורה': '/images/simchat-torah.gif',
+    'חנוכה': '/images/chanukah.gif',
+    'פורים': '/images/purim.gif',
+    'פסח': '/images/pesach.gif',
+    'שבועות': '/images/shavuot.gif',
+    'תשעה באב': '/images/tisha-bav.gif',
+  };
+  
+  // פונקציה לקבלת תמונת החג המתאימה
+  const getHolidayImage = (holidayName: string): string => {
+    // חיפוש מדויק
+    if (holidayImages[holidayName]) {
+      return holidayImages[holidayName];
+    }
+    
+    // חיפוש חלקי - בדיקה אם שם החג מכיל מילות מפתח
+    const lowerName = holidayName.toLowerCase();
+    if (lowerName.includes('ראש השנה') || lowerName.includes('ר\"ה')) {
+      return holidayImages['ראש השנה'] || '/images/shabbat.gif';
+    }
+    if (lowerName.includes('יום כיפור') || lowerName.includes('כיפור')) {
+      return holidayImages['יום כיפור'] || '/images/shabbat.gif';
+    }
+    if (lowerName.includes('סוכות')) {
+      return holidayImages['סוכות'] || '/images/shabbat.gif';
+    }
+    if (lowerName.includes('שמיני עצרת') || lowerName.includes('שמחת תורה')) {
+      return holidayImages['שמיני עצרת'] || '/images/shabbat.gif';
+    }
+    if (lowerName.includes('חנוכה') || lowerName.includes('חנוכה')) {
+      return holidayImages['חנוכה'] || '/images/shabbat.gif';
+    }
+    if (lowerName.includes('פורים')) {
+      return holidayImages['פורים'] || '/images/shabbat.gif';
+    }
+    if (lowerName.includes('פסח') || lowerName.includes('פסח')) {
+      return holidayImages['פסח'] || '/images/shabbat.gif';
+    }
+    if (lowerName.includes('שבועות')) {
+      return holidayImages['שבועות'] || '/images/shabbat.gif';
+    }
+    if (lowerName.includes('תשעה באב') || lowerName.includes('ט\"ב')) {
+      return holidayImages['תשעה באב'] || '/images/shabbat.gif';
+    }
+    
+    // fallback לתמונת שבת כללית
+    return '/images/shabbat.gif';
+  };
   
   // הוספת state למוזיקה
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
@@ -776,15 +839,6 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     }
   }, [images.length, currentImageIndex])
 
-  useEffect(() => {
-    const newsTimer = setInterval(() => {
-      if (news.length > 0) {
-        setCurrentNewsIndex((prev) => (prev + 1) % news.length)
-      }
-    }, 5000)
-
-    return () => clearInterval(newsTimer)
-  }, [news.length])
 
   useEffect(() => {
     const noticeTimer = setInterval(() => {
@@ -932,37 +986,105 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         const candleLighting = events.find((event: any) => event.category === "candles");
         const havdalah = events.find((event: any) => event.category === "havdalah");
         const parsha = events.find((event: any) => event.category === "parashat");
+        
+        // בדיקת חגים - חיפוש אירועים מסוג holiday או yomtov
+        const holidayEvents = events.filter((event: any) => {
+          if (event.category === "holiday" || event.yomtov === true) {
+            const title = event.title || '';
+            // רשימת מילות מפתח לזיהוי חגים
+            const holidayKeywords = [
+              'ראש השנה', 'ר"ה', 'Rosh Hashana', 'Rosh Hashanah',
+              'יום כיפור', 'כיפור', 'Yom Kippur',
+              'סוכות', 'Sukkot',
+              'שמיני עצרת', 'שמחת תורה', 'Simchat Torah',
+              'חנוכה', 'Chanukah', 'Hanukkah',
+              'פורים', 'Purim',
+              'פסח', 'Pesach', 'Passover',
+              'שבועות', 'Shavuot',
+              'תשעה באב', 'ט"ב', 'Tisha B\'Av'
+            ];
+            return holidayKeywords.some(keyword => title.includes(keyword)) || event.yomtov === true;
+          }
+          return false;
+        });
 
-        console.log('🕯️ Found events:', { candleLighting, havdalah, parsha });
+        console.log('🕯️ Found events:', { candleLighting, havdalah, parsha, holidays: holidayEvents.length });
 
+        // קבע אם זה חג או שבת
+        let holidayName = 'שבת'; // default לשבת
+        if (holidayEvents.length > 0) {
+          // יש חג - נשתמש בשם החג
+          holidayName = holidayEvents[0].title || 'שבת';
+        } else if (parsha) {
+          // אם יש פרשה זה כנראה שבת רגילה
+          holidayName = 'שבת';
+        }
+        
         if (candleLighting && havdalah) {
           const entryTime = candleLighting.date.split('T')[1].slice(0, 5);
           const exitTime = havdalah.date.split('T')[1].slice(0, 5);
-          const parshaTitle = parsha?.title || "לא נמצאה פרשה";
+          const entryDate = candleLighting.date; // תאריך מלא
+          const exitDate = havdalah.date; // תאריך מלא
+          const parshaTitle = parsha?.title || (holidayEvents.length > 0 ? holidayEvents[0].title : "לא נמצאה פרשה");
           
-          console.log('✅ Setting shabbat times:', { entryTime, exitTime, parshaTitle });
+          console.log('✅ Setting shabbat/holiday times:', { entryTime, exitTime, entryDate, exitDate, parshaTitle, holidayName, isHoliday: holidayEvents.length > 0 });
           
           setShabbatTimes({
             entry: entryTime,
             exit: exitTime,
+            entryDate: entryDate,
+            exitDate: exitDate,
             parsha: parshaTitle
           });
+          
+          // שמירת שם החג/שבת
+          setCurrentHolidayName(holidayName);
+        } else if (holidayEvents.length > 0) {
+          // אם יש חג אבל אין שבת, נשתמש בזמנים של החג
+          const holiday = holidayEvents[0];
+          const holidayDate = new Date(holiday.date);
+          // נניח שחג נכנס בערב ונמשך עד הערב הבא
+          const entryTime = `${String(holidayDate.getHours()).padStart(2, '0')}:${String(holidayDate.getMinutes()).padStart(2, '0')}`;
+          const nextDay = new Date(holidayDate);
+          nextDay.setDate(nextDay.getDate() + 1);
+          const exitTime = `${String(nextDay.getHours()).padStart(2, '0')}:${String(nextDay.getMinutes()).padStart(2, '0')}`;
+          
+          setShabbatTimes({
+            entry: entryTime,
+            exit: exitTime,
+            entryDate: holiday.date,
+            exitDate: nextDay.toISOString(),
+            parsha: holiday.title
+          });
+          
+          // שמירת שם החג
+          setCurrentHolidayName(holiday.title || 'שבת');
         } else {
           console.log('⚠️ No candle lighting or havdalah found, using fallback');
           setShabbatTimes({ 
             entry: '19:30', 
-            exit: '20:30', 
+            exit: '20:30',
+            entryDate: '',
+            exitDate: '',
             parsha: 'פרשת השבוע' 
           });
+          
+          // fallback לשבת
+          setCurrentHolidayName('שבת');
         }
         
       } catch (e) {
         console.error('❌ Error fetching shabbat times:', e);
         setShabbatTimes({ 
           entry: '19:30', 
-          exit: '20:30', 
+          exit: '20:30',
+          entryDate: '',
+          exitDate: '',
           parsha: 'פרשת השבוע' 
         });
+        
+        // fallback לשבת
+        setCurrentHolidayName('שבת');
       }
     };
     
@@ -972,6 +1094,191 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     
     return () => clearInterval(dailyTimer);
   }, []);
+
+  // פונקציה לבדיקה אם אנחנו בזמן שבת/חג (3 שעות לפני כניסה עד 3 שעות אחרי יציאה)
+  const checkShabbatMode = () => {
+    if (!shabbatTimes.entry || !shabbatTimes.exit) return false;
+    
+    const now = new Date();
+    
+    let shabbatEntry: Date;
+    let shabbatExit: Date;
+    
+    // אם יש תאריכים מלאים מה-API, נשתמש בהם
+    if (shabbatTimes.entryDate && shabbatTimes.exitDate) {
+      shabbatEntry = new Date(shabbatTimes.entryDate);
+      shabbatExit = new Date(shabbatTimes.exitDate);
+    } else {
+      // fallback - חישוב ידני
+      const entryParts = shabbatTimes.entry.split(':').map(Number);
+      const exitParts = shabbatTimes.exit.split(':').map(Number);
+      
+      const entryHour = entryParts[0] ?? 19;
+      const entryMin = entryParts[1] ?? 30;
+      const exitHour = exitParts[0] ?? 20;
+      const exitMin = exitParts[1] ?? 30;
+      
+      // מציאת יום שישי הקרוב (כניסת שבת)
+      const today = new Date();
+      const daysUntilFriday = (5 - today.getDay() + 7) % 7 || 7;
+      const friday = new Date(today);
+      friday.setDate(today.getDate() + daysUntilFriday);
+      
+      // זמן כניסת שבת (יום שישי בערב)
+      shabbatEntry = new Date(friday);
+      shabbatEntry.setHours(entryHour, entryMin, 0, 0);
+      
+      // יום שבת (יציאת שבת)
+      const saturday = new Date(friday);
+      saturday.setDate(friday.getDate() + 1);
+      
+      // זמן יציאת שבת (יום שבת בערב)
+      shabbatExit = new Date(saturday);
+      shabbatExit.setHours(exitHour, exitMin, 0, 0);
+      
+      // אם אנחנו אחרי יציאת השבת של השבוע הנוכחי, נבדוק את השבוע הבא
+      if (now > shabbatExit) {
+        shabbatEntry.setDate(shabbatEntry.getDate() + 7);
+        shabbatExit.setDate(shabbatExit.getDate() + 7);
+      }
+    }
+    
+    // 3 שעות לפני כניסת שבת
+    const threeHoursBeforeEntry = new Date(shabbatEntry);
+    threeHoursBeforeEntry.setHours(threeHoursBeforeEntry.getHours() - 3);
+    
+    // 3 שעות אחרי יציאת שבת
+    const threeHoursAfterExit = new Date(shabbatExit);
+    threeHoursAfterExit.setHours(threeHoursAfterExit.getHours() + 3);
+    
+    // בדיקה אם אנחנו בטווח
+    return now >= threeHoursBeforeEntry && now <= threeHoursAfterExit;
+  };
+
+  // useEffect לבדיקת מצב שבת/חג כל דקה
+  useEffect(() => {
+    const updateShabbatMode = () => {
+      const shouldBeInShabbatMode = checkShabbatMode();
+      
+      if (shouldBeInShabbatMode && !isShabbatMode) {
+        // כניסה למצב שבת - שמירת מצב נוכחי והחלפה לתמונת שבת
+        console.log('🕯️ כניסה למצב שבת/חג');
+        
+        // שמירת האינדקס המקורי
+        if (originalImageIndexRef.current === null) {
+          originalImageIndexRef.current = currentImageIndex;
+        }
+        
+        // שמירת מצב המוזיקה והשתקתה
+        wasMusicPlayingRef.current = isMusicPlaying;
+        if (isMusicPlaying && audioRef.current) {
+          audioRef.current.pause();
+          setIsMusicPlaying(false);
+          console.log('🔇 מוזיקה הושתקה לכבוד שבת/חג');
+        }
+        
+        setIsShabbatMode(true);
+      } else if (!shouldBeInShabbatMode && isShabbatMode) {
+        // יציאה ממצב שבת - החזרת מצב קודם
+        console.log('✨ יציאה ממצב שבת/חג');
+        
+        // החזרת האינדקס המקורי
+        if (originalImageIndexRef.current !== null) {
+          setCurrentImageIndex(originalImageIndexRef.current);
+          originalImageIndexRef.current = null;
+        }
+        
+        // החזרת מוזיקה אם הייתה פעילה
+        if (wasMusicPlayingRef.current && audioRef.current) {
+          // ננסה להפעיל את המוזיקה מחדש
+          audioRef.current.play()
+            .then(() => {
+              setIsMusicPlaying(true);
+              console.log('▶️ מוזיקה הופעלה מחדש לאחר שבת');
+            })
+            .catch(() => {
+              console.log('⚠️ לא ניתן להפעיל מוזיקה מחדש אוטומטית');
+            });
+        }
+        wasMusicPlayingRef.current = false;
+        
+        setIsShabbatMode(false);
+      }
+    };
+
+    // בדיקה ראשונית מיד כשהקומפוננטה נטענת או כשהזמנים משתנים
+    updateShabbatMode();
+
+    // בדיקה אוטומטית כל 30 שניות - ללא צורך ברפרש
+    // זה מבטיח שהמעבר בין מצבים יתרחש בזמן המדויק
+    const interval = setInterval(updateShabbatMode, 30000);
+
+    return () => clearInterval(interval);
+  }, [shabbatTimes.entry, shabbatTimes.exit, shabbatTimes.entryDate, shabbatTimes.exitDate, isShabbatMode, currentImageIndex, isMusicPlaying]);
+
+  // רענון אוטומטי של הדף פעמיים ביום - 11:00 בבוקר ו-23:00 בלילה
+  useEffect(() => {
+    const scheduleNextRefresh = () => {
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      const currentSecond = now.getSeconds();
+      
+      // שעות הרענון
+      const refreshHours = [11, 23]; // 11:00 ו-23:00
+      
+      // מציאת השעה הבאה לרענון
+      let nextRefreshHour = refreshHours.find(hour => 
+        hour > currentHour || 
+        (hour === currentHour && currentMinute === 0 && currentSecond < 10)
+      );
+      
+      // אם אין שעה היום, נקח את הראשונה למחר
+      if (nextRefreshHour === undefined) {
+        nextRefreshHour = refreshHours[0];
+      }
+      
+      // יצירת תאריך לרענון הבא
+      const nextRefresh = new Date();
+      nextRefresh.setHours(nextRefreshHour, 0, 0, 0); // 0 דקות, 0 שניות
+      
+      // אם השעה כבר עברה היום, נעבור למחר
+      if (nextRefresh <= now) {
+        nextRefresh.setDate(nextRefresh.getDate() + 1);
+      }
+      
+      // חישוב זמן עד הרענון (במילישניות)
+      const timeUntilRefresh = nextRefresh.getTime() - now.getTime();
+      
+      console.log(`🔄 רענון אוטומטי מתוזמן ל-${nextRefreshHour}:00 (בעוד ${Math.round(timeUntilRefresh / 1000 / 60)} דקות)`);
+      
+      // נקה טיימר קודם אם קיים
+      if (refreshTimerRef.current) {
+        clearTimeout(refreshTimerRef.current);
+      }
+      
+      // הגדרת טיימר לרענון
+      refreshTimerRef.current = setTimeout(() => {
+        console.log('🔄 מבצע רענון אוטומטי של הדף...');
+        window.location.reload();
+      }, timeUntilRefresh);
+    };
+    
+    // תזמון ראשוני
+    scheduleNextRefresh();
+    
+    // בדיקה כל שעה כדי לתזמן מחדש (מטפל בשינוי שעון קיץ/חורף)
+    const hourlyCheck = setInterval(() => {
+      scheduleNextRefresh();
+    }, 3600000); // בדיקה כל שעה
+    
+    return () => {
+      if (refreshTimerRef.current) {
+        clearTimeout(refreshTimerRef.current);
+      }
+      clearInterval(hourlyCheck);
+    };
+  }, []); // רץ פעם אחת בלבד
 
   const handleSecretClick = () => {
     const now = Date.now()
@@ -1267,7 +1574,24 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
        }}
      >
 
-          {images.length > 0 && images[currentImageIndex] ? (
+          {isShabbatMode ? (
+            // תמונת חג/שבת ייחודית
+            <img
+              src={getHolidayImage(currentHolidayName)}
+              alt={currentHolidayName || "שבת שלום"}
+              className="w-full h-full"
+              style={{
+                objectPosition: 'center center',
+                objectFit: 'contain'
+              }}
+              onError={(e) => {
+                console.error('❌ שגיאה בטעינת תמונת חג/שבת:', currentHolidayName);
+                // fallback לתמונת שבת כללית
+                const target = e.target as HTMLImageElement;
+                target.src = '/images/shabbat.gif';
+              }}
+            />
+          ) : images.length > 0 && images[currentImageIndex] ? (
                          <img
                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/building-images/${images[currentImageIndex]?.filename}`}
                alt="תמונת בניין"
@@ -1429,13 +1753,15 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
 
 // קומפוננטת עמודת חדשות מעוצבת עם כרטיסיות נפרדות
 function NewsColumn({ news, style }: { news: NewsItem[], style: Style | null }) {
-  // קיבוץ לפי מקור
-  const grouped = news.reduce((acc: Record<string, NewsItem[]>, item: NewsItem) => {
-    const key = item.source || 'אחר';
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(item);
-    return acc;
-  }, {});
+  // קיבוץ לפי מקור - שימוש ב-useMemo כדי למנוע הגדרה מחדש בכל רינדור
+  const grouped = useMemo(() => {
+    return news.reduce((acc: Record<string, NewsItem[]>, item: NewsItem) => {
+      const key = item.source || 'אחר';
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(item);
+      return acc;
+    }, {});
+  }, [news]);
 
   // סדר הצגה מועדף
   const order = ['ynet', 'ONE', 'גלובס'];
@@ -1450,18 +1776,31 @@ function NewsColumn({ news, style }: { news: NewsItem[], style: Style | null }) 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    // נקה טיימר קודם אם קיים
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+
     intervalRef.current = setInterval(() => {
       setIndexes(prev => {
         const next = { ...prev };
         order.forEach(src => {
           const arr = grouped[src] || [];
-          next[src] = arr.length > 0 ? ((prev[src] || 0) + 1) % arr.length : 0;
+          if (arr.length > 0) {
+            next[src] = ((prev[src] || 0) + 1) % arr.length;
+          }
         });
         return next;
       });
-    }, 10000);
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [news.length, grouped]);
+    }, 10000); // 10 שניות
+
+    return () => { 
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [grouped]); // תלוי רק ב-grouped שהוא עכשיו memoized
 
   return (
     <div className="w-full flex flex-col h-full">

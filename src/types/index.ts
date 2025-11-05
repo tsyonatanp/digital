@@ -48,6 +48,8 @@ export interface ShabbatTimes {
   entry: string
   exit: string
   parsha: string
+  entryDate?: string
+  exitDate?: string
 }
 
 // Component props types
