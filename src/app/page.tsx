@@ -33,9 +33,16 @@ export default function HomePage() {
     )
   }
 
-  // אם יש משתמש מחובר, אל תציג כלום (כי הוא יועבר לדף התצוגה)
+  // אם יש משתמש מחובר, הצג loading בזמן שהוא מועבר לדף התצוגה
   if (user) {
-    return null
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">מעביר לדף התצוגה...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
