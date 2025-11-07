@@ -1582,7 +1582,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
               className="w-full h-full"
               style={{
                 objectPosition: 'center center',
-                objectFit: 'contain'
+                objectFit: 'fill'
               }}
               onError={(e) => {
                 console.error('❌ שגיאה בטעינת תמונת חג/שבת:', currentHolidayName);
