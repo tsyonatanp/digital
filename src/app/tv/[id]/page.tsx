@@ -76,9 +76,20 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   const [hebrewDate, setHebrewDate] = useState('');
   const [shabbatTimes, setShabbatTimes] = useState({ entry: '', exit: '', parsha: '', entryDate: '', exitDate: '' });
   
-  // State לניהול מצב שבת/חג
-  const [isShabbatMode, setIsShabbatMode] = useState(false);
-  const [currentHolidayName, setCurrentHolidayName] = useState<string>(''); // שם החג/שבת הנוכחי
+  // State לניהול מצב שבת/חג - טוען מ-localStorage אם קיים
+  const [isShabbatMode, setIsShabbatMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('isShabbatMode');
+      return saved === 'true';
+    }
+    return false;
+  });
+  const [currentHolidayName, setCurrentHolidayName] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('currentHolidayName') || '';
+    }
+    return '';
+  }); // שם החג/שבת הנוכחי
   const originalImageIndexRef = useRef<number | null>(null);
   const wasMusicPlayingRef = useRef(false);
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -544,6 +555,12 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     // הוספת event listeners בסיסיים
     addBasicAudioListeners();
 
+    // אם אנחנו במצב שבת/חג, לא מתחילים לנגן אוטומטית
+    if (isShabbatMode) {
+      console.log('🕯️ מצב שבת/חג פעיל - מוזיקה לא תופעל אוטומטית');
+      return;
+    }
+
     // ניסיון ראשון: ניגון עם volume מלא
     audioRef.current.play()
       .then(() => {
@@ -577,6 +594,11 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     let retries = 0;
     const retryTimer = setInterval(async () => {
       if (!audioRef.current) return;
+      // אם אנחנו במצב שבת, לא מנסים להפעיל מוזיקה
+      if (isShabbatMode) {
+        clearInterval(retryTimer);
+        return;
+      }
       if (!audioRef.current.paused || fullyPlayingRef.current) {
         clearInterval(retryTimer);
         return;
@@ -616,6 +638,8 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     // ביטול השתקה והפעלה בנגיעה/מקש ראשון (עוזר ב-Fully Kiosk / Android)
     const unlockOnInteract = () => {
       if (!audioRef.current) return;
+      // אם אנחנו במצב שבת, לא מתחילים לנגן
+      if (isShabbatMode) return;
       audioRef.current.muted = false;
       audioRef.current.play().then(() => {
         setIsMusicPlaying(true);
@@ -1154,6 +1178,15 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     // בדיקה אם אנחנו בטווח
     return now >= threeHoursBeforeEntry && now <= threeHoursAfterExit;
   };
+
+  // useEffect לשמירת מצב שבת ב-localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('isShabbatMode', String(isShabbatMode));
+      localStorage.setItem('currentHolidayName', currentHolidayName);
+      console.log(`💾 שמירת מצב שבת: ${isShabbatMode}, חג: ${currentHolidayName}`);
+    }
+  }, [isShabbatMode, currentHolidayName]);
 
   // useEffect לבדיקת מצב שבת/חג כל דקה
   useEffect(() => {
