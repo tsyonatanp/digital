@@ -99,12 +99,16 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     }
     return '';
   }); // שם החג/שבת הנוכחי
+  
+  const [holidayImagesArray, setHolidayImagesArray] = useState<string[]>([]); // רשימת תמונות לקרוסלה של חג/שבת
+  const [currentHolidayImageIndex, setCurrentHolidayImageIndex] = useState(0); // אינדקס בקרוסלה של חג/שבת
+  
   const originalImageIndexRef = useRef<number | null>(null);
   const wasMusicPlayingRef = useRef(false);
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   // מיפוי בין חגים לתמונות ייחודיות
-  const holidayImages: Record<string, string> = {
+  const holidayImageMap: Record<string, string> = {
     'שבת': '/images/shabbat.gif',
     'ראש השנה': '/images/rosh-hashana.gif',
     'יום כיפור': '/images/yom-kippur.gif',
@@ -121,38 +125,38 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   // פונקציה לקבלת תמונת החג המתאימה
   const getHolidayImage = (holidayName: string): string => {
     // חיפוש מדויק
-    if (holidayImages[holidayName]) {
-      return holidayImages[holidayName];
+    if (holidayImageMap[holidayName]) {
+      return holidayImageMap[holidayName];
     }
     
     // חיפוש חלקי - בדיקה אם שם החג מכיל מילות מפתח
     const lowerName = holidayName.toLowerCase();
     if (lowerName.includes('ראש השנה') || lowerName.includes('ר\"ה')) {
-      return holidayImages['ראש השנה'] || '/images/shabbat.gif';
+      return holidayImageMap['ראש השנה'] || '/images/shabbat.gif';
     }
     if (lowerName.includes('יום כיפור') || lowerName.includes('כיפור')) {
-      return holidayImages['יום כיפור'] || '/images/shabbat.gif';
+      return holidayImageMap['יום כיפור'] || '/images/shabbat.gif';
     }
     if (lowerName.includes('סוכות')) {
-      return holidayImages['סוכות'] || '/images/shabbat.gif';
+      return holidayImageMap['סוכות'] || '/images/shabbat.gif';
     }
     if (lowerName.includes('שמיני עצרת') || lowerName.includes('שמחת תורה')) {
-      return holidayImages['שמיני עצרת'] || '/images/shabbat.gif';
+      return holidayImageMap['שמיני עצרת'] || '/images/shabbat.gif';
     }
     if (lowerName.includes('חנוכה') || lowerName.includes('חנוכה')) {
-      return holidayImages['חנוכה'] || '/images/shabbat.gif';
+      return holidayImageMap['חנוכה'] || '/images/shabbat.gif';
     }
     if (lowerName.includes('פורים')) {
-      return holidayImages['פורים'] || '/images/shabbat.gif';
+      return holidayImageMap['פורים'] || '/images/shabbat.gif';
     }
     if (lowerName.includes('פסח') || lowerName.includes('פסח')) {
-      return holidayImages['פסח'] || '/images/shabbat.gif';
+      return holidayImageMap['פסח'] || '/images/shabbat.gif';
     }
     if (lowerName.includes('שבועות')) {
-      return holidayImages['שבועות'] || '/images/shabbat.gif';
+      return holidayImageMap['שבועות'] || '/images/shabbat.gif';
     }
     if (lowerName.includes('תשעה באב') || lowerName.includes('ט\"ב')) {
-      return holidayImages['תשעה באב'] || '/images/shabbat.gif';
+      return holidayImageMap['תשעה באב'] || '/images/shabbat.gif';
     }
     
     // fallback לתמונת שבת כללית
@@ -1149,8 +1153,28 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
             isYomTov: true // שבת או יום טוב עם איסור מלאכה
           });
           
-          // שמירת שם החג/שבת
+          // שמירת שם החג/שבת וקביעת רשימת תמונות
           setCurrentHolidayName(holidayName);
+          
+          // קביעת מערך התמונות - אם יש שבת+חג, הצג את שניהם
+          const imagesForCarousel: string[] = [];
+          if (regularHolidayEvents.length > 0) {
+            // יש חג רגיל (כמו חנוכה) ביחד עם שבת
+            const regularHolidayName = regularHolidayEvents[0].title || '';
+            imagesForCarousel.push('/images/shabbat.gif'); // תמונת שבת
+            const holidayImg = getHolidayImage(regularHolidayName);
+            if (holidayImg !== '/images/shabbat.gif') {
+              imagesForCarousel.push(holidayImg); // תמונת החג
+            }
+            console.log(`🎨 שבת + חג: תמונות = שבת + ${regularHolidayName}`);
+          } else {
+            // רק שבת או רק יום טוב
+            imagesForCarousel.push(getHolidayImage(holidayName));
+            console.log(`🎨 תמונה יחידה: ${holidayName}`);
+          }
+          setHolidayImagesArray(imagesForCarousel);
+          setCurrentHolidayImageIndex(0);
+          
         } else if (holidayEvents.length > 0) {
           // אם יש חג אבל אין candles/havdalah - זה חג ללא איסור מלאכה (כמו חנוכה, פורים)
           const holiday = holidayEvents[0];
@@ -1177,6 +1201,12 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           
           // שמירת שם החג
           setCurrentHolidayName(holiday.title || '');
+          
+          // קביעת מערך התמונות - רק תמונת החג
+          const holidayImg = getHolidayImage(holiday.title || '');
+          setHolidayImagesArray([holidayImg]);
+          setCurrentHolidayImageIndex(0);
+          console.log(`🎨 חג רגיל בלבד: ${holiday.title}`);
         } else {
           console.log('⚠️ No candle lighting or havdalah found, using fallback');
           setShabbatTimes({ 
@@ -1190,6 +1220,8 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           
           // fallback לשבת
           setCurrentHolidayName('שבת');
+          setHolidayImagesArray(['/images/shabbat.gif']);
+          setCurrentHolidayImageIndex(0);
         }
         
       } catch (e) {
@@ -1205,6 +1237,8 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         
         // fallback לשבת
         setCurrentHolidayName('שבת');
+        setHolidayImagesArray(['/images/shabbat.gif']);
+        setCurrentHolidayImageIndex(0);
       }
     };
     
@@ -1284,6 +1318,20 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       console.log(`💾 שמירת מצב - שבת/יום טוב: ${isShabbatMode}, חג: ${isHolidayMode}, שם: ${currentHolidayName}`);
     }
   }, [isShabbatMode, isHolidayMode, currentHolidayName]);
+
+  // useEffect להחלפת תמונות חג/שבת בקרוסלה (כל 10 שניות)
+  useEffect(() => {
+    if (!isHolidayMode || holidayImagesArray.length <= 1) {
+      // אין צורך בקרוסלה אם אין מצב חג או יש רק תמונה אחת
+      return;
+    }
+
+    const intervalId = setInterval(() => {
+      setCurrentHolidayImageIndex((prev) => (prev + 1) % holidayImagesArray.length);
+    }, 10000); // החלפה כל 10 שניות
+
+    return () => clearInterval(intervalId);
+  }, [isHolidayMode, holidayImagesArray.length]);
 
   // useEffect לבדיקת מצב שבת/חג כל דקה
   useEffect(() => {
@@ -1720,10 +1768,11 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
        }}
      >
 
-          {isHolidayMode ? (
+          {isHolidayMode && holidayImagesArray.length > 0 ? (
             // תמונת חג/שבת ייחודית - מוצגת בכל החגים (כולל חגים ללא איסור מלאכה)
+            // אם יש מספר תמונות (שבת+חג), הן מתחלפות אוטומטית
             <img
-              src={getHolidayImage(currentHolidayName)}
+              src={holidayImagesArray[currentHolidayImageIndex]}
               alt={currentHolidayName || "שבת שלום"}
               className="w-full h-full"
               style={{
@@ -1731,7 +1780,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
                 objectFit: 'fill'
               }}
               onError={(e) => {
-                console.error('❌ שגיאה בטעינת תמונת חג/שבת:', currentHolidayName);
+                console.error('❌ שגיאה בטעינת תמונת חג/שבת:', holidayImagesArray[currentHolidayImageIndex]);
                 // fallback לתמונת שבת כללית
                 const target = e.target as HTMLImageElement;
                 target.src = '/images/shabbat.gif';
