@@ -985,38 +985,26 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         const today = new Date();
         const dayOfWeek = today.getDay(); // 0=ראשון, 5=שישי, 6=שבת
         
-        // אם היום שישי, שבת או ראשון בבוקר - נביא את השבת הנוכחית
-        // אחרת - נביא את השבת הבאה
-        let targetFriday = new Date(today);
+        // כדי לתפוס גם חגים שעלולים להיות בכל יום, נחפש מ-5 ימים אחורה
+        // זה מכסה מקרים שבהם חג התחיל לפני מספר ימים ועדיין בטווח של 3 שעות אחרי היציאה
+        const startDate = new Date(today);
+        startDate.setDate(today.getDate() - 5); // 5 ימים אחורה
         
-        if (dayOfWeek === 5) {
-          // יום שישי - השבת היום
-          targetFriday = new Date(today);
-        } else if (dayOfWeek === 6) {
-          // יום שבת - השבת התחילה אתמול
-          targetFriday.setDate(today.getDate() - 1);
-        } else if (dayOfWeek === 0 && today.getHours() < 12) {
-          // יום ראשון לפני הצהריים - אולי עדיין בטווח של 3 שעות אחרי יציאת שבת
-          targetFriday.setDate(today.getDate() - 2);
-        } else {
-          // יום אחר - נחפש את יום שישי הבא
-          const daysUntilFriday = (5 - dayOfWeek + 7) % 7;
-          targetFriday.setDate(today.getDate() + (daysUntilFriday === 0 ? 7 : daysUntilFriday));
-        }
+        // תאריך סיום - נחפש עד השבוע הבא כדי לכלול גם שבת/חגים הקרובים
+        const endDate = new Date(today);
+        endDate.setDate(today.getDate() + 7); // שבוע קדימה
         
-        const year = targetFriday.getFullYear();
-        const month = String(targetFriday.getMonth() + 1).padStart(2, '0');
-        const day = String(targetFriday.getDate()).padStart(2, '0');
+        const startYear = startDate.getFullYear();
+        const startMonth = String(startDate.getMonth() + 1).padStart(2, '0');
+        const startDay = String(startDate.getDate()).padStart(2, '0');
+        
+        const endYear = endDate.getFullYear();
+        const endMonth = String(endDate.getMonth() + 1).padStart(2, '0');
+        const endDay = String(endDate.getDate()).padStart(2, '0');
 
-        const targetSaturday = new Date(targetFriday);
-        targetSaturday.setDate(targetFriday.getDate() + 1);
-        const saturdayYear = targetSaturday.getFullYear();
-        const saturdayMonth = String(targetSaturday.getMonth() + 1).padStart(2, '0');
-        const saturdayDay = String(targetSaturday.getDate()).padStart(2, '0');
-
-        console.log(`📅 Fetching for date range: ${year}-${month}-${day} to ${saturdayYear}-${saturdayMonth}-${saturdayDay} (today is ${dayOfWeek})`);
+        console.log(`📅 Fetching for date range: ${startYear}-${startMonth}-${startDay} to ${endYear}-${endMonth}-${endDay} (today is day ${dayOfWeek})`);
         
-        const response = await fetch(`https://www.hebcal.com/hebcal?v=1&cfg=json&start=${year}-${month}-${day}&end=${saturdayYear}-${saturdayMonth}-${saturdayDay}&maj=on&min=off&ss=on&mod=off&mf=off&lg=h&le=y&s=on&geo=geoname&geonameid=293397&m=on&s=on&i=on&b=18&M=on&year=h`);
+        const response = await fetch(`https://www.hebcal.com/hebcal?v=1&cfg=json&start=${startYear}-${startMonth}-${startDay}&end=${endYear}-${endMonth}-${endDay}&maj=on&min=off&ss=on&mod=off&mf=off&lg=h&le=y&s=on&geo=geoname&geonameid=293397&m=on&s=on&i=on&b=18&M=on&year=h`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -1026,11 +1014,49 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         console.log('📡 Hebcal API response:', data);
         
         const events = data.items || [];
-        const candleLighting = events.find((event: any) => event.category === "candles");
-        const havdalah = events.find((event: any) => event.category === "havdalah");
+        const now = new Date();
+        
+        // מצא את כל אירועי הדלקת נרות והבדלה
+        const candleLightingEvents = events.filter((event: any) => event.category === "candles");
+        const havdalahEvents = events.filter((event: any) => event.category === "havdalah");
+        
+        // מצא את הזוג הכי קרוב - זה שאנחנו בתוכו עכשיו או הקרוב ביותר בעתיד
+        let candleLighting = null;
+        let havdalah = null;
+        
+        for (let i = 0; i < candleLightingEvents.length; i++) {
+          const candle = candleLightingEvents[i];
+          const candleDate = new Date(candle.date);
+          const matchingHavdalah = havdalahEvents.find((h: any) => {
+            const hDate = new Date(h.date);
+            return hDate > candleDate && hDate.getTime() - candleDate.getTime() < 48 * 60 * 60 * 1000; // תוך 48 שעות
+          });
+          
+          if (matchingHavdalah) {
+            const havdalahDate = new Date(matchingHavdalah.date);
+            // בדוק אם אנחנו בטווח (3 שעות לפני עד 3 שעות אחרי)
+            const threeHoursBefore = new Date(candleDate);
+            threeHoursBefore.setHours(candleDate.getHours() - 3);
+            const threeHoursAfter = new Date(havdalahDate);
+            threeHoursAfter.setHours(havdalahDate.getHours() + 3);
+            
+            if (now >= threeHoursBefore && now <= threeHoursAfter) {
+              // אנחנו בטווח של השבת/חג הזה!
+              candleLighting = candle;
+              havdalah = matchingHavdalah;
+              console.log('✅ Found current Shabbat/Holiday we are in:', { candle: candle.title, havdalah: matchingHavdalah.title });
+              break;
+            } else if (candleDate > now && (!candleLighting || candleDate < new Date(candleLighting.date))) {
+              // זה השבת/חג הבא הכי קרוב
+              candleLighting = candle;
+              havdalah = matchingHavdalah;
+            }
+          }
+        }
+        
         const parsha = events.find((event: any) => event.category === "parashat");
         
-        // בדיקת חגים - חיפוש אירועים מסוג holiday או yomtov
+        // בדיקת חגים - חיפוש אירועים מסוג holiday או yomtov שבטווח הרלוונטי
         const holidayEvents = events.filter((event: any) => {
           if (event.category === "holiday" || event.yomtov === true) {
             const title = event.title || '';
@@ -1046,12 +1072,22 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
               'שבועות', 'Shavuot',
               'תשעה באב', 'ט"ב', 'Tisha B\'Av'
             ];
-            return holidayKeywords.some(keyword => title.includes(keyword)) || event.yomtov === true;
+            
+            if (holidayKeywords.some(keyword => title.includes(keyword)) || event.yomtov === true) {
+              // בדוק אם החג בטווח זמן רלוונטי (מ-3 ימים אחורה עד 7 ימים קדימה)
+              const eventDate = new Date(event.date);
+              const threeDaysAgo = new Date(now);
+              threeDaysAgo.setDate(now.getDate() - 3);
+              const weekAhead = new Date(now);
+              weekAhead.setDate(now.getDate() + 7);
+              
+              return eventDate >= threeDaysAgo && eventDate <= weekAhead;
+            }
           }
           return false;
         });
 
-        console.log('🕯️ Found events:', { candleLighting, havdalah, parsha, holidays: holidayEvents.length });
+        console.log('🕯️ Found events:', { candleLighting, havdalah, parsha, holidays: holidayEvents.length, holidayNames: holidayEvents.map((h: any) => h.title) });
 
         // קבע אם זה חג או שבת
         let holidayName = 'שבת'; // default לשבת
