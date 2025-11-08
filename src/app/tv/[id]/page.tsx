@@ -983,19 +983,38 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         console.log('🕯️ Starting to fetch shabbat times...');
         
         const today = new Date();
-        const nextFriday = new Date(today);
-        nextFriday.setDate(today.getDate() + (5 - today.getDay() + 7) % 7);
-        const year = nextFriday.getFullYear();
-        const month = String(nextFriday.getMonth() + 1).padStart(2, '0');
-        const day = String(nextFriday.getDate()).padStart(2, '0');
+        const dayOfWeek = today.getDay(); // 0=ראשון, 5=שישי, 6=שבת
+        
+        // אם היום שישי, שבת או ראשון בבוקר - נביא את השבת הנוכחית
+        // אחרת - נביא את השבת הבאה
+        let targetFriday = new Date(today);
+        
+        if (dayOfWeek === 5) {
+          // יום שישי - השבת היום
+          targetFriday = new Date(today);
+        } else if (dayOfWeek === 6) {
+          // יום שבת - השבת התחילה אתמול
+          targetFriday.setDate(today.getDate() - 1);
+        } else if (dayOfWeek === 0 && today.getHours() < 12) {
+          // יום ראשון לפני הצהריים - אולי עדיין בטווח של 3 שעות אחרי יציאת שבת
+          targetFriday.setDate(today.getDate() - 2);
+        } else {
+          // יום אחר - נחפש את יום שישי הבא
+          const daysUntilFriday = (5 - dayOfWeek + 7) % 7;
+          targetFriday.setDate(today.getDate() + (daysUntilFriday === 0 ? 7 : daysUntilFriday));
+        }
+        
+        const year = targetFriday.getFullYear();
+        const month = String(targetFriday.getMonth() + 1).padStart(2, '0');
+        const day = String(targetFriday.getDate()).padStart(2, '0');
 
-        const nextSaturday = new Date(nextFriday);
-        nextSaturday.setDate(nextFriday.getDate() + 1);
-        const saturdayYear = nextSaturday.getFullYear();
-        const saturdayMonth = String(nextSaturday.getMonth() + 1).padStart(2, '0');
-        const saturdayDay = String(nextSaturday.getDate()).padStart(2, '0');
+        const targetSaturday = new Date(targetFriday);
+        targetSaturday.setDate(targetFriday.getDate() + 1);
+        const saturdayYear = targetSaturday.getFullYear();
+        const saturdayMonth = String(targetSaturday.getMonth() + 1).padStart(2, '0');
+        const saturdayDay = String(targetSaturday.getDate()).padStart(2, '0');
 
-        console.log(`📅 Fetching for date range: ${year}-${month}-${day} to ${saturdayYear}-${saturdayMonth}-${saturdayDay}`);
+        console.log(`📅 Fetching for date range: ${year}-${month}-${day} to ${saturdayYear}-${saturdayMonth}-${saturdayDay} (today is ${dayOfWeek})`);
         
         const response = await fetch(`https://www.hebcal.com/hebcal?v=1&cfg=json&start=${year}-${month}-${day}&end=${saturdayYear}-${saturdayMonth}-${saturdayDay}&maj=on&min=off&ss=on&mod=off&mf=off&lg=h&le=y&s=on&geo=geoname&geonameid=293397&m=on&s=on&i=on&b=18&M=on&year=h`);
         
