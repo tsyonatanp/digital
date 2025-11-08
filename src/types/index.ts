@@ -50,6 +50,7 @@ export interface ShabbatTimes {
   parsha: string
   entryDate?: string
   exitDate?: string
+  isYomTov?: boolean // האם זה שבת או יום טוב עם איסור מלאכה (true) או חג רגיל (false)
 }
 
 // Component props types

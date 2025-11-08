@@ -74,7 +74,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
   const clickCount = useRef(0)
   const lastClickTime = useRef(0)
   const [hebrewDate, setHebrewDate] = useState('');
-  const [shabbatTimes, setShabbatTimes] = useState({ entry: '', exit: '', parsha: '', entryDate: '', exitDate: '' });
+  const [shabbatTimes, setShabbatTimes] = useState({ entry: '', exit: '', parsha: '', entryDate: '', exitDate: '', isYomTov: false });
   
   // State לניהול מצב שבת/חג - טוען מ-localStorage אם קיים
   const [isShabbatMode, setIsShabbatMode] = useState(() => {
@@ -83,7 +83,16 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       return saved === 'true';
     }
     return false;
-  });
+  }); // שבת או יום טוב (עם איסור מלאכה) - מושתק מוזיקה
+  
+  const [isHolidayMode, setIsHolidayMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('isHolidayMode');
+      return saved === 'true';
+    }
+    return false;
+  }); // כל חג (כולל חגים ללא איסור מלאכה) - תמונת חג במקום פרסומות
+  
   const [currentHolidayName, setCurrentHolidayName] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('currentHolidayName') || '';
@@ -1067,8 +1076,10 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
               'סוכות', 'Sukkot',
               'שמיני עצרת', 'שמחת תורה', 'Simchat Torah',
               'חנוכה', 'Chanukah', 'Hanukkah',
+              'ט"ו בשבט', 'Tu BiShvat', 'Tu B\'Shvat',
               'פורים', 'Purim',
               'פסח', 'Pesach', 'Passover',
+              'ל"ג בעומר', 'Lag BaOmer', 'Lag B\'Omer',
               'שבועות', 'Shavuot',
               'תשעה באב', 'ט"ב', 'Tisha B\'Av'
             ];
@@ -1087,16 +1098,36 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           return false;
         });
 
-        console.log('🕯️ Found events:', { candleLighting, havdalah, parsha, holidays: holidayEvents.length, holidayNames: holidayEvents.map((h: any) => h.title) });
+        // סיווג חגים לפי סוג: יום טוב (עם איסור מלאכה) או חג רגיל
+        const yomTovEvents = holidayEvents.filter((h: any) => h.yomtov === true);
+        const regularHolidayEvents = holidayEvents.filter((h: any) => h.yomtov !== true);
+        
+        console.log('🕯️ Found events:', { 
+          candleLighting, 
+          havdalah, 
+          parsha, 
+          yomTovHolidays: yomTovEvents.length, 
+          yomTovNames: yomTovEvents.map((h: any) => h.title),
+          regularHolidays: regularHolidayEvents.length,
+          regularHolidayNames: regularHolidayEvents.map((h: any) => h.title)
+        });
 
         // קבע אם זה חג או שבת
         let holidayName = 'שבת'; // default לשבת
-        if (holidayEvents.length > 0) {
-          // יש חג - נשתמש בשם החג
-          holidayName = holidayEvents[0].title || 'שבת';
+        let isYomTov = false; // האם זה יום טוב עם איסור מלאכה
+        
+        if (yomTovEvents.length > 0) {
+          // יש יום טוב - נשתמש בשם היום טוב
+          holidayName = yomTovEvents[0].title || 'שבת';
+          isYomTov = true;
+        } else if (regularHolidayEvents.length > 0) {
+          // יש חג רגיל (ללא איסור מלאכה) - נשתמש בשם החג
+          holidayName = regularHolidayEvents[0].title || '';
+          isYomTov = false;
         } else if (parsha) {
           // אם יש פרשה זה כנראה שבת רגילה
           holidayName = 'שבת';
+          isYomTov = true; // שבת היא כמו יום טוב
         }
         
         if (candleLighting && havdalah) {
@@ -1106,38 +1137,46 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           const exitDate = havdalah.date; // תאריך מלא
           const parshaTitle = parsha?.title || (holidayEvents.length > 0 ? holidayEvents[0].title : "לא נמצאה פרשה");
           
-          console.log('✅ Setting shabbat/holiday times:', { entryTime, exitTime, entryDate, exitDate, parshaTitle, holidayName, isHoliday: holidayEvents.length > 0 });
+          // אם יש candleLighting ו-havdalah, זה תמיד שבת או יום טוב (עם איסור מלאכה)
+          console.log('✅ Setting shabbat/holiday times:', { entryTime, exitTime, entryDate, exitDate, parshaTitle, holidayName, isYomTov: true });
           
           setShabbatTimes({
             entry: entryTime,
             exit: exitTime,
             entryDate: entryDate,
             exitDate: exitDate,
-            parsha: parshaTitle
+            parsha: parshaTitle,
+            isYomTov: true // שבת או יום טוב עם איסור מלאכה
           });
           
           // שמירת שם החג/שבת
           setCurrentHolidayName(holidayName);
         } else if (holidayEvents.length > 0) {
-          // אם יש חג אבל אין שבת, נשתמש בזמנים של החג
+          // אם יש חג אבל אין candles/havdalah - זה חג ללא איסור מלאכה (כמו חנוכה, פורים)
           const holiday = holidayEvents[0];
           const holidayDate = new Date(holiday.date);
-          // נניח שחג נכנס בערב ונמשך עד הערב הבא
-          const entryTime = `${String(holidayDate.getHours()).padStart(2, '0')}:${String(holidayDate.getMinutes()).padStart(2, '0')}`;
+          
+          // חגים ללא איסור מלאכה - נקבע זמנים סמליים (כל היום)
+          const entryTime = '00:00';
+          const exitTime = '23:59';
+          
+          // החג מתחיל בחצות היום הזה ונמשך עד חצות למחרת
           const nextDay = new Date(holidayDate);
           nextDay.setDate(nextDay.getDate() + 1);
-          const exitTime = `${String(nextDay.getHours()).padStart(2, '0')}:${String(nextDay.getMinutes()).padStart(2, '0')}`;
+          
+          console.log('🎉 Setting regular holiday (no melacha restriction):', { holiday: holiday.title, date: holiday.date, isYomTov: false });
           
           setShabbatTimes({
             entry: entryTime,
             exit: exitTime,
             entryDate: holiday.date,
             exitDate: nextDay.toISOString(),
-            parsha: holiday.title
+            parsha: holiday.title,
+            isYomTov: false // חג רגיל ללא איסור מלאכה
           });
           
           // שמירת שם החג
-          setCurrentHolidayName(holiday.title || 'שבת');
+          setCurrentHolidayName(holiday.title || '');
         } else {
           console.log('⚠️ No candle lighting or havdalah found, using fallback');
           setShabbatTimes({ 
@@ -1145,7 +1184,8 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
             exit: '20:30',
             entryDate: '',
             exitDate: '',
-            parsha: 'פרשת השבוע' 
+            parsha: 'פרשת השבוע',
+            isYomTov: true // fallback - נניח שזה שבת
           });
           
           // fallback לשבת
@@ -1159,7 +1199,8 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           exit: '20:30',
           entryDate: '',
           exitDate: '',
-          parsha: 'פרשת השבוע' 
+          parsha: 'פרשת השבוע',
+          isYomTov: true // fallback - נניח שזה שבת
         });
         
         // fallback לשבת
@@ -1234,75 +1275,92 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
     return now >= threeHoursBeforeEntry && now <= threeHoursAfterExit;
   };
 
-  // useEffect לשמירת מצב שבת ב-localStorage
+  // useEffect לשמירת מצב שבת/חג ב-localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('isShabbatMode', String(isShabbatMode));
+      localStorage.setItem('isHolidayMode', String(isHolidayMode));
       localStorage.setItem('currentHolidayName', currentHolidayName);
-      console.log(`💾 שמירת מצב שבת: ${isShabbatMode}, חג: ${currentHolidayName}`);
+      console.log(`💾 שמירת מצב - שבת/יום טוב: ${isShabbatMode}, חג: ${isHolidayMode}, שם: ${currentHolidayName}`);
     }
-  }, [isShabbatMode, currentHolidayName]);
+  }, [isShabbatMode, isHolidayMode, currentHolidayName]);
 
   // useEffect לבדיקת מצב שבת/חג כל דקה
   useEffect(() => {
-    const updateShabbatMode = () => {
-      const shouldBeInShabbatMode = checkShabbatMode();
+    const updateHolidayModes = () => {
+      const shouldBeInHolidayMode = checkShabbatMode(); // בודק אם אנחנו בטווח הזמנים
+      const isYomTovHoliday = shabbatTimes.isYomTov === true; // האם זה יום טוב עם איסור מלאכה
       
-      if (shouldBeInShabbatMode && !isShabbatMode) {
-        // כניסה למצב שבת - שמירת מצב נוכחי והחלפה לתמונת שבת
-        console.log('🕯️ כניסה למצב שבת/חג');
+      if (shouldBeInHolidayMode) {
+        // אנחנו בטווח של חג/שבת
         
-        // שמירת האינדקס המקורי
-        if (originalImageIndexRef.current === null) {
-          originalImageIndexRef.current = currentImageIndex;
+        // תמיד נכנסים למצב חג (תמונת חג במקום פרסומות)
+        if (!isHolidayMode) {
+          console.log('🎉 כניסה למצב חג - תמונת חג תוצג');
+          if (originalImageIndexRef.current === null) {
+            originalImageIndexRef.current = currentImageIndex;
+          }
+          setIsHolidayMode(true);
         }
         
-        // שמירת מצב המוזיקה והשתקתה
-        wasMusicPlayingRef.current = isMusicPlaying;
-        if (isMusicPlaying && audioRef.current) {
-          audioRef.current.pause();
-          setIsMusicPlaying(false);
-          console.log('🔇 מוזיקה הושתקה לכבוד שבת/חג');
+        // רק אם זה יום טוב (isYomTov) - נשתיק מוזיקה
+        if (isYomTovHoliday && !isShabbatMode) {
+          console.log('🕯️ כניסה למצב שבת/יום טוב - השתקת מוזיקה');
+          
+          // שמירת מצב המוזיקה והשתקתה
+          wasMusicPlayingRef.current = isMusicPlaying;
+          if (isMusicPlaying && audioRef.current) {
+            audioRef.current.pause();
+            setIsMusicPlaying(false);
+            console.log('🔇 מוזיקה הושתקה לכבוד שבת/יום טוב');
+          }
+          
+          setIsShabbatMode(true);
+        } else if (!isYomTovHoliday && isShabbatMode) {
+          // אם זה לא יום טוב אבל isShabbatMode פעיל, נבטל את זה (למקרה שהתוקף פג)
+          console.log('🎵 זה חג ללא איסור מלאכה - מוזיקה ממשיכה');
+          setIsShabbatMode(false);
         }
         
-        setIsShabbatMode(true);
-      } else if (!shouldBeInShabbatMode && isShabbatMode) {
-        // יציאה ממצב שבת - החזרת מצב קודם
-        console.log('✨ יציאה ממצב שבת/חג');
+      } else {
+        // אנחנו מחוץ לטווח - יצ יאה ממצב חג/שבת
         
-        // החזרת האינדקס המקורי
-        if (originalImageIndexRef.current !== null) {
-          setCurrentImageIndex(originalImageIndexRef.current);
-          originalImageIndexRef.current = null;
+        if (isHolidayMode || isShabbatMode) {
+          console.log('✨ יציאה ממצב חג/שבת');
+          
+          // החזרת האינדקס המקורי
+          if (originalImageIndexRef.current !== null) {
+            setCurrentImageIndex(originalImageIndexRef.current);
+            originalImageIndexRef.current = null;
+          }
+          
+          // החזרת מוזיקה אם הייתה פעילה
+          if (isShabbatMode && wasMusicPlayingRef.current && audioRef.current) {
+            audioRef.current.play()
+              .then(() => {
+                setIsMusicPlaying(true);
+                console.log('▶️ מוזיקה הופעלה מחדש');
+              })
+              .catch(() => {
+                console.log('⚠️ לא ניתן להפעיל מוזיקה מחדש אוטומטית');
+              });
+          }
+          wasMusicPlayingRef.current = false;
+          
+          setIsHolidayMode(false);
+          setIsShabbatMode(false);
         }
-        
-        // החזרת מוזיקה אם הייתה פעילה
-        if (wasMusicPlayingRef.current && audioRef.current) {
-          // ננסה להפעיל את המוזיקה מחדש
-          audioRef.current.play()
-            .then(() => {
-              setIsMusicPlaying(true);
-              console.log('▶️ מוזיקה הופעלה מחדש לאחר שבת');
-            })
-            .catch(() => {
-              console.log('⚠️ לא ניתן להפעיל מוזיקה מחדש אוטומטית');
-            });
-        }
-        wasMusicPlayingRef.current = false;
-        
-        setIsShabbatMode(false);
       }
     };
 
     // בדיקה ראשונית מיד כשהקומפוננטה נטענת או כשהזמנים משתנים
-    updateShabbatMode();
+    updateHolidayModes();
 
     // בדיקה אוטומטית כל 30 שניות - ללא צורך ברפרש
-    // זה מבטיח שהמעבר בין מצבים יתרחש בזמן המדויק
-    const interval = setInterval(updateShabbatMode, 30000);
+    const interval = setInterval(updateHolidayModes, 30000);
 
     return () => clearInterval(interval);
-  }, [shabbatTimes.entry, shabbatTimes.exit, shabbatTimes.entryDate, shabbatTimes.exitDate, isShabbatMode, currentImageIndex, isMusicPlaying]);
+  }, [shabbatTimes.entry, shabbatTimes.exit, shabbatTimes.entryDate, shabbatTimes.exitDate, shabbatTimes.isYomTov, isShabbatMode, isHolidayMode, currentImageIndex, isMusicPlaying]);
 
   // רענון אוטומטי של הדף פעמיים ביום - 11:00 בבוקר ו-23:00 בלילה
   useEffect(() => {
@@ -1662,8 +1720,8 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
        }}
      >
 
-          {isShabbatMode ? (
-            // תמונת חג/שבת ייחודית
+          {isHolidayMode ? (
+            // תמונת חג/שבת ייחודית - מוצגת בכל החגים (כולל חגים ללא איסור מלאכה)
             <img
               src={getHolidayImage(currentHolidayName)}
               alt={currentHolidayName || "שבת שלום"}
