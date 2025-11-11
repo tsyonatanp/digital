@@ -720,11 +720,37 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
       return
     }
 
+    let retryCount = 0
+    const maxRetries = 10
+
     const fetchData = async () => {
       try {
         if (!supabase) {
           console.error('❌ Supabase client לא זמין')
           return
+        }
+        
+        // וודא שה-session משוחזר לפני טעינת נתונים
+        console.log('🔐 בודק session...')
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        
+        if (sessionError) {
+          console.error('❌ שגיאה בבדיקת session:', sessionError)
+        }
+        
+        if (!session) {
+          if (retryCount < maxRetries) {
+            retryCount++
+            console.log(`⚠️ אין session פעיל - ניסיון ${retryCount}/${maxRetries}`)
+            // המתן 500ms ונסה שוב
+            setTimeout(() => fetchData(), 500)
+            return
+          } else {
+            console.log('❌ נכשל לשחזר session אחרי 10 ניסיונות - טוען נתונים בכל מקרה')
+            // נמשיך לנסות לטעון נתונים גם בלי session (אולי זה לא נדרש)
+          }
+        } else {
+          console.log('✅ Session פעיל, טוען נתונים...')
         }
         
         console.log('🚀 התחלת טעינת נתונים עבור ID:', resolvedParams.id)
@@ -1153,7 +1179,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           holidayName = 'שבת';
           isYomTov = true; // שבת היא כמו יום טוב
         }
-        
+
         if (candleLighting && havdalah) {
           const entryTime = candleLighting.date.split('T')[1].slice(0, 5);
           const exitTime = havdalah.date.split('T')[1].slice(0, 5);
@@ -1231,7 +1257,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           console.log('⚠️ No candle lighting or havdalah found, using fallback');
           setShabbatTimes({ 
             entry: '19:30', 
-            exit: '20:30',
+            exit: '20:30', 
             entryDate: '',
             exitDate: '',
             parsha: 'פרשת השבוע',
@@ -1248,7 +1274,7 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
         console.error('❌ Error fetching shabbat times:', e);
         setShabbatTimes({ 
           entry: '19:30', 
-          exit: '20:30',
+          exit: '20:30', 
           entryDate: '',
           exitDate: '',
           parsha: 'פרשת השבוע',
@@ -1971,11 +1997,11 @@ function NewsColumn({ news, style }: { news: NewsItem[], style: Style | null }) 
   // קיבוץ לפי מקור - שימוש ב-useMemo כדי למנוע הגדרה מחדש בכל רינדור
   const grouped = useMemo(() => {
     return news.reduce((acc: Record<string, NewsItem[]>, item: NewsItem) => {
-      const key = item.source || 'אחר';
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(item);
-      return acc;
-    }, {});
+    const key = item.source || 'אחר';
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(item);
+    return acc;
+  }, {});
   }, [news]);
 
   // סדר הצגה מועדף
