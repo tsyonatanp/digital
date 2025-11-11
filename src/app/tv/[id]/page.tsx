@@ -1067,7 +1067,27 @@ export default function TVDisplayPage({ params }: TVDisplayProps) {
           }
         }
         
-        const parsha = events.find((event: any) => event.category === "parashat");
+        // מצא את הפרשה של השבת הקרובה/הבאה (לא השבת שעברה)
+        const parshaEvents = events.filter((event: any) => event.category === "parashat");
+        let parsha = null;
+        if (parshaEvents.length > 0) {
+          // בחר את הפרשה שהתאריך שלה הכי קרוב בעתיד, או אם אנחנו בשבת - הפרשה של היום
+          const futureParshas = parshaEvents.filter((p: any) => new Date(p.date) >= now);
+          if (futureParshas.length > 0) {
+            // יש פרשה בעתיד - קח את הקרובה ביותר
+            parsha = futureParshas.reduce((closest: any, current: any) => {
+              if (!closest) return current;
+              return new Date(current.date) < new Date(closest.date) ? current : closest;
+            }, null);
+          } else if (parshaEvents.length > 0) {
+            // אין פרשה בעתיד - קח את האחרונה (השבת שעברה)
+            parsha = parshaEvents.reduce((latest: any, current: any) => {
+              if (!latest) return current;
+              return new Date(current.date) > new Date(latest.date) ? current : latest;
+            }, null);
+          }
+          console.log('📖 Parsha selected:', parsha?.title, 'date:', parsha?.date);
+        }
         
         // בדיקת חגים - חיפוש אירועים מסוג holiday או yomtov שבטווח הרלוונטי
         const holidayEvents = events.filter((event: any) => {
